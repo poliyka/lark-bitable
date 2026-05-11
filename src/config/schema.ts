@@ -229,8 +229,83 @@ export const qaVerificationResultSchema = z.object({
   workspaceEvidence: z.array(researchEvidenceSchema).default([]),
 });
 
+export const writeFieldChangeSchema = z.object({
+  fieldName: z.string().min(1),
+  requestedValue: z.unknown(),
+  previousValue: z.unknown().optional(),
+  resultValue: z.unknown().optional(),
+  status: z.enum(["pending", "changed", "unchanged", "rejected", "unknown"]),
+  validationIssues: z.array(issueSchema).default([]),
+});
+
+export const writeOperationSchema = z.object({
+  operationId: z.string().min(1),
+  type: z.enum(["create", "update"]),
+  source: sourceMetadataSchema,
+  targetRecordId: z.string().min(1).optional(),
+  requestedFields: z.record(z.string(), z.unknown()),
+  fieldChanges: z.array(writeFieldChangeSchema),
+  previewedAt: isoTimestampSchema,
+  commitState: z.enum(["previewed", "confirmed-request", "not-requested"]),
+  clientToken: z.string().min(1).optional(),
+  requestedBy: z.enum(["human", "agent", "unknown"]).optional(),
+});
+
+export const writePreviewSchema = z.object({
+  operation: writeOperationSchema,
+  source: sourceMetadataSchema,
+  targetRecord: bitableRecordSchema.optional(),
+  fieldChanges: z.array(writeFieldChangeSchema),
+  warnings: z.array(z.string().min(1)).default([]),
+  commitRequired: z.boolean(),
+  wouldWrite: z.boolean(),
+});
+
+export const writeResultSchema = z.object({
+  operationId: z.string().min(1),
+  type: z.enum(["create", "update"]),
+  commitState: z.enum(["previewed", "committed", "blocked", "not-requested"]),
+  confirmationStatus: z.enum([
+    "not-written",
+    "confirmed",
+    "failed",
+    "partial",
+    "unknown",
+  ]),
+  targetRecordId: z.string().min(1).optional(),
+  clientToken: z.string().min(1).optional(),
+  fieldChanges: z.array(writeFieldChangeSchema),
+  createdRecord: bitableRecordSchema.optional(),
+  updatedRecord: bitableRecordSchema.optional(),
+  issues: z.array(issueSchema).default([]),
+  warnings: z.array(z.string().min(1)).default([]),
+  evidence: z.array(researchEvidenceSchema).default([]),
+  nextActions: z.array(z.string().min(1)).default([]),
+});
+
+export const writeReadinessSchema = z.object({
+  sourceConfigured: z.boolean(),
+  authReady: z.boolean(),
+  fieldsReadable: z.union([z.boolean(), z.literal("unknown")]),
+  targetRecordReadable: z.union([z.boolean(), z.literal("unknown")]),
+  writePermissionStatus: z.enum(["verified", "missing", "failed", "unknown"]),
+  blockingIssues: z.array(issueSchema).default([]),
+  partialIssues: z.array(issueSchema).default([]),
+  status: z.enum(["ready", "partial", "blocked"]),
+  nextSafeCommand: z.string().min(1).optional(),
+});
+
+export const writeEvidenceSchema = researchEvidenceSchema;
+
 export const validationResultSchema = z.object({
-  workflow: z.enum(["global", "inspect", "triage", "research", "verify"]),
+  workflow: z.enum([
+    "global",
+    "inspect",
+    "triage",
+    "research",
+    "verify",
+    "write",
+  ]),
   status: z.enum(["ready", "partial", "blocked"]),
   checkedPrerequisites: z.array(z.string().min(1)),
   blockingIssues: z.array(issueSchema).default([]),
@@ -275,3 +350,9 @@ export type QaCheckCandidate = z.infer<typeof qaCheckCandidateSchema>;
 export type ExecutedQaCheck = z.infer<typeof executedQaCheckSchema>;
 export type SkippedQaCheck = z.infer<typeof skippedQaCheckSchema>;
 export type QaVerificationResult = z.infer<typeof qaVerificationResultSchema>;
+export type WriteFieldChange = z.infer<typeof writeFieldChangeSchema>;
+export type WriteOperation = z.infer<typeof writeOperationSchema>;
+export type WritePreview = z.infer<typeof writePreviewSchema>;
+export type WriteResult = z.infer<typeof writeResultSchema>;
+export type WriteReadiness = z.infer<typeof writeReadinessSchema>;
+export type WriteEvidence = z.infer<typeof writeEvidenceSchema>;

@@ -11,6 +11,9 @@ import { fixtureSource } from "../fixtures/lark.js";
 describe("LarkClient", () => {
   it("lists fields and paginated records through the transport seam", async () => {
     const transport: LarkClientTransport = {
+      async createRecord(input) {
+        return { record_id: "recCreated", fields: input.fields };
+      },
       async downloadMedia(input) {
         return { outPath: input.outPath };
       },
@@ -31,19 +34,41 @@ describe("LarkClient", () => {
           items: [{ record_id: "recB", fields: { title: "B" } }],
         };
       },
+      async updateRecord(input) {
+        return { record_id: input.recordId, fields: input.fields };
+      },
     };
 
     const client = new LarkClient(transport);
 
+    expect(
+      await client.createRecord(
+        fixtureSource,
+        { title: "Created" },
+        { clientToken: "token-1" },
+      ),
+    ).toMatchObject({
+      recordId: "recCreated",
+      fields: { title: "Created" },
+    });
     expect(await client.listFields(fixtureSource)).toHaveLength(1);
     expect(await client.listRecords(fixtureSource)).toHaveLength(2);
     expect((await client.getRecord(fixtureSource, "recA")).recordId).toBe(
       "recA",
     );
+    expect(
+      await client.updateRecord(fixtureSource, "recA", { title: "Updated" }),
+    ).toMatchObject({
+      recordId: "recA",
+      fields: { title: "Updated" },
+    });
   });
 
   it("limits records across pages", async () => {
     const transport: LarkClientTransport = {
+      async createRecord(input) {
+        return { record_id: "recCreated", fields: input.fields };
+      },
       async downloadMedia(input) {
         return { outPath: input.outPath };
       },
@@ -60,6 +85,9 @@ describe("LarkClient", () => {
             { record_id: "recB", fields: {} },
           ],
         };
+      },
+      async updateRecord(input) {
+        return { record_id: input.recordId, fields: input.fields };
       },
     };
 
@@ -88,6 +116,18 @@ describe("LarkClient", () => {
           },
         },
         appTableRecord: {
+          async create(payload: unknown, options: unknown) {
+            requests.push({ target: "create", payload, options });
+            return {
+              code: 0,
+              data: {
+                record: {
+                  record_id: "recCreated",
+                  fields: { 標題: "Created bug" },
+                },
+              },
+            };
+          },
           async get(payload: unknown, options: unknown) {
             requests.push({ target: "get", payload, options });
             return {
@@ -107,6 +147,18 @@ describe("LarkClient", () => {
               },
             };
           },
+          async update(payload: unknown, options: unknown) {
+            requests.push({ target: "update", payload, options });
+            return {
+              code: 0,
+              data: {
+                record: {
+                  record_id: "recLive",
+                  fields: { 標題: "Updated bug" },
+                },
+              },
+            };
+          },
         },
       },
     };
@@ -123,9 +175,31 @@ describe("LarkClient", () => {
     expect((await client.getRecord(fixtureSource, "recLive")).fields).toEqual({
       標題: "Live bug",
     });
+    expect(
+      await client.createRecord(
+        fixtureSource,
+        { 標題: "Created bug" },
+        { clientToken: "create-token" },
+      ),
+    ).toMatchObject({
+      recordId: "recCreated",
+      fields: { 標題: "Created bug" },
+    });
+    expect(
+      await client.updateRecord(fixtureSource, "recLive", {
+        標題: "Updated bug",
+      }),
+    ).toMatchObject({
+      recordId: "recLive",
+      fields: { 標題: "Updated bug" },
+    });
     expect(JSON.stringify(requests)).toContain("TypDbjKBfaJcaSsoEI1lZjHsgIY");
     expect(JSON.stringify(requests)).toContain("tblp8ig36Itp0yOU");
     expect(JSON.stringify(requests)).toContain("Bearer access-secret");
+    expect(JSON.stringify(requests)).toContain("create-token");
+    expect(requests.map((request) => request.target)).toEqual(
+      expect.arrayContaining(["create", "update"]),
+    );
   });
 
   it("downloads drive media with authenticated requests", async () => {
@@ -183,11 +257,17 @@ describe("LarkClient", () => {
             },
           },
           appTableRecord: {
+            async create() {
+              return { code: 0, data: { record: { record_id: "rec" } } };
+            },
             async get() {
               return { code: 0, data: { record: { fields: {} } } };
             },
             async list() {
               return { code: 0, data: { has_more: false, items: [] } };
+            },
+            async update() {
+              return { code: 0, data: { record: { record_id: "rec" } } };
             },
           },
         };

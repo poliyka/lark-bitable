@@ -19,6 +19,7 @@ export const commandNames = [
   "triage",
   "research",
   "verify",
+  "write",
 ] as const;
 
 type CommandName = (typeof commandNames)[number];
@@ -463,6 +464,58 @@ const helpEntries: Record<CommandName, HelpEntry> = {
       "Verify a selected Bitable task in QA mode with evidence-backed checks.",
     title: "QA Verify",
   },
+  write: {
+    aiUsage: [
+      'lark-bitable write --op create --fields-json \'{"標題":"新增任務","狀態":"待處理"}\' --json',
+      'lark-bitable write --op update --record-id recxxxx --fields-json \'{"狀態":"處理中"}\' --json',
+      'lark-bitable write --op update --record-id recxxxx --fields-json \'{"狀態":"處理中"}\' --confirm --json',
+    ],
+    commonFailures: [
+      "missing auth",
+      "missing source",
+      "unknown field",
+      "missing write permission",
+      "invalid field value rejected by Lark",
+      "confirmation read unavailable after a write response",
+      "unsupported delete, batch, schema, view, or permission operation",
+    ],
+    examples: [
+      'lark-bitable write --op create --field "標題=新增登入錯誤" --field "狀態=待處理"',
+      'lark-bitable write --op create --fields-json \'{"標題":"新增登入錯誤","狀態":"待處理"}\' --confirm',
+      'lark-bitable write --op update --record-id recxxxx --field "狀態=處理中"',
+      "lark-bitable valid --workflow write --json",
+    ],
+    humanUsage: [
+      "Run write without --confirm first to preview the requested create or update. Preview mode does not change table content.",
+      "Use --confirm only after the preview shows the intended operation, source, target record, and field changes.",
+      "For create, pass --field repeatedly or one --fields-json object. For update, also pass --record-id.",
+      "Use --client-token only for committed creates when you need idempotency.",
+      "Committed writes require Lark auth and a write-capable Bitable permission. Existing read-only commands remain available without write permission.",
+    ],
+    inputs: [
+      "--op create|update",
+      "--record-id for updates only",
+      "--field name=value, repeatable",
+      "--fields-json JSON object",
+      "--confirm to commit",
+      "--client-token for committed creates only",
+    ],
+    nextSteps: [
+      "Run lark-bitable schema --json when field names are unknown.",
+      "Run preview first, then repeat with --confirm only when the planned write is correct.",
+      "Run lark-bitable get <record-id> --json after committed writes when confirmation is uncertain.",
+    ],
+    outputs: [
+      "write operation metadata",
+      "preview field changes",
+      "confirmationStatus not-written, confirmed, failed, partial, or unknown",
+      "created or updated record id when known",
+      "issues, warnings, evidence, and next safe commands",
+    ],
+    purpose:
+      "Preview or commit one create/update operation against the active Bitable table.",
+    title: "Write Bitable Content",
+  },
 };
 
 export default class HelpCommand extends BaseCommand {
@@ -518,6 +571,7 @@ export default class HelpCommand extends BaseCommand {
             "lark-bitable get <record-id>",
             "lark-bitable research",
             "lark-bitable verify",
+            "lark-bitable write --op create|update --json",
           ],
           commands: commandNames,
           entries: helpEntries,
@@ -574,6 +628,7 @@ function renderGlobalHelp(): string {
     "  Owner filtering is optional; if ownerCriteria.applied=false, continue with returned records and report the not-applied reason.",
     "  In Developer mode, run get <record-id> before repository research and download any Lark media through media download before claiming asset contents.",
     "  In QA mode, prefer verify and keep executed checks, skipped checks, assumptions, risks, and manual next steps separate.",
+    "  For write operations, preview without --confirm first and commit only after the target source, record, and field changes are explicit.",
     "",
     "Commands:",
     ...commandNames.map((name) => `  ${name} - ${helpEntries[name].purpose}`),

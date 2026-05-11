@@ -15,8 +15,10 @@ Use this skill before reading Lark Bitable data for a bug-fixing workflow.
 3. Run `lark-bitable valid --workflow triage` before `triage`.
 4. Run `lark-bitable valid --workflow research` before `research`.
 5. Run `lark-bitable valid --workflow verify` before `verify` in QA mode.
-6. Run `lark-bitable schema` first when you only need field headers.
-7. Run `lark-bitable schema --json` before querying when the table schema,
+6. Run `lark-bitable valid --workflow write` before committed `write`
+   operations.
+7. Run `lark-bitable schema` first when you only need field headers.
+8. Run `lark-bitable schema --json` before querying or writing when the table schema,
    field mappings, exact status values, owner field, or field types are not
    already known from current context.
 
@@ -50,6 +52,10 @@ version conflicts, or inconclusive live access.
   languages. If the current context does not show the exact table shape, run
   `lark-bitable schema --json` first and use its `fields`, `mappings`, and
   sampled observed values.
+- Do not commit Bitable writes by default. Always run `lark-bitable write`
+  without `--confirm` first, inspect the preview, and only repeat with
+  `--confirm` after the requested source, target record, and field changes are
+  explicit.
 
 ## Login and Configure
 
@@ -73,6 +79,11 @@ version conflicts, or inconclusive live access.
 - Run `lark-bitable lark --login` when auth is missing, expired, invalid, or
   insufficient. The command opens a browser and waits for the local SSO
   callback using the configured Lark app settings.
+- For committed Bitable writes, the user access token must be requested with
+  write scope. After the Lark app has published and approved the user-identity
+  write permission, run `lark-bitable lark --login --scope="bitable:app"`.
+  A token previously issued with only `bitable:app:readonly` remains read-only
+  until the user logs in again with the write scope.
 - The redirect URI is the OAuth Redirect URL from Lark Developer Console >
   Security Settings. Do not use the Event Callback URL from the event callback
   page for login.
@@ -99,6 +110,34 @@ version conflicts, or inconclusive live access.
 
 Use `get` as the record-detail step. There is no separate `detail` command
 required when `get` can show the full record.
+
+## Write
+
+- `lark-bitable write --op create --field "<field>=<value>" --json`
+- `lark-bitable write --op create --fields-json '{"欄位":"值"}' --confirm --json`
+- `lark-bitable write --op update --record-id <record-id> --field "<field>=<value>" --json`
+- `lark-bitable write --op update --record-id <record-id> --fields-json '{"欄位":"值"}' --confirm --json`
+
+Rules for write operations:
+
+- Preview is mandatory. Without `--confirm`, the command must report
+  `confirmationStatus=not-written` and no create/update should be treated as
+  performed.
+- For update, run preview or `get <record-id>` first so before values are
+  visible. Do not guess current table state.
+- Use exact field names from `schema --json`; unknown fields must be fixed
+  before retrying.
+- Before committed writes, ensure auth was obtained with
+  `lark-bitable lark --login --scope="bitable:app"`. If current auth scopes are
+  only `bitable:app:readonly`, ask the user to re-login with write scope before
+  running `write --confirm`.
+- Use `--client-token` only for committed creates.
+- Missing write permission, rejected values, or unknown confirmation must be
+  reported as failure/partial evidence, not as success.
+- The command does not support delete, batch write, upsert, schema mutation,
+  view mutation, or permission management. Do not emulate those behaviors with
+  repeated `write` calls unless the user explicitly asks for separate single
+  record operations and each one is previewed.
 
 ## Developer Mode: Triage and Research
 

@@ -18,6 +18,7 @@
 - `triage`: 依狀態和優先級挑出可處理 bug，讓使用者選擇要修的項目。
 - `research`: 依已選 bug 和 repo 證據產出第一份分析報告。
 - `verify`: QA mode 下讀取選定任務、探索 workspace 可安全執行的檢查，產出 QA verification report。
+- `write`: 預覽或提交單筆新增、單筆更新。沒有 `--confirm` 時只產生 no-write preview，不修改表格。
 - `media download`: 使用登入 token 下載多維表格圖片或附件。
 - `doctor --install-skill`: 安裝 AI Agent 可讀的 bootstrap skill。
 
@@ -183,6 +184,25 @@ bitable:app:readonly
 
 ```text
 bitable:app:readonly
+```
+
+如果你要使用 `write --confirm` 新增或更新記錄，也需要加入 Lark Developer
+Console 中對應的 user identity 多維表格寫入權限。不同租戶或 Console 語系可能顯示為
+「多維表格讀寫」或類似名稱；重點是該權限必須允許 record create/update，而不是只有
+readonly。權限新增後同樣要發布新版並等待審核通過。
+
+使用 write app 登入時，請明確要求讀寫 scope：
+
+```bash
+lark-bitable lark --login --scope="bitable:app"
+```
+
+如果你之前已經用 `bitable:app:readonly` 登入，既有 token 不會自動升權；請在 write
+權限發布並審核通過後重新登入一次：
+
+```bash
+lark-bitable lark --logout --yes
+lark-bitable lark --login --scope="bitable:app"
 ```
 
 注意：這裡的 user identity `bitable:app:readonly` 和上一節的 application identity `bitable:app:readonly` 是不同授權上下文。名稱看起來一樣，但一個給 app/tenant token 用，一個給使用者 OAuth token 用。完整 CLI 流程需要兩類身份的權限都生效。
@@ -363,6 +383,16 @@ lark-bitable configure --clear
 lark-bitable lark --login
 ```
 
+如果目前配置的是可寫入的 Lark app，且你要執行 `write --confirm`，登入時要明確帶入
+write scope：
+
+```bash
+lark-bitable lark --login --scope="bitable:app"
+```
+
+只用一般 `lark-bitable lark --login` 或曾經以 `bitable:app:readonly` 登入時，保存下來的
+user token 可能仍然只有 readonly scope，會導致 committed write 仍然 403。
+
 預設是 SSO 模式：
 
 ```bash
@@ -442,6 +472,7 @@ lark-bitable valid --workflow inspect
 lark-bitable valid --workflow triage
 lark-bitable valid --workflow research
 lark-bitable valid --workflow verify
+lark-bitable valid --workflow write
 ```
 
 狀態含義：
@@ -453,6 +484,11 @@ lark-bitable valid --workflow verify
 `verify` workflow 只會在 active mode 是 `QA` 時 ready。`research` 是
 Developer-oriented workflow；如果 active mode 是 `QA`，`valid --workflow research`
 會給出 warning 並引導改用 `verify`。
+
+`write` workflow 會另外檢查寫入前置條件。缺少 auth 或 source 會 blocked；
+如果尚未用一次可確認的提交寫入證明權限，`valid --workflow write` 會回報
+`partial` 和 `write-permission-unverified`。這個 partial 只代表寫入權限尚未被證明，
+不會讓 `list`、`get`、`schema`、`triage`、`research`、`verify` 失效。
 
 如果看到 `blocked`，照輸出的 remediation 做。常見 remediation：
 
@@ -563,6 +599,69 @@ actionable status、priority sort 等條件之後才套用。
 - 已有有效 `~/.lark-bitable/auth.json`
 - Lark app 權限已生效
 - 目標 Base 允許讀取
+
+## 寫入多維表格
+
+Committed write 需要 user access token 具備 write scope。若目前 app 已在 Lark Developer
+Console 開通並發布 user identity 的多維表格讀寫權限，請先用以下方式登入：
+
+```bash
+lark-bitable lark --login --scope="bitable:app"
+```
+
+如果原本是 readonly token，請先重新登入；否則 `write --confirm` 仍會用舊 token
+發出請求。
+
+`write` 支援兩種單筆操作：
+
+```bash
+lark-bitable write --op create --field "標題=新增登入錯誤" --field "狀態=待處理"
+lark-bitable write --op update --record-id recxxxx --field "狀態=處理中"
+```
+
+預設永遠是 preview，不會修改表格。preview 輸出會標示：
+
+- `commitState=previewed`
+- `confirmationStatus=not-written`
+- 目標 source
+- update 的 target record id 和 before values
+- planned field changes
+- 下一個可安全執行的 `--confirm` 指令
+
+確認 preview 正確後，才加上 `--confirm`：
+
+```bash
+lark-bitable write --op create \
+  --fields-json '{"標題":"新增登入錯誤","狀態":"待處理"}' \
+  --client-token "manual-write-create-001" \
+  --confirm \
+  --json
+
+lark-bitable write --op update \
+  --record-id recxxxx \
+  --fields-json '{"狀態":"處理中"}' \
+  --confirm \
+  --json
+```
+
+輸入規則：
+
+- `--op create|update` 必填。
+- `--op update` 必須有 `--record-id`。
+- `--op create` 不能帶 `--record-id`。
+- `--field "欄位=值"` 可重複；值若是合法 JSON scalar/object/array 會以 JSON 解析，否則當字串。
+- `--fields-json` 必須是 JSON object。
+- 同一個欄位不能同時在多個輸入裡重複出現。
+- `--client-token` 只適用於 committed create。
+
+安全邊界：
+
+- 沒有 `--confirm` 一律不會呼叫 create/update。
+- 未知欄位、空 field set、missing source/auth、missing target record 會在 commit 前中止。
+- Lark 權限或欄位值拒絕會輸出 `confirmationStatus=failed`，不會宣稱表格已修改。
+- 如果寫入 response 已回來但最終狀態無法確認，輸出會是 `status=partial` 和
+  `confirmationStatus=unknown`，並要求先 `get` 或人工檢查表格，不要直接重試造成重複資料。
+- 這個版本不支援 delete、batch write、upsert、schema mutation、view mutation 或權限管理。
 
 ## Bug Triage 工作流
 
@@ -706,6 +805,7 @@ lark-bitable help search
 lark-bitable help triage
 lark-bitable help research
 lark-bitable help verify
+lark-bitable help write
 lark-bitable help "media download"
 lark-bitable help doctor
 ```
@@ -782,7 +882,7 @@ https://open.larksuite.com/app/<app-id>/event?tab=callback
 
 那是 event callback 設定頁，不是 OAuth redirect URL。
 
-### list 或 valid 顯示 403 / 91403 Forbidden
+### list、valid 或 write 顯示 403 / 91403 Forbidden
 
 請檢查：
 
@@ -790,6 +890,9 @@ https://open.larksuite.com/app/<app-id>/event?tab=callback
 - Base 是否允許 app 讀取
 - application identity 是否同時開了 `base:field:read` 和 `bitable:app:readonly`
 - user identity 是否開了 `bitable:app:readonly`
+- 如果是 `write --confirm`，user identity 是否也有可新增/更新記錄的多維表格寫入權限
+- 如果是 `write --confirm`，是否已用 `lark-bitable lark --login --scope="bitable:app"`
+  重新取得 write scope token，而不是沿用 `bitable:app:readonly` token
 - 使用的 Lark app 是否就是 configure 裡填的 app
 - 登入的是不是同一個 tenant
 

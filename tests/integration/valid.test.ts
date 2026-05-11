@@ -65,6 +65,39 @@ describe("valid command", () => {
     });
   });
 
+  it("reports write readiness separately from read-only readiness", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "valid-"));
+    const authPath = join(cwd, "auth.json");
+    const skillDir = join(cwd, "skills");
+    await new AuthStore(authPath).write({
+      ...readyAuthSession,
+      storagePath: authPath,
+    });
+    new ConfigStore({ cwd }).setSource(fixtureSource);
+    await installBootstrapSkill({ targetDir: skillDir });
+
+    const result = await ValidCommand.run([
+      "--workflow",
+      "write",
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--skill-dir",
+      skillDir,
+      "--json",
+    ]);
+
+    expect(result.status).toBe("partial");
+    expect(result.data).toMatchObject({
+      workflow: "write",
+      partialIssues: [
+        expect.objectContaining({ code: "write-permission-unverified" }),
+      ],
+      nextSafeCommand: expect.stringContaining("lark-bitable write"),
+    });
+  });
+
   it("blocks on missing bootstrap skill even when auth and source are configured", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "valid-"));
     const authPath = join(cwd, "auth.json");

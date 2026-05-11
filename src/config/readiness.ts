@@ -22,7 +22,10 @@ export async function checkReadiness(
   workflow: Workflow = "global",
   context: ReadinessContext = {},
 ): Promise<ValidationResult> {
-  const checkedPrerequisites = ["install", "bootstrap", "auth", "source"];
+  const checkedPrerequisites =
+    workflow === "write"
+      ? ["install", "bootstrap", "auth", "source", "fields", "write-permission"]
+      : ["install", "bootstrap", "auth", "source"];
   const blockingIssues: Issue[] = [];
   const partialIssues: Issue[] = [];
   const remediationSteps: string[] = [];
@@ -130,6 +133,15 @@ export async function checkReadiness(
     });
   }
 
+  if (workflow === "write" && blockingIssues.length === 0) {
+    partialIssues.push({
+      code: "write-permission-unverified",
+      message: "Write permission has not been verified by a committed write.",
+      remediation:
+        "Preview first. Commit only against a known writable disposable table or after confirming write-capable Lark permissions.",
+    });
+  }
+
   if (workflow === "research" && mode?.active === "QA") {
     partialIssues.push({
       code: "qa-mode-research",
@@ -157,9 +169,11 @@ export async function checkReadiness(
       ? "lark-bitable list"
       : workflow === "inspect"
         ? "lark-bitable list"
-        : workflow === "verify"
-          ? "lark-bitable verify"
-          : `lark-bitable ${workflow}`;
+        : workflow === "write"
+          ? 'lark-bitable write --op create --field "欄位=值" --json'
+          : workflow === "verify"
+            ? "lark-bitable verify"
+            : `lark-bitable ${workflow}`;
 
   return {
     workflow,

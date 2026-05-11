@@ -73,6 +73,11 @@ version conflicts, or inconclusive live access.
 - Run `lark-bitable lark --login` when auth is missing, expired, invalid, or
   insufficient. The command opens a browser and waits for the local SSO
   callback using the configured Lark app settings.
+- For committed Bitable writes, the user access token must be requested with
+  write scope. After the Lark app has published and approved the user-identity
+  write permission, run `lark-bitable lark --login --scope="bitable:app"`.
+  A token previously issued with only `bitable:app:readonly` remains read-only
+  until the user logs in again with the write scope.
 - The redirect URI is the OAuth Redirect URL from Lark Developer Console >
   Security Settings. Do not use the Event Callback URL from the event callback
   page for login.

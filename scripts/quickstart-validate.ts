@@ -12,7 +12,13 @@ import ResearchCommand from "../src/cli/commands/research.js";
 import SearchCommand from "../src/cli/commands/search.js";
 import TriageCommand from "../src/cli/commands/triage.js";
 import ValidCommand from "../src/cli/commands/valid.js";
+import WriteCommand from "../src/cli/commands/write.js";
 import { fixtureRecords } from "../tests/fixtures/lark.js";
+import {
+  fixtureCreatedWriteRecord,
+  fixtureWriteFields,
+  fixtureWriteRecord,
+} from "../tests/fixtures/write.js";
 
 const validUrl =
   "https://u5ijellsw5.sg.larksuite.com/base/TypDbjKBfaJcaSsoEI1lZjHsgIY?table=tblp8ig36Itp0yOU&view=vewb6FrjBe";
@@ -65,6 +71,17 @@ await ValidCommand.run([
   skillDir,
   "--json",
 ]);
+await ValidCommand.run([
+  "--workflow",
+  "write",
+  "--config-cwd",
+  cwd,
+  "--auth-path",
+  authPath,
+  "--skill-dir",
+  skillDir,
+  "--json",
+]);
 await ListCommand.run([
   "--config-cwd",
   cwd,
@@ -105,6 +122,70 @@ await SearchCommand.run([
   authPath,
   "--fixture",
   fixture,
+  "--json",
+]);
+const writePreview = await WriteCommand.run([
+  "--config-cwd",
+  cwd,
+  "--auth-path",
+  authPath,
+  "--fixture-fields",
+  JSON.stringify(fixtureWriteFields),
+  "--op",
+  "create",
+  "--field",
+  "標題=Write command preview",
+  "--json",
+]);
+if (
+  (writePreview.data as { result?: { confirmationStatus?: string } }).result
+    ?.confirmationStatus !== "not-written"
+) {
+  throw new Error(
+    "Write preview did not report confirmationStatus=not-written.",
+  );
+}
+
+const writeCreate = await WriteCommand.run([
+  "--config-cwd",
+  cwd,
+  "--auth-path",
+  authPath,
+  "--fixture-fields",
+  JSON.stringify(fixtureWriteFields),
+  "--mock-create-record",
+  JSON.stringify(fixtureCreatedWriteRecord),
+  "--op",
+  "create",
+  "--fields-json",
+  '{"標題":"Write command live create","狀態":"待處理"}',
+  "--client-token",
+  "manual-write-create-001",
+  "--confirm",
+  "--json",
+]);
+if (
+  (writeCreate.data as { result?: { confirmationStatus?: string } }).result
+    ?.confirmationStatus !== "confirmed"
+) {
+  throw new Error("Committed write create did not report confirmed status.");
+}
+
+await WriteCommand.run([
+  "--config-cwd",
+  cwd,
+  "--auth-path",
+  authPath,
+  "--fixture-fields",
+  JSON.stringify(fixtureWriteFields),
+  "--fixture-records",
+  JSON.stringify([fixtureWriteRecord]),
+  "--op",
+  "update",
+  "--record-id",
+  "recWrite",
+  "--field",
+  "狀態=處理中",
   "--json",
 ]);
 await TriageCommand.run([

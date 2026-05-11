@@ -9,6 +9,12 @@ import type { BitableFieldInfo } from "./field-discovery.js";
 import { mapRecord } from "./record-mapper.js";
 
 export interface LarkClientTransport {
+  createRecord(input: {
+    appToken: string;
+    clientToken?: string;
+    fields: Record<string, unknown>;
+    tableId: string;
+  }): Promise<{ fields?: Record<string, unknown>; record_id?: string }>;
   downloadMedia(input: {
     extra?: string;
     fileToken: string;
@@ -19,6 +25,12 @@ export interface LarkClientTransport {
     appToken: string;
     tableId: string;
     recordId: string;
+  }): Promise<{ fields?: Record<string, unknown>; record_id?: string }>;
+  updateRecord(input: {
+    appToken: string;
+    fields: Record<string, unknown>;
+    recordId: string;
+    tableId: string;
   }): Promise<{ fields?: Record<string, unknown>; record_id?: string }>;
   listFields(input: { appToken: string; tableId: string }): Promise<
     Array<{
@@ -77,6 +89,27 @@ export interface LarkBitableSdk {
       }>;
     };
     appTableRecord: {
+      create(
+        payload: {
+          data: {
+            fields: Record<string, unknown>;
+          };
+          params?: {
+            client_token?: string;
+          };
+          path: {
+            app_token: string;
+            table_id: string;
+          };
+        },
+        options?: unknown,
+      ): Promise<{
+        code?: number;
+        data?: {
+          record?: { fields?: Record<string, unknown>; record_id?: string };
+        };
+        msg?: string;
+      }>;
       get(
         payload: {
           params?: {
@@ -118,6 +151,25 @@ export interface LarkBitableSdk {
             record_id?: string;
           }>;
           page_token?: string;
+        };
+        msg?: string;
+      }>;
+      update(
+        payload: {
+          data: {
+            fields: Record<string, unknown>;
+          };
+          path: {
+            app_token: string;
+            record_id: string;
+            table_id: string;
+          };
+        },
+        options?: unknown,
+      ): Promise<{
+        code?: number;
+        data?: {
+          record?: { fields?: Record<string, unknown>; record_id?: string };
         };
         msg?: string;
       }>;
@@ -190,6 +242,33 @@ export function createLarkSdkTransport(
   const tokenOptions = createUserAccessTokenOptions(session.accessToken);
 
   return {
+    async createRecord(input) {
+      const response = await (
+        await sdk()
+      ).bitable.appTableRecord.create(
+        {
+          data: {
+            fields: input.fields,
+          },
+          params: input.clientToken
+            ? {
+                client_token: input.clientToken,
+              }
+            : undefined,
+          path: {
+            app_token: input.appToken,
+            table_id: input.tableId,
+          },
+        },
+        tokenOptions,
+      );
+      assertOk(response, "record create");
+      return (
+        response.data?.record ?? {
+          fields: input.fields,
+        }
+      );
+    },
     async downloadMedia(input) {
       const response = await (
         await sdk()
@@ -261,6 +340,30 @@ export function createLarkSdkTransport(
       assertOk(response, "field list");
       return response.data?.items ?? [];
     },
+    async updateRecord(input) {
+      const response = await (
+        await sdk()
+      ).bitable.appTableRecord.update(
+        {
+          data: {
+            fields: input.fields,
+          },
+          path: {
+            app_token: input.appToken,
+            table_id: input.tableId,
+            record_id: input.recordId,
+          },
+        },
+        tokenOptions,
+      );
+      assertOk(response, "record update");
+      return (
+        response.data?.record ?? {
+          record_id: input.recordId,
+          fields: input.fields,
+        }
+      );
+    },
     async listRecords(input) {
       const response = await (
         await sdk()
@@ -297,6 +400,28 @@ function headerValue(value: string | string[] | undefined): string | undefined {
 
 export class LarkClient {
   constructor(private readonly transport: LarkClientTransport) {}
+
+  async createRecord(
+    source: BitableSource,
+    fields: Record<string, unknown>,
+    options: { clientToken?: string } = {},
+  ): Promise<BitableRecord> {
+    const item = await this.transport.createRecord({
+      appToken: source.appToken,
+      tableId: source.tableId,
+      fields,
+      clientToken: options.clientToken,
+    });
+    return mapRecord({
+      ...item,
+      source: {
+        appToken: source.appToken,
+        tableId: source.tableId,
+        viewId: source.viewId,
+        retrievedAt: new Date().toISOString(),
+      },
+    });
+  }
 
   async downloadMedia(input: {
     extra?: string;
@@ -361,6 +486,29 @@ export class LarkClient {
       appToken: source.appToken,
       tableId: source.tableId,
       recordId,
+    });
+    return mapRecord({
+      ...item,
+      record_id: item.record_id ?? recordId,
+      source: {
+        appToken: source.appToken,
+        tableId: source.tableId,
+        viewId: source.viewId,
+        retrievedAt: new Date().toISOString(),
+      },
+    });
+  }
+
+  async updateRecord(
+    source: BitableSource,
+    recordId: string,
+    fields: Record<string, unknown>,
+  ): Promise<BitableRecord> {
+    const item = await this.transport.updateRecord({
+      appToken: source.appToken,
+      tableId: source.tableId,
+      recordId,
+      fields,
     });
     return mapRecord({
       ...item,
