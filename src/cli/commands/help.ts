@@ -71,7 +71,7 @@ const helpEntries: Record<CommandName, HelpEntry> = {
     commonFailures: [
       "invalid URL",
       "missing table id",
-      "field discovery denied by missing application-identity base:field:read or bitable:app:readonly permission",
+      "field discovery denied by missing application-identity base:field:read and/or application-identity bitable:app:readonly permission",
       "redirect URI not registered in Lark developer console",
       "replacement conflict",
     ],
@@ -83,8 +83,8 @@ const helpEntries: Record<CommandName, HelpEntry> = {
       "Run lark-bitable configure with no arguments to be prompted for the Lark Base URL, Lark app id/secret, OAuth redirect URI, and bug field mappings.",
       "After app credentials are entered, configure loads the table fields and lets you choose status, priority, and title fields by number. The actionable status value is also chosen from discovered status options or existing record values.",
       "If Lark cannot return fields, interactive configure stops and shows the permission/configuration fix instead of asking humans to type field names.",
-      "Field discovery uses app credentials and tenant_access_token, so the Lark app needs an application-identity field-read permission. Prefer base:field:read; use application-identity bitable:app:readonly only when the broader Bitable read scope is required.",
-      "If configure reports Lark code 99991672, publish a new app version with application-identity base:field:read and wait for enterprise approval if Lark requires review.",
+      "Field discovery uses app credentials and tenant_access_token, so the Lark app needs application-identity base:field:read for field metadata and application-identity bitable:app:readonly for Bitable record reads used when deriving existing status values.",
+      "If configure reports Lark code 99991672, publish a new app version with both application-identity base:field:read and application-identity bitable:app:readonly, then wait for enterprise approval if Lark requires review.",
       "For OAuth redirect URI, use Lark Developer Console > Security Settings > Redirect URL. Do not use the Event Callback URL from the event callback page.",
     ],
     inputs: [

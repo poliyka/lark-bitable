@@ -481,9 +481,9 @@ function requireDiscoveredFields(summary: FieldDiscoverySummary): never {
 function fieldDiscoveryPermissionRemediation(): string {
   return [
     "Interactive configure reads Bitable field metadata with the Lark app tenant_access_token.",
-    "Open Lark Developer Console > Permissions and add an application-identity permission that can list fields: prefer base:field:read, or use application-identity bitable:app:readonly if your app policy requires the broader Bitable read scope.",
+    "Open Lark Developer Console > Permissions and add the application-identity permissions needed by configure: base:field:read for field metadata and application-identity bitable:app:readonly for Bitable record reads used when deriving existing status values.",
     "Publish a new app version and wait for enterprise approval if the console marks the permission as requiring review.",
-    "User-identity bitable:app:readonly is needed for browser login and user-token table reads, but it does not satisfy configure field discovery.",
+    "User-identity bitable:app:readonly is also required for browser login and user-token table reads, but it does not satisfy application-identity configure calls.",
     "Also confirm the app id/secret are correct and the app can access the target Base.",
   ].join(" ");
 }

@@ -58,19 +58,20 @@ Expected validation:
   options or existing record values. If Lark denies field discovery,
   interactive configure stops and reports the permission/configuration
   remediation instead of asking humans to type field names.
-- Field discovery uses `tenant_access_token`, so it requires an
-  application-identity permission that can list Bitable fields. Prefer
-  `base:field:read`; use application-identity `bitable:app:readonly` only when
-  the app policy requires the broader Bitable read scope. The permission must be
-  published and, when Lark marks it as reviewed, enterprise approval must pass
-  before configure can load fields. SSO login separately uses user identity and
-  requires the user-identity `bitable:app:readonly` permission.
+- Field discovery uses `tenant_access_token`, so it requires
+  application-identity permissions. Configure needs `base:field:read` for field
+  metadata and application-identity `bitable:app:readonly` for Bitable record
+  reads used when deriving existing status values. These permissions must be
+  published and, when Lark marks them as reviewed, enterprise approval must pass
+  before configure can load fields and status values reliably. SSO login
+  separately uses user identity and requires the user-identity
+  `bitable:app:readonly` permission.
 - If field discovery fails with Lark code `99991672` and required scopes such as
   `[bitable:app:readonly, bitable:app, base:field:read]`, treat it as a missing
-  or unpublished application-identity field permission. Add
-  application-identity `base:field:read` in Lark Developer Console >
-  Permissions, publish a new app version, wait for approval if required, then
-  rerun `lark-bitable configure`.
+  or unpublished application-identity permission. Add application-identity
+  `base:field:read` and application-identity `bitable:app:readonly` in Lark
+  Developer Console > Permissions, publish a new app version, wait for approval
+  if required, then rerun `lark-bitable configure`.
 - The CLI does not attempt table access when required authorization is missing.
 - Replacing a configured source reports the previous and new table identity.
 - Invalid URLs fail before mutating the previous active source.

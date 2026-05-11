@@ -164,10 +164,13 @@ guide users through missing configuration.
   record values. If discovery is denied or inconclusive, interactive configure
   stops with remediation instead of asking humans to type field names.
   Field discovery uses `tenant_access_token`, so remediation must distinguish it
-  from browser login: missing Lark scope code `99991672` should point users to an
-  application-identity field-read permission such as `base:field:read` or
-  application-identity `bitable:app:readonly`, followed by app version publishing
-  and enterprise approval when required.
+  from browser login: missing Lark scope code `99991672` should point users to
+  application-identity `base:field:read` for field metadata and
+  application-identity `bitable:app:readonly` for Bitable record reads used when
+  deriving existing status values, followed by app version publishing and
+  enterprise approval when required. User-identity `bitable:app:readonly` is a
+  separate browser login requirement and does not satisfy application-identity
+  configure calls.
 
 **Failure behavior**:
 

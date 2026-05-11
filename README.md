@@ -33,7 +33,7 @@ Lark 端需要：
 - Lark app 的 `App ID`
 - Lark app 的 `App Secret`
 - Lark app 已設定 OAuth Redirect URL
-- Lark app 已開通並發布必要 API 權限
+- Lark app 已開通並發布 application identity 和 user identity 兩類必要 API 權限
 - 目標多維表格允許這個應用讀取欄位與記錄
 
 ## 安裝 CLI
@@ -149,13 +149,18 @@ http://127.0.0.1:14543/callback
 base:field:read
 ```
 
-如果你的 Lark app 權限策略需要更廣的多維表格讀取權限，也可以使用 application identity 的：
+如果要一次開齊、避免 configure 在讀取既有狀態值或記錄值時又遇到權限不足，也建議同時加入 application identity 的：
 
 ```text
 bitable:app:readonly
 ```
 
-優先建議用 `base:field:read`，因為它更窄，剛好符合 configure 讀欄位 metadata 的需求。
+這兩個不要理解成二選一。它們覆蓋的是不同讀取面：
+
+- `base:field:read`：讓 configure 讀取欄位 metadata，顯示可選欄位。
+- application identity `bitable:app:readonly`：讓 app 身份讀取多維表格資料；configure 在需要從既有記錄推導狀態值時會用到記錄讀取能力。
+
+如果你只開 `base:field:read`，欄位選擇可能能跑，但 configure 需要讀取記錄值時仍可能失敗。如果你只開 application identity `bitable:app:readonly`，部分 Lark 權限策略下也可能能列欄位，但語義上缺少明確的欄位讀取授權。實務上建議 application identity 兩個都開。
 
 ### 4. 開通使用者身份權限
 
@@ -166,6 +171,8 @@ bitable:app:readonly
 ```text
 bitable:app:readonly
 ```
+
+注意：這裡的 user identity `bitable:app:readonly` 和上一節的 application identity `bitable:app:readonly` 是不同授權上下文。名稱看起來一樣，但一個給 app/tenant token 用，一個給使用者 OAuth token 用。完整 CLI 流程需要兩類身份的權限都生效。
 
 如果登入時看到：
 
@@ -512,6 +519,7 @@ lark-bitable help doctor
 
 - app id/app secret 是否正確
 - application identity 是否有 `base:field:read`
+- application identity 是否也有 `bitable:app:readonly`
 - 權限是否已發布
 - 企業審核是否已通過
 - 目標 Base 是否授權 app 讀取
@@ -529,10 +537,11 @@ Access denied. One of the following scopes is required:
 
 1. 到 Lark Developer Console > Permissions。
 2. 新增 application identity `base:field:read`。
-3. 發布新版。
-4. 等企業審核通過。
-5. 確認 Base 允許 app 讀取。
-6. 重新執行：
+3. 同時新增 application identity `bitable:app:readonly`，避免 configure 後續讀取既有記錄值時再次缺權限。
+4. 發布新版。
+5. 等企業審核通過。
+6. 確認 Base 允許 app 讀取。
+7. 重新執行：
 
    ```bash
    lark-bitable configure
@@ -576,7 +585,8 @@ https://open.larksuite.com/app/<app-id>/event?tab=callback
 
 - app 權限是否已發布並審核通過
 - Base 是否允許 app 讀取
-- user identity 和 application identity 權限是否都開了
+- application identity 是否同時開了 `base:field:read` 和 `bitable:app:readonly`
+- user identity 是否開了 `bitable:app:readonly`
 - 使用的 Lark app 是否就是 configure 裡填的 app
 - 登入的是不是同一個 tenant
 

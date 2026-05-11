@@ -27,14 +27,16 @@ conflicts, or inconclusive live access.
   through prompts. Configure tries to load table fields and shows numbered
   choices when Lark app credentials can read the table metadata.
 - Configure field discovery uses app credentials and `tenant_access_token`.
-  If it fails after app id/secret are entered, check the application-identity
-  `base:field:read` permission first. Application-identity
-  `bitable:app:readonly` is also sufficient when the broader Bitable read scope
-  is required by app policy. The permission must be published and approved before
-  configure can load numbered field choices.
+  If it fails after app id/secret are entered, check that application identity
+  has both `base:field:read` for field metadata and
+  `bitable:app:readonly` for Bitable record reads used when deriving existing
+  status values. These are not replacements for the user-identity
+  `bitable:app:readonly` permission used by browser login. All required
+  permissions must be published and approved before configure can load numbered
+  field choices and status values reliably.
 - If configure reports Lark code `99991672` with required scopes such as
   `[bitable:app:readonly, bitable:app, base:field:read]`, treat it as a missing
-  or inactive application-identity field permission, not as a field-name problem.
+  or inactive application-identity permission, not as a field-name problem.
 - For AI setup, run `lark-bitable configure <Lark Base URL> --lark-app-id <id> --lark-app-secret <secret> --lark-redirect-uri <registered-redirect-uri>`
   with explicit values provided by the user or environment.
 - Run `lark-bitable lark --login` when auth is missing, expired, invalid, or
