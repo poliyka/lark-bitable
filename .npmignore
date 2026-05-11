@@ -1,0 +1,10 @@
+node_modules/
+coverage/
+tests/
+specs/
+.specify/
+.agents/
+.env
+.env.*
+*.log
+src/**/*.test.ts
