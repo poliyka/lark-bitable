@@ -1,4 +1,12 @@
-import { mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -8,7 +16,7 @@ import { ConfigStore, defaultConfigPath } from "../../src/config/store.js";
 import { fixtureSource } from "../fixtures/lark.js";
 
 describe("ConfigStore", () => {
-  it("stores default config under the private lark-bitable CLI home directory", async () => {
+  it("stores default config under the private lark-bitable home directory", async () => {
     const home = await mkdtemp(join(tmpdir(), "lark-home-"));
     const store = new ConfigStore({ home });
 
@@ -21,7 +29,7 @@ describe("ConfigStore", () => {
       tableId: fixtureSource.tableId,
     });
 
-    const dirStat = await stat(join(home, ".lark-bitable-cli"));
+    const dirStat = await stat(join(home, ".lark-bitable"));
     const fileStat = await stat(store.path);
     expect(dirStat.mode & 0o077).toBe(0);
     expect(fileStat.mode & 0o077).toBe(0);
@@ -41,6 +49,43 @@ describe("ConfigStore", () => {
 
     expect(store.path).toBe(defaultConfigPath(home));
     expect(store.getSource()?.tableId).toBe(fixtureSource.tableId);
+  });
+
+  it("migrates the previous .lark-bitable-cli config path into .lark-bitable", async () => {
+    const home = await mkdtemp(join(tmpdir(), "lark-home-"));
+    const oldDir = join(home, ".lark-bitable-cli");
+    const oldPath = join(oldDir, "config.json");
+    await mkdir(oldDir, { recursive: true });
+    await writeFile(
+      oldPath,
+      `${JSON.stringify({ activeSource: fixtureSource }, null, 2)}\n`,
+    );
+
+    const store = new ConfigStore({ home });
+
+    expect(store.path).toBe(defaultConfigPath(home));
+    expect(store.getSource()?.tableId).toBe(fixtureSource.tableId);
+    await expect(access(oldPath)).rejects.toThrow();
+  });
+
+  it("does not resurrect legacy config after the unified config is deleted", async () => {
+    const home = await mkdtemp(join(tmpdir(), "lark-home-"));
+    const legacyDir = await mkdtemp(join(tmpdir(), "lark-legacy-config-"));
+    const legacyPath = join(legacyDir, "config.json");
+
+    await writeFile(
+      legacyPath,
+      `${JSON.stringify({ activeSource: fixtureSource }, null, 2)}\n`,
+    );
+
+    const migrated = new ConfigStore({ home, legacyPath });
+    expect(migrated.getSource()?.tableId).toBe(fixtureSource.tableId);
+
+    await expect(access(legacyPath)).rejects.toThrow();
+    await rm(defaultConfigPath(home));
+
+    const freshStore = new ConfigStore({ home, legacyPath });
+    expect(freshStore.getSource()).toBeUndefined();
   });
 
   it("stores, replaces, and clears active source configuration", async () => {

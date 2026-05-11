@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 import { Flags } from "@oclif/core";
 
 import { ConfigStore } from "../../config/store.js";
+import { resolveWorkflowMode } from "../../mode/mode-config.js";
 import { parseEvidenceArgument } from "../../reporting/repository-context.js";
 import { renderResearchReport } from "../../reporting/research-report.js";
 import { toEvidence } from "../../reporting/evidence.js";
@@ -29,6 +30,7 @@ export default class ResearchCommand extends BaseCommand {
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(ResearchCommand);
     const store = new ConfigStore({ cwd: flags["config-cwd"] });
+    const mode = resolveWorkflowMode(store);
     const selectedBug = store.getSelection();
     if (!selectedBug) {
       throw new CliError({
@@ -69,7 +71,26 @@ export default class ResearchCommand extends BaseCommand {
       command: "research",
       status: "ok",
       evidence,
+      mode: {
+        active: mode.active,
+        source: mode.source,
+      },
+      issues:
+        mode.active === "QA"
+          ? [
+              {
+                code: "qa-mode-research",
+                message:
+                  "Research is Developer-oriented; QA mode should normally use verify.",
+                remediation:
+                  "Run lark-bitable verify, or switch with lark-bitable configure --mode Developer.",
+              },
+            ]
+          : undefined,
       data: {
+        mode: "Developer",
+        selectionMode: selectedBug.mode ?? null,
+        ownerCriteria: selectedBug.selectionEvidence.ownerCriteria ?? null,
         report,
         reportPath: flags.out ?? null,
       },

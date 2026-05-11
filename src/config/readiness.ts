@@ -1,7 +1,8 @@
 import type { ConfigStore } from "./store.js";
 import type { AuthStore } from "./auth-store.js";
 import type { Issue, ValidationResult } from "./schema.js";
-import { authStatusFor } from "../lark/auth.js";
+import { authStatusFor, ensureReadyAuthSession } from "../lark/auth.js";
+import { resolveWorkflowMode } from "../mode/mode-config.js";
 
 export type Workflow = ValidationResult["workflow"];
 
@@ -25,6 +26,9 @@ export async function checkReadiness(
   const blockingIssues: Issue[] = [];
   const partialIssues: Issue[] = [];
   const remediationSteps: string[] = [];
+  const mode = context.configStore
+    ? resolveWorkflowMode(context.configStore)
+    : undefined;
 
   const bootstrapInstalled =
     context.bootstrap?.installed ?? context.bootstrapInstalled;
@@ -49,7 +53,7 @@ export async function checkReadiness(
     remediationSteps.push("Run lark-bitable doctor --install-skill");
   }
 
-  const auth = await context.authStore?.read();
+  const auth = await readAuthForReadiness(context);
   const authStatus = authStatusFor(auth);
   if (authStatus.status !== "ready") {
     blockingIssues.push({
@@ -108,6 +112,34 @@ export async function checkReadiness(
     remediationSteps.push("Run lark-bitable triage");
   }
 
+  if (workflow === "verify" && mode?.active !== "QA") {
+    blockingIssues.push({
+      code: "wrong-mode",
+      message: "QA verification requires active mode QA.",
+      remediation: "Run lark-bitable configure --mode QA",
+    });
+    remediationSteps.push("Run lark-bitable configure --mode QA");
+  }
+
+  if (workflow === "verify" && !context.configStore?.getSelection()) {
+    partialIssues.push({
+      code: "missing-selection",
+      message:
+        "Verify can run with a record id, but no previous triage selection exists.",
+      remediation: "Run lark-bitable triage or lark-bitable verify <record-id>",
+    });
+  }
+
+  if (workflow === "research" && mode?.active === "QA") {
+    partialIssues.push({
+      code: "qa-mode-research",
+      message:
+        "Research is Developer-oriented; QA mode should normally use verify.",
+      remediation:
+        "Run lark-bitable verify, or switch with lark-bitable configure --mode Developer.",
+    });
+  }
+
   if (
     context.liveAccessStatus === "partial" ||
     context.liveAccessStatus === "failed"
@@ -125,7 +157,9 @@ export async function checkReadiness(
       ? "lark-bitable list"
       : workflow === "inspect"
         ? "lark-bitable list"
-        : `lark-bitable ${workflow}`;
+        : workflow === "verify"
+          ? "lark-bitable verify"
+          : `lark-bitable ${workflow}`;
 
   return {
     workflow,
@@ -141,6 +175,37 @@ export async function checkReadiness(
     remediationSteps,
     nextSafeCommand: remediationSteps[0] ?? readyCommand,
     evidence: [],
+    activeMode: mode?.active,
+    modeSource: mode?.source,
     checkedAt: new Date().toISOString(),
   };
+}
+
+async function readAuthForReadiness(
+  context: ReadinessContext,
+): Promise<
+  Awaited<ReturnType<NonNullable<ReadinessContext["authStore"]>["read"]>>
+> {
+  const auth = await context.authStore?.read();
+  if (!auth || !context.authStore) return auth;
+  if (authStatusFor(auth).status !== "expired" || !auth.refreshToken) {
+    return auth;
+  }
+
+  const app = context.configStore?.getLarkApp();
+  try {
+    const refreshed = await ensureReadyAuthSession({
+      appId: app?.appId,
+      appSecret: app?.appSecret,
+      domain: app?.domain ?? auth.domain,
+      session: auth,
+      storagePath: context.authStore.path,
+    });
+    if (refreshed !== auth && authStatusFor(refreshed).status === "ready") {
+      return context.authStore.write(refreshed);
+    }
+  } catch {
+    return auth;
+  }
+  return auth;
 }

@@ -72,12 +72,12 @@ shape, and request conventions compared with direct HTTP calls.
 - Browser automation against the Lark UI: useful for manual observation, but not
   reliable or appropriate as the primary data access path for a CLI.
 
-### Decision: Add interactive `lark-bitable lark --login` and store auth at `~/.lark-bitable-cli/auth.json`
+### Decision: Add interactive `lark-bitable lark --login` and store auth at `~/.lark-bitable/auth.json`
 
 **Rationale**: The user explicitly identified login as a prerequisite for Lark
 API use. A user-home auth file keeps token state outside repositories, makes API
 commands reusable across runs, and gives AI agents a stable readiness check.
-The path `~/.lark-bitable-cli/auth.json` concretizes the user's `~/.xxx/auth.json`
+The path `~/.lark-bitable/auth.json` concretizes the user's `~/.xxx/auth.json`
 requirement with the project name.
 
 **Alternatives considered**:
@@ -183,7 +183,7 @@ bootstrap self-check can provide observable installation/configuration evidence.
 - **Packaging format**: Plan for a Node package with an oclif command binary and
   repository-local bootstrap skill assets. Exact publishing target can be
   decided during implementation tasks.
-- **Auth file path**: Use `~/.lark-bitable-cli/auth.json` by default. The first
+- **Auth file path**: Use `~/.lark-bitable/auth.json` by default. The first
   version may later add an override, but docs and self-checks use this default.
 - **Readiness validation**: `valid` checks global readiness by default and can
   scope checks to inspect, triage, or research workflows.

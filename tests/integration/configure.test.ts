@@ -141,6 +141,7 @@ describe("configure command", () => {
           if (message.includes("redirect URI")) {
             return "http://127.0.0.1:14543/callback";
           }
+          if (message.includes("Default owner")) return "";
           if (message.includes("URL")) return validUrl;
           if (message.includes("app id")) return "cli-app";
           throw new Error(`unexpected prompt: ${message}`);
@@ -158,9 +159,11 @@ describe("configure command", () => {
           message: string;
         }) => {
           rawlistPrompts.push({ choices, default: defaultValue, message });
+          if (message.includes("workflow mode")) return "Developer";
           if (message.includes("status field")) return "狀態";
           if (message.includes("priority")) return "優先級";
           if (message.includes("title")) return "標題";
+          if (message.includes("owner field")) return "__none__";
           if (message.includes("Actionable status")) return "待處理";
           throw new Error(`unexpected rawlist prompt: ${message}`);
         },
@@ -205,14 +208,16 @@ describe("configure command", () => {
       appSecret: "cli-secret",
       redirectUri: "http://127.0.0.1:14543/callback",
     });
-    expect(rawlistPrompts).toHaveLength(4);
+    expect(rawlistPrompts).toHaveLength(6);
     expect(rawlistPrompts.map((prompt) => prompt.message)).toEqual([
+      "Choose workflow mode",
       "Choose the bug status field",
       "Choose the bug priority field",
       "Choose the bug title field",
+      "Choose the optional owner field",
       "Actionable status value",
     ]);
-    for (const prompt of rawlistPrompts.slice(0, 3)) {
+    for (const prompt of rawlistPrompts.slice(1, 4)) {
       expect(prompt.choices.map((choice) => choice.name)).toEqual([
         "標題",
         "狀態",
@@ -220,12 +225,15 @@ describe("configure command", () => {
         "描述",
       ]);
     }
-    expect(rawlistPrompts[3]?.choices.map((choice) => choice.name)).toEqual([
+    expect(rawlistPrompts[5]?.choices.map((choice) => choice.name)).toEqual([
       "待處理",
       "處理中",
       "已完成",
     ]);
     expect(inputPrompts).not.toContain("Actionable status value");
+    expect(
+      inputPrompts.some((message) => message.includes("Default owner")),
+    ).toBe(false);
     expect(result.data).toMatchObject({
       fieldDiscovery: {
         actionableValuesReturned: 3,
@@ -257,7 +265,8 @@ describe("configure command", () => {
         },
       ),
       password: vi.fn(async () => "cli-secret"),
-      rawlist: vi.fn(async () => {
+      rawlist: vi.fn(async ({ message }: { message: string }) => {
+        if (message.includes("workflow mode")) return "Developer";
         throw new Error("field choices should not be shown");
       }),
     }));
@@ -466,6 +475,9 @@ describe("configure command", () => {
       message:
         "Lark app secret for token exchange (press Enter to keep stored secret)",
     });
+    expect(
+      inputPrompts.some((prompt) => prompt.message.includes("Default owner")),
+    ).toBe(false);
     expect(passwordPrompts[0]).not.toHaveProperty("default");
     expect(JSON.stringify(result)).not.toContain("cli-secret");
   });

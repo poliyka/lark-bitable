@@ -5,12 +5,20 @@ import { ConfigStore } from "../../config/store.js";
 import {
   extractBugCandidates,
   filterActionableCandidates,
+  observedStatusValues,
   sortCandidatesByPriority,
 } from "../../triage/candidate-sort.js";
 import { writeSelection } from "../../triage/selection-state.js";
+import {
+  applyQueryLimit,
+  parsePositiveLimit,
+} from "../../mode/owner-filter.js";
 import { BaseCommand } from "../base-command.js";
 import type { CommandOutput } from "../output.js";
-import { loadRecordCommandData } from "../shared-records.js";
+import {
+  applyOwnerCriteria,
+  loadRecordCommandData,
+} from "../shared-records.js";
 
 export default class TriageCommand extends BaseCommand {
   static description =
@@ -23,6 +31,16 @@ export default class TriageCommand extends BaseCommand {
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
     "config-cwd": Flags.string({ hidden: true }),
     fixture: Flags.string({ hidden: true }),
+    limit: Flags.integer({
+      description: "Maximum candidates to return after sorting.",
+    }),
+    "no-default-owner": Flags.boolean({
+      description: "Ignore the stored default owner for this run.",
+    }),
+    owner: Flags.string({
+      description:
+        "Filter candidates by owner when an owner field is configured.",
+    }),
     select: Flags.integer({
       description: "Select candidate index without an interactive prompt.",
       hidden: true,
@@ -32,23 +50,35 @@ export default class TriageCommand extends BaseCommand {
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(TriageCommand);
     const store = new ConfigStore({ cwd: flags["config-cwd"] });
-    const { records, source } = await loadRecordCommandData({
+    const context = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
       fixture: flags.fixture,
     });
+    const { source } = context;
+    const ownerResult = applyOwnerCriteria({
+      ...context,
+      commandOwner: flags.owner,
+      ignoreDefaultOwner: flags["no-default-owner"],
+    });
 
     const actionableStatus =
       flags["actionable-status"] ?? source.actionableStatus;
+    const allCandidates = extractBugCandidates(ownerResult.records, source);
     const candidates = sortCandidatesByPriority(
-      filterActionableCandidates(
-        extractBugCandidates(records, source),
-        actionableStatus,
-      ),
+      filterActionableCandidates(allCandidates, actionableStatus),
       source.priorityOrder,
     );
+    const limit = parsePositiveLimit({
+      defaultLimit: 20,
+      flagLimit: flags.limit,
+    });
+    const limitedResult = applyQueryLimit(candidates, {
+      appliedAfter: ["owner", "actionable-status", "priority-sort"],
+      ...limit,
+    });
 
-    if (candidates.length === 0) {
+    if (limitedResult.items.length === 0) {
       const output: CommandOutput = {
         command: "triage",
         status: "partial",
@@ -57,13 +87,20 @@ export default class TriageCommand extends BaseCommand {
             code: "no-actionable-records",
             message: "No actionable bug records matched the configured status.",
             remediation:
-              "Run lark-bitable list or filter with broader criteria.",
+              "Run lark-bitable configure and choose the actionable status from discovered table values, or pass --actionable-status with the exact current table value.",
           },
         ],
+        mode: {
+          active: context.mode.active,
+          source: context.mode.source,
+        },
+        ownerCriteria: ownerResult.criteria,
+        queryLimit: limitedResult.queryLimit,
         data: {
           candidates: [],
           criteria: {
             actionableStatus,
+            observedStatusValues: observedStatusValues(allCandidates),
             priorityOrder: source.priorityOrder ?? [],
           },
         },
@@ -73,16 +110,20 @@ export default class TriageCommand extends BaseCommand {
     }
 
     const selectedIndex = flags.select ?? 0;
-    const selected = candidates[selectedIndex];
+    const selected = limitedResult.items[selectedIndex];
 
     if (selected) {
       writeSelection(store, {
         selectedRecordId: selected.record.recordId,
         selectedAt: new Date().toISOString(),
+        mode: context.mode.active,
         selectionEvidence: {
           filter: `${source.statusField} equals ${actionableStatus}`,
+          mode: context.mode.active,
+          ownerCriteria: ownerResult.criteria,
+          queryLimit: limitedResult.queryLimit,
           sort: `${source.priorityField} by configured priority order`,
-          displayedRecordIds: candidates.map(
+          displayedRecordIds: limitedResult.items.map(
             (candidate) => candidate.record.recordId,
           ),
         },
@@ -104,12 +145,18 @@ export default class TriageCommand extends BaseCommand {
         viewId: source.viewId,
         retrievedAt: new Date().toISOString(),
       },
+      mode: {
+        active: context.mode.active,
+        source: context.mode.source,
+      },
+      ownerCriteria: ownerResult.criteria,
+      queryLimit: limitedResult.queryLimit,
       data: {
         criteria: {
           actionableStatus,
           priorityOrder: source.priorityOrder ?? [],
         },
-        candidates,
+        candidates: limitedResult.items,
         selectedRecordId: selected?.record.recordId ?? null,
       },
     };

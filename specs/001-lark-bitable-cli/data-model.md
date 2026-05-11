@@ -4,7 +4,7 @@
 
 Represents the active Lark Base/Bitable source selected by the user.
 
-**Storage path**: `~/.lark-bitable-cli/config.json`.
+**Storage path**: `~/.lark-bitable/config.json`.
 
 **Fields**:
 
@@ -25,7 +25,7 @@ Represents the active Lark Base/Bitable source selected by the user.
 
 - `sourceUrl`, `appToken`, and `tableId` are required before table access.
 - Source configuration, Lark app settings, and triage selection state are stored
-  under `~/.lark-bitable-cli/config.json`, outside the current repository.
+  under `~/.lark-bitable/config.json`, outside the current repository.
 - `viewId` is optional only when the user intentionally configures table-wide
   access.
 - `actionableStatus` defaults to `待處理` when not provided.
@@ -55,7 +55,7 @@ Represents the locally stored login state created by interactive `lark-bitable l
 
 **Fields**:
 
-- `storagePath`: Default path `~/.lark-bitable-cli/auth.json`.
+- `storagePath`: Default path `~/.lark-bitable/auth.json`.
 - `domain`: Lark domain or region used for authorization.
 - `accountLabel`: Redacted account or tenant display label.
 - `appIdentity`: Redacted app identity used for authorization.
@@ -211,7 +211,7 @@ Represents the result of bootstrap setup and self-check.
 - `configReady`: Boolean indicating whether a source is configured.
 - `authReady`: Boolean indicating whether Lark access can be attempted.
 - `authPath`: Redacted auth file path, defaulting to
-  `~/.lark-bitable-cli/auth.json`.
+  `~/.lark-bitable/auth.json`.
 - `authStatus`: `ready`, `missing`, `expired`, `invalid`, or
   `insufficient-scope`.
 - `issues`: Missing or conflicting prerequisites.

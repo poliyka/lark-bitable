@@ -2,12 +2,13 @@ import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../base-command.js";
 import type { CommandOutput } from "../output.js";
-import { AuthStore } from "../../config/auth-store.js";
+import { AuthStore, defaultAuthPath } from "../../config/auth-store.js";
 import { ConfigStore } from "../../config/store.js";
 import {
   installBootstrapSkill,
   inspectBootstrapSkill,
 } from "../../bootstrap/installer.js";
+import { resolveWorkflowMode } from "../../mode/mode-config.js";
 
 export default class DoctorCommand extends BaseCommand {
   static description =
@@ -24,6 +25,8 @@ export default class DoctorCommand extends BaseCommand {
   ];
   static flags = {
     ...BaseCommand.baseFlags,
+    "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
+    "config-cwd": Flags.string({ hidden: true }),
     "install-skill": Flags.boolean({
       description: "Install shipped bootstrap skill guidance when supported.",
     }),
@@ -35,8 +38,19 @@ export default class DoctorCommand extends BaseCommand {
 
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(DoctorCommand);
-    const auth = await new AuthStore().read();
-    const source = new ConfigStore().getSource();
+    const authStore = new AuthStore(flags["auth-path"]);
+    const auth = await authStore.read();
+    const store = new ConfigStore({ cwd: flags["config-cwd"] });
+    const source = store.getSource();
+    const larkApp = store.getLarkApp();
+    const mode = resolveWorkflowMode(store);
+    const missingMappings = source
+      ? [
+          source.statusField ? null : "status-field",
+          source.priorityField ? null : "priority-field",
+          source.fieldAliases.title ? null : "title-field",
+        ].filter((value): value is string => Boolean(value))
+      : [];
     const bootstrap = flags["install-skill"]
       ? await installBootstrapSkill({
           targetDir: flags["skill-dir"] ?? ".agents/skills",
@@ -49,10 +63,14 @@ export default class DoctorCommand extends BaseCommand {
       status: auth && source && bootstrap.installed ? "ok" : "partial",
       auth: {
         status: auth?.status ?? "missing",
-        storagePath: "~/.lark-bitable-cli/auth.json",
+        storagePath: authStore.path,
         domain: auth?.domain,
         accountLabel: auth?.accountLabel,
         expiresAt: auth?.expiresAt,
+      },
+      mode: {
+        active: mode.active,
+        source: mode.source,
       },
       issues: [],
       data: {
@@ -60,10 +78,17 @@ export default class DoctorCommand extends BaseCommand {
           bin: this.config.bin,
           version: this.config.version,
         },
+        configPath: store.path,
+        authPath: authStore.path,
         bootstrapSkillInstalled: bootstrap.installed,
         bootstrapSkillPath: bootstrap.skillPath,
         bootstrapSkillStale: bootstrap.stale,
         sourceConfigured: Boolean(source),
+        larkAppConfigured: Boolean(larkApp),
+        activeMode: mode.active,
+        modeSource: mode.source,
+        configureMappingsReady: Boolean(source) && missingMappings.length === 0,
+        missingConfigureMappings: missingMappings,
         installSkillRequested: Boolean(flags["install-skill"]),
       },
     };
@@ -82,6 +107,24 @@ export default class DoctorCommand extends BaseCommand {
         remediation: "Run lark-bitable configure <url>",
       });
     }
+    if (source && missingMappings.length > 0) {
+      output.issues?.push({
+        code: "incomplete-configure",
+        message:
+          "Active source exists, but required bug mappings are incomplete.",
+        remediation:
+          "Run lark-bitable configure and choose status, priority, and title fields.",
+      });
+    }
+    if (!larkApp) {
+      output.issues?.push({
+        code: "missing-lark-app-config",
+        message:
+          "Lark app settings are not stored, so refresh and interactive field discovery may fail.",
+        remediation:
+          "Run lark-bitable configure and provide Lark app id, app secret, and redirect URI.",
+      });
+    }
     if (!bootstrap.installed) {
       output.issues?.push({
         code: "missing-bootstrap",
@@ -89,6 +132,9 @@ export default class DoctorCommand extends BaseCommand {
         remediation: "Run lark-bitable doctor --install-skill",
       });
     }
+
+    output.status =
+      output.issues && output.issues.length > 0 ? "partial" : "ok";
 
     this.emit(output, Boolean(flags.json));
     return output;

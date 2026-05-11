@@ -42,6 +42,16 @@ export interface TokenRefreshInput {
   sdk?: LarkAuthSdk;
 }
 
+export interface EnsureReadyAuthInput {
+  appId?: string;
+  appSecret?: string;
+  domain?: string;
+  httpPost?: LarkAuthHttpPost;
+  session: LarkAuthSession;
+  sdk?: LarkAuthSdk;
+  storagePath: string;
+}
+
 export interface TokenExchangeResult {
   accessToken: string;
   accountLabel?: string;
@@ -394,4 +404,41 @@ export function authStatusFor(session: LarkAuthSession | undefined): {
     };
   }
   return { status: "ready", shouldRelogin: false };
+}
+
+export async function ensureReadyAuthSession(
+  input: EnsureReadyAuthInput,
+): Promise<LarkAuthSession> {
+  const status = authStatusFor(input.session);
+  if (status.status === "ready") return input.session;
+
+  if (status.status !== "expired" || !input.session.refreshToken) {
+    return input.session;
+  }
+
+  const appId =
+    input.appId ?? process.env.LARK_APP_ID ?? input.session.appIdentity;
+  const appSecret = input.appSecret ?? process.env.LARK_APP_SECRET;
+  if (!appId || !appSecret) return input.session;
+
+  const refreshed = await refreshAuthorizationToken({
+    appId,
+    appSecret,
+    domain: input.domain ?? input.session.domain,
+    httpPost: input.httpPost,
+    refreshToken: input.session.refreshToken,
+    sdk: input.sdk,
+  });
+  return createAuthSession({
+    accessToken: refreshed.accessToken,
+    refreshToken: refreshed.refreshToken ?? input.session.refreshToken,
+    storagePath: input.storagePath,
+    domain: input.domain ?? input.session.domain,
+    accountLabel: refreshed.accountLabel ?? input.session.accountLabel,
+    appIdentity: input.session.appIdentity,
+    scopes: refreshed.scopes ?? input.session.scopes,
+    expiresAt: refreshed.expiresAt,
+    refreshExpiresAt:
+      refreshed.refreshExpiresAt ?? input.session.refreshExpiresAt,
+  });
 }

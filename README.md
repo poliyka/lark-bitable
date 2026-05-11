@@ -10,12 +10,15 @@
 
 ## 功能範圍
 
-- `configure`: 設定 Lark app、OAuth redirect URI、Base URL、bug 欄位對應。
+- `configure`: 設定 Lark app、OAuth redirect URI、Base URL、workflow mode、bug 欄位對應、可選負責人欄位。
 - `lark --login`: 使用 Lark SSO/OAuth 登入，取得可呼叫 API 的 token。
 - `valid`: 檢查安裝、bootstrap skill、登入、Base 設定、欄位對應是否完成。
+- `schema`: 預設只輸出欄位 headers；加上 `--json` 會輸出完整 schema、欄位型別、選項、mappings 與 sample 統計。
 - `list`, `get`, `filter`, `search`: 讀取與查詢多維表格資料。
 - `triage`: 依狀態和優先級挑出可處理 bug，讓使用者選擇要修的項目。
 - `research`: 依已選 bug 和 repo 證據產出第一份分析報告。
+- `verify`: QA mode 下讀取選定任務、探索 workspace 可安全執行的檢查，產出 QA verification report。
+- `media download`: 使用登入 token 下載多維表格圖片或附件。
 - `doctor --install-skill`: 安裝 AI Agent 可讀的 bootstrap skill。
 
 ## 前置條件
@@ -80,10 +83,18 @@ ls -l "$(which lark-bitable)"
 CLI 的設定和 auth 都放在同一個私有目錄：
 
 ```text
-~/.lark-bitable-cli/
+~/.lark-bitable/
 ├── config.json
 └── auth.json
 ```
+
+如果你是用 `pnpm` 全域安裝，可能會看到
+`~/.config/pnpm/lark-bitable`。那是 pnpm 產生的可執行檔 shim，用來啟動
+`lark-bitable` 指令，不是 CLI 設定檔。實際設定檔只看
+`~/.lark-bitable/config.json`，auth 只看 `~/.lark-bitable/auth.json`。
+
+舊版曾使用 `~/.lark-bitable-cli/`；新版第一次讀取時會把
+`config.json` 和 `auth.json` 自動遷移到 `~/.lark-bitable/`。
 
 `config.json` 儲存：
 
@@ -94,6 +105,8 @@ CLI 的設定和 auth 都放在同一個私有目錄：
 - OAuth redirect URI
 - 欄位對應，例如狀態、優先級、問題名稱
 - actionable status，例如 `待处理`
+- active workflow mode：`QA` 或 `Developer`
+- mode-specific default owner（僅在你有設定 `--default-owner` 時）
 - 最近一次 triage 選擇
 
 `auth.json` 儲存：
@@ -236,6 +249,38 @@ bitable:app:readonly
 
 `待处理` 和 `待處理` 對程式來說是不同字串。若表格資料是簡體 `待处理`，`configure` 或 `triage --actionable-status` 也要使用 `待处理`。
 
+## Workflow Mode
+
+CLI 有兩個 mode：
+
+- `Developer`: 預設 mode。保留既有 bug list/search/filter/triage/get/research 流程，重點是找出可處理 bug、讀完整 bug 單、下載附件或圖片、再做 repo research。
+- `QA`: 用於驗證任務。重點是選定任務後執行 `verify`，CLI 會讀完整任務、列出 media references、從目前 workspace 找可安全執行的檢查，並把已執行、未執行、風險、假設和下一步分開報告。
+
+設定 mode：
+
+```bash
+lark-bitable configure --mode Developer
+lark-bitable configure --mode QA
+```
+
+切換 mode 不會清掉 Base URL、Lark app 設定、欄位對應或最近一次 selection。
+
+負責人欄位是可選欄位。若你的表格有負責人欄位，可以在 configure 時指定：
+
+```bash
+lark-bitable configure --owner-field "負責人"
+```
+
+如果你真的需要 mode-specific default owner，再用參數設定：
+
+```bash
+lark-bitable configure --default-owner "openclaw"
+```
+
+如果沒有負責人欄位，可以不填。`list`、`search`、`filter`、`triage`、`verify`
+在指定 `--owner` 但缺少 owner field 時不會中止，會回傳
+`ownerCriteria.applied=false` 並說明 owner filter 沒有被套用。
+
 ## 第一次設定 CLI
 
 建議人類使用者直接跑互動式設定：
@@ -266,6 +311,7 @@ CLI 會依序要求：
 
 7. 你只需要輸入數字，不需要手打欄位名稱。
 8. CLI 會讓你選 actionable status，例如 `待处理`。
+9. 互動式 configure 不會再詢問 default owner；只有你明確傳 `--default-owner` 才會更新。
 
 如果你之前已設定過，互動式 prompt 會顯示既有值：
 
@@ -279,14 +325,28 @@ AI Agent 或 script 可以改用明確參數：
 
 ```bash
 lark-bitable configure "$LARK_BASE_URL" \
+  --mode Developer \
   --lark-app-id "$LARK_APP_ID" \
   --lark-app-secret "$LARK_APP_SECRET" \
   --lark-redirect-uri "http://127.0.0.1:14543/callback" \
   --status-field "当前状态" \
   --priority-field "优先级" \
   --title-field "问题名称" \
+  --owner-field "负责人" \
   --actionable-status "待处理" \
   --json
+```
+
+QA mode 的非互動式切換：
+
+```bash
+lark-bitable configure --mode QA --json
+```
+
+QA mode 也可以設定預設負責人；如果你不需要負責人篩選，可以省略：
+
+```bash
+lark-bitable configure --mode QA --owner-field "负责人" --default-owner "qa-user" --json
 ```
 
 清除目前 Base 設定：
@@ -311,7 +371,7 @@ lark-bitable lark --login --auth-mode sso
 
 CLI 會：
 
-1. 讀取 `~/.lark-bitable-cli/config.json` 裡的 app id、app secret、redirect URI。
+1. 讀取 `~/.lark-bitable/config.json` 裡的 app id、app secret、redirect URI。
 2. 啟動本機 callback server。
 3. 開啟瀏覽器到 Lark OAuth/SSO 授權頁。
 4. 等待 Lark redirect 回：
@@ -325,7 +385,7 @@ CLI 會：
 7. 把登入狀態寫入：
 
    ```text
-   ~/.lark-bitable-cli/auth.json
+   ~/.lark-bitable/auth.json
    ```
 
 如果你在無法開瀏覽器或無法 callback 的環境，也可以使用 authorization code 模式：
@@ -381,6 +441,7 @@ lark-bitable valid
 lark-bitable valid --workflow inspect
 lark-bitable valid --workflow triage
 lark-bitable valid --workflow research
+lark-bitable valid --workflow verify
 ```
 
 狀態含義：
@@ -388,6 +449,10 @@ lark-bitable valid --workflow research
 - `ready`: 所需前置條件都完成。
 - `partial`: 本機設定存在，但 live access 或網路驗證不完整。
 - `blocked`: 有必要設定缺失，命令不能安全執行。
+
+`verify` workflow 只會在 active mode 是 `QA` 時 ready。`research` 是
+Developer-oriented workflow；如果 active mode 是 `QA`，`valid --workflow research`
+會給出 warning 並引導改用 `verify`。
 
 如果看到 `blocked`，照輸出的 remediation 做。常見 remediation：
 
@@ -399,6 +464,34 @@ lark-bitable triage
 ```
 
 ## 讀取多維表格
+
+先理解目前表格 schema：
+
+```bash
+lark-bitable schema
+```
+
+`schema` 預設只回傳：
+
+- 欄位 headers（編號清單）
+
+若需要完整資料，再加 `--json`：
+
+```bash
+lark-bitable schema --json
+```
+
+`schema --json` 會回傳：
+
+- 欄位名稱
+- 欄位 type / UI type
+- 單選或多選選項
+- 目前 configure 的欄位 mapping，例如 status、priority、title、owner
+- 少量 sample records 中的非空統計與 observed values
+
+當 AI Agent 不確定欄位名稱、狀態值、owner 欄位或表格語系時，必須先跑
+`lark-bitable schema --json`，再決定 `filter`、`search`、`triage` 的參數。
+不要用 `待處理` / `待处理` 或 `狀態` / `当前状态` 這類語系猜測代替 schema。
 
 列出記錄：
 
@@ -412,22 +505,62 @@ lark-bitable list --limit 20
 lark-bitable get <record-id>
 ```
 
+下載多維表格圖片或附件素材：
+
+```bash
+lark-bitable media download <file-token> --out ./evidence/asset.bin
+```
+
+`media download` 使用 Lark 官方 Drive media 下載 API：
+
+```text
+GET /open-apis/drive/v1/medias/:file_token/download
+```
+
+這個請求會使用 `~/.lark-bitable/auth.json` 裡的 Lark access token
+發送 `Authorization: Bearer <token>`。不要直接匿名打開從多維表格複製出來
+的圖片或附件 URL，因為那可能拿到權限頁、redirect 或錯誤內容，而不是實際
+檔案。
+
+如果目標 Base 啟用了進階權限，Lark 可能要求 media `extra` 查詢參數。這時
+使用：
+
+```bash
+lark-bitable media download <file-token> \
+  --extra '<extra-from-lark-record-or-api>' \
+  --out ./evidence/asset.bin
+```
+
+下載成功後，請先打開本機檔案確認內容，再把它當成 research report 的圖片
+或附件證據。下載失敗時只能記錄失敗原因，不能描述未看到的圖片內容。
+
 篩選：
 
 ```bash
-lark-bitable filter --field "当前状态" --equals "待处理"
+lark-bitable filter --field "当前状态" --equals "待处理" --limit 20
 ```
 
 搜尋：
 
 ```bash
-lark-bitable search "login error"
+lark-bitable search "login error" --limit 20
 ```
+
+依負責人查詢：
+
+```bash
+lark-bitable list --owner "openclaw" --limit 10
+lark-bitable search "群聊" --owner "openclaw" --limit 10
+lark-bitable filter --field "当前状态" --equals "待处理" --owner "openclaw" --limit 10
+```
+
+所有查詢型命令的 `--limit` 都必須是正整數。limit 會在 owner、search/filter、
+actionable status、priority sort 等條件之後才套用。
 
 所有 record 讀取命令都需要：
 
-- 已有 `~/.lark-bitable-cli/config.json`
-- 已有有效 `~/.lark-bitable-cli/auth.json`
+- 已有 `~/.lark-bitable/config.json`
+- 已有有效 `~/.lark-bitable/auth.json`
 - Lark app 權限已生效
 - 目標 Base 允許讀取
 
@@ -445,6 +578,17 @@ lark-bitable valid --workflow triage
 lark-bitable triage
 ```
 
+當使用者從候選清單選定一筆 bug 後，AI Agent 必須先執行：
+
+```bash
+lark-bitable get <record-id>
+```
+
+`triage` / `list` / `search` / `filter` 的結果只能當候選摘要，不能取代完整
+bug 單。若完整 bug 單內有圖片、附件或其他 media token，必須先用
+`lark-bitable media download` 透過登入 token 下載並檢查內容，再開始對當前
+repo 做 root cause research。
+
 `triage` 會：
 
 1. 讀取目前 Base 的 records。
@@ -459,6 +603,62 @@ lark-bitable triage
 ```bash
 lark-bitable triage --actionable-status "待处理"
 ```
+
+如果只想看指定負責人的候選項：
+
+```bash
+lark-bitable triage --owner "openclaw" --limit 10
+```
+
+如果 triage 顯示沒有 actionable records，先看輸出中的
+`observedStatusValues`，使用表格實際出現的狀態值重新 configure 或明確傳入
+`--actionable-status`。不要用繁簡或語意猜測狀態值。
+
+## QA Verification 工作流
+
+先切到 QA mode：
+
+```bash
+lark-bitable configure --mode QA
+lark-bitable valid --workflow verify
+```
+
+選一筆任務：
+
+```bash
+lark-bitable triage --limit 10
+```
+
+驗證最近一次 triage selection：
+
+```bash
+lark-bitable verify --checks auto --out reports/qa-verification.md
+```
+
+或指定 record id：
+
+```bash
+lark-bitable verify <record-id> --checks auto --json
+```
+
+`verify` 會：
+
+1. 確認 active mode 是 `QA`。
+2. 讀取選定任務完整 record。
+3. 抽取圖片與附件 media references。
+4. 讀取目前 workspace 的 `package.json` 等可觀察證據，尋找可安全執行的檢查。
+5. 略過不安全、破壞性、沒有證據支持或不符合 `--checks` 範圍的檢查。
+6. 把 executed checks、skipped checks、manual next steps、assumptions、risks 和 evidence 分開輸出。
+
+如果你只想先產出不執行測試的 QA report：
+
+```bash
+lark-bitable verify <record-id> --checks none --json
+```
+
+`verify` 不會自動判讀圖片內容。若輸出包含 `mediaReferences`，必須使用
+`lark-bitable media download` 下載並人工或工具檢查本機檔案，才能把圖片或附件內容
+寫成事實。
 
 ## 產出 Research Report
 
@@ -499,11 +699,14 @@ lark-bitable help configure
 lark-bitable help lark
 lark-bitable help valid
 lark-bitable help list
+lark-bitable help schema
 lark-bitable help get
 lark-bitable help filter
 lark-bitable help search
 lark-bitable help triage
 lark-bitable help research
+lark-bitable help verify
+lark-bitable help "media download"
 lark-bitable help doctor
 ```
 
@@ -623,7 +826,7 @@ lark-bitable lark --logout
 如果要完全清掉 CLI 狀態：
 
 ```bash
-rm -rf ~/.lark-bitable-cli
+rm -rf ~/.lark-bitable
 ```
 
 這會刪除 app secret、Base 設定、auth token、最近 triage 選擇。

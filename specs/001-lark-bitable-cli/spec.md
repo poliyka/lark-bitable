@@ -200,7 +200,7 @@ that requires Lark API access.
 
 1. **Given** no auth file exists, **When** the user runs `lark-bitable lark --login` and
    completes authorization, **Then** the CLI writes token state to
-   `~/.lark-bitable-cli/auth.json` and reports that API access can be attempted.
+   `~/.lark-bitable/auth.json` and reports that API access can be attempted.
 2. **Given** no valid login exists, **When** the user runs list, get, filter,
    search, triage, or research against Lark data, **Then** the CLI refuses the
    API call and instructs the user to run `lark-bitable lark --login`.
@@ -252,7 +252,7 @@ configured table, run `valid`, follow the suggested remediation steps, and rerun
   result as partial rather than ready.
 - User cancels the interactive login flow before authorization completes.
 - Login callback, browser handoff, or pasted authorization code fails.
-- `~/.lark-bitable-cli/auth.json` is missing, malformed, unreadable, or contains
+- `~/.lark-bitable/auth.json` is missing, malformed, unreadable, or contains
   expired token state.
 - Auth file permissions allow other local users to read token data.
 - Multiple Lark accounts or apps are available and the active account is
@@ -323,7 +323,7 @@ configured table, run `valid`, follow the suggested remediation steps, and rerun
   - The spec assumes the bootstrap mechanism is delivered as AI-facing
     installation guidance plus an installable skill or equivalent local agent
     instruction package; the exact packaging format is deferred to planning.
-  - The spec chooses `~/.lark-bitable-cli/auth.json` as the concrete default auth
+  - The spec chooses `~/.lark-bitable/auth.json` as the concrete default auth
     path for the user's `~/.xxx/auth.json` requirement.
 - **Unsupported Claims**: None. Example table row contents, exact field schema,
   and actual bug status values were not visible in DevTools and are not asserted
@@ -412,7 +412,7 @@ configured table, run `valid`, follow the suggested remediation steps, and rerun
   report remediation without exposing app secrets or tokens instead of asking
   humans to type field names.
 - **FR-026**: After successful login, the CLI MUST write token state to
-  `~/.lark-bitable-cli/auth.json` and include enough metadata to determine
+  `~/.lark-bitable/auth.json` and include enough metadata to determine
   expiration, active Lark domain, account/app identity, and scopes.
 - **FR-027**: The auth file MUST live outside the current repository and MUST
   NOT be included in generated reports, command logs, or AI-facing evidence
@@ -547,4 +547,4 @@ configured table, run `valid`, follow the suggested remediation steps, and rerun
 - The bootstrap skill is intended to teach AI agents how to use the tool, not to
   replace user-controlled Lark authorization or configuration.
 - The auth file path may be configurable later, but the first version uses
-  `~/.lark-bitable-cli/auth.json` by default.
+  `~/.lark-bitable/auth.json` by default.

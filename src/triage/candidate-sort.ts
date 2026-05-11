@@ -63,6 +63,16 @@ export function filterActionableCandidates(
   );
 }
 
+export function observedStatusValues(candidates: BugCandidate[]): string[] {
+  return [
+    ...new Set(
+      candidates
+        .map((candidate) => candidate.status)
+        .filter((status): status is string => typeof status === "string"),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+}
+
 export function sortCandidatesByPriority(
   candidates: BugCandidate[],
   priorityOrder: string[] = [],

@@ -11,6 +11,9 @@ import { fixtureSource } from "../fixtures/lark.js";
 describe("LarkClient", () => {
   it("lists fields and paginated records through the transport seam", async () => {
     const transport: LarkClientTransport = {
+      async downloadMedia(input) {
+        return { outPath: input.outPath };
+      },
       async getRecord() {
         return { record_id: "recA", fields: { title: "A" } };
       },
@@ -41,6 +44,9 @@ describe("LarkClient", () => {
 
   it("limits records across pages", async () => {
     const transport: LarkClientTransport = {
+      async downloadMedia(input) {
+        return { outPath: input.outPath };
+      },
       async getRecord() {
         return { record_id: "recA", fields: {} };
       },
@@ -109,7 +115,7 @@ describe("LarkClient", () => {
     const client = new LarkClient(transport);
 
     expect(await client.listFields(fixtureSource)).toEqual([
-      { field_name: "標題", type: 1 },
+      { fieldName: "標題", type: 1 },
     ]);
     expect(await client.listRecords(fixtureSource, { limit: 1 })).toHaveLength(
       1,
@@ -120,6 +126,50 @@ describe("LarkClient", () => {
     expect(JSON.stringify(requests)).toContain("TypDbjKBfaJcaSsoEI1lZjHsgIY");
     expect(JSON.stringify(requests)).toContain("tblp8ig36Itp0yOU");
     expect(JSON.stringify(requests)).toContain("Bearer access-secret");
+  });
+
+  it("downloads drive media with authenticated requests", async () => {
+    const requests: Array<{
+      options: unknown;
+      payload: unknown;
+    }> = [];
+    const sdk = {
+      drive: {
+        media: {
+          async download(payload: unknown, options: unknown) {
+            requests.push({ payload, options });
+            return {
+              headers: {
+                "content-disposition": "attachment; filename=image.png",
+                "content-type": "image/png",
+              },
+              async writeFile() {
+                return "written";
+              },
+            };
+          },
+        },
+      },
+    };
+
+    const result = await new LarkClient(
+      createLarkSdkTransport(readyAuthSession, { sdk: sdk as never }),
+    ).downloadMedia({
+      fileToken: "boxcnabcdefg",
+      outPath: "/tmp/image.png",
+      extra: "extra-value",
+      range: "bytes=0-1024",
+    });
+
+    expect(result).toEqual({
+      contentDisposition: "attachment; filename=image.png",
+      contentType: "image/png",
+      outPath: "/tmp/image.png",
+    });
+    expect(JSON.stringify(requests)).toContain("boxcnabcdefg");
+    expect(JSON.stringify(requests)).toContain("Bearer access-secret");
+    expect(JSON.stringify(requests)).toContain("bytes=0-1024");
+    expect(JSON.stringify(requests)).toContain("extra-value");
   });
 
   it("normalizes stored Lark domains before constructing the official SDK", async () => {

@@ -6,6 +6,7 @@ import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
 import { LarkClient, createLarkSdkTransport } from "../../lark/client.js";
+import { extractMediaReferences } from "../../lark/record-mapper.js";
 import { loadRecordCommandData } from "../shared-records.js";
 
 export default class GetCommand extends BaseCommand {
@@ -25,7 +26,7 @@ export default class GetCommand extends BaseCommand {
 
   async run(): Promise<CommandOutput> {
     const { args, flags } = await this.parse(GetCommand);
-    const { auth, records, source } = await loadRecordCommandData({
+    const { auth, mode, records, source } = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
       fixture: flags.fixture,
@@ -74,8 +75,13 @@ export default class GetCommand extends BaseCommand {
         viewId: source.viewId,
         retrievedAt: new Date().toISOString(),
       },
+      mode: {
+        active: mode.active,
+        source: mode.source,
+      },
       data: {
         record,
+        mediaReferences: extractMediaReferences(record),
       },
     };
 

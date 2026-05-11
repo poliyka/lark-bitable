@@ -4,18 +4,32 @@ import type {
   LarkAuthSession,
 } from "../config/schema.js";
 import { normalizeOpenApiDomain } from "./auth.js";
+import { normalizeBitableFieldInfo } from "./field-discovery.js";
+import type { BitableFieldInfo } from "./field-discovery.js";
 import { mapRecord } from "./record-mapper.js";
 
 export interface LarkClientTransport {
+  downloadMedia(input: {
+    extra?: string;
+    fileToken: string;
+    outPath: string;
+    range?: string;
+  }): Promise<DownloadResult>;
   getRecord(input: {
     appToken: string;
     tableId: string;
     recordId: string;
   }): Promise<{ fields?: Record<string, unknown>; record_id?: string }>;
-  listFields(input: {
-    appToken: string;
-    tableId: string;
-  }): Promise<Array<{ field_name: string; type?: number }>>;
+  listFields(input: { appToken: string; tableId: string }): Promise<
+    Array<{
+      field_name: string;
+      property?: {
+        options?: Array<{ color?: number; id?: string; name?: string }>;
+      };
+      type?: number;
+      ui_type?: string;
+    }>
+  >;
   listRecords(input: {
     appToken: string;
     pageToken?: string;
@@ -27,6 +41,12 @@ export interface LarkClientTransport {
     items: Array<{ fields?: Record<string, unknown>; record_id?: string }>;
     pageToken?: string;
   }>;
+}
+
+export interface DownloadResult {
+  contentDisposition?: string;
+  contentType?: string;
+  outPath: string;
 }
 
 export interface LarkSdkTransportOptions {
@@ -103,6 +123,22 @@ export interface LarkBitableSdk {
       }>;
     };
   };
+  drive?: {
+    media?: {
+      download(
+        payload: {
+          params?: {
+            extra?: string;
+          };
+          path: { file_token: string };
+        },
+        options?: unknown,
+      ): Promise<{
+        headers?: Record<string, string | string[] | undefined>;
+        writeFile(filePath: string): Promise<unknown>;
+      }>;
+    };
+  };
 }
 
 function assertOk(
@@ -154,6 +190,38 @@ export function createLarkSdkTransport(
   const tokenOptions = createUserAccessTokenOptions(session.accessToken);
 
   return {
+    async downloadMedia(input) {
+      const response = await (
+        await sdk()
+      ).drive?.media?.download(
+        {
+          params: {
+            extra: input.extra,
+          },
+          path: {
+            file_token: input.fileToken,
+          },
+        },
+        {
+          ...tokenOptions,
+          headers: {
+            ...tokenOptions.headers,
+            ...(input.range ? { Range: input.range } : {}),
+          },
+        },
+      );
+      if (!response) {
+        throw new Error("Lark media download is unavailable in the SDK");
+      }
+      await response.writeFile(input.outPath);
+      return {
+        contentDisposition: headerValue(
+          response.headers?.["content-disposition"],
+        ),
+        contentType: headerValue(response.headers?.["content-type"]),
+        outPath: input.outPath,
+      };
+    },
     async getRecord(input) {
       const response = await (
         await sdk()
@@ -222,14 +290,31 @@ export function createLarkSdkTransport(
   };
 }
 
+function headerValue(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value.join(", ");
+  return value;
+}
+
 export class LarkClient {
   constructor(private readonly transport: LarkClientTransport) {}
 
+  async downloadMedia(input: {
+    extra?: string;
+    fileToken: string;
+    outPath: string;
+    range?: string;
+  }): Promise<DownloadResult> {
+    return this.transport.downloadMedia(input);
+  }
+
   async listFields(source: BitableSource) {
-    return this.transport.listFields({
+    const fields = await this.transport.listFields({
       appToken: source.appToken,
       tableId: source.tableId,
     });
+    return fields
+      .map((field) => normalizeBitableFieldInfo(field))
+      .filter((field): field is BitableFieldInfo => Boolean(field));
   }
 
   async listRecords(

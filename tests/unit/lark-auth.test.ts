@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ensureReadyAuthSession,
   exchangeAuthorizationCode,
   refreshAuthorizationToken,
 } from "../../src/lark/auth.js";
+import { expiredAuthSession } from "../fixtures/auth.js";
 
 describe("Lark auth adapter", () => {
   it("exchanges a Lark authorization code through the official SDK", async () => {
@@ -66,6 +68,27 @@ describe("Lark auth adapter", () => {
 
     expect(result.accessToken).toBe("new-access");
     expect(result.refreshToken).toBe("new-refresh");
+  });
+
+  it("creates a refreshed auth session when expired auth has refresh credentials", async () => {
+    const result = await ensureReadyAuthSession({
+      appId: "cli-app",
+      appSecret: "cli-secret",
+      httpPost: async () => ({
+        code: 0,
+        data: {
+          access_token: "refreshed-access",
+          refresh_token: "refreshed-refresh",
+          expires_in: 3600,
+        },
+      }),
+      session: expiredAuthSession,
+      storagePath: "/tmp/auth.json",
+    });
+
+    expect(result.status).toBe("ready");
+    expect(result.accessToken).toBe("refreshed-access");
+    expect(result.storagePath).toBe("/tmp/auth.json");
   });
 
   it("falls back to direct OpenAPI exchange when the SDK omits app credentials", async () => {

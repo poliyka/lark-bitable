@@ -3,6 +3,8 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  renameSync,
+  rmSync,
   statSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -14,15 +16,19 @@ import {
   bitableSourceSchema,
   larkAppConfigSchema,
   triageSelectionSchema,
+  workflowConfigSchema,
   type BitableSource,
   type LarkAppConfig,
   type TriageSelection,
+  type WorkflowConfig,
+  type WorkflowMode,
 } from "./schema.js";
 
 interface StoreShape {
   activeSource?: BitableSource;
   larkApp?: LarkAppConfig;
   lastSelection?: TriageSelection;
+  workflow?: WorkflowConfig;
 }
 
 export interface StoreOptions {
@@ -33,11 +39,15 @@ export interface StoreOptions {
 }
 
 export function defaultConfigDir(home = homedir()): string {
-  return join(home, ".lark-bitable-cli");
+  return join(home, ".lark-bitable");
 }
 
 export function defaultConfigPath(home = homedir()): string {
   return join(defaultConfigDir(home), "config.json");
+}
+
+function legacyUnifiedConfigPath(home = homedir()): string {
+  return join(home, ".lark-bitable-cli", "config.json");
 }
 
 function legacyConfigPath(projectName: string): string {
@@ -67,8 +77,24 @@ function migrateLegacyConfig(targetPath: string, legacyPath: string): void {
     return;
   }
 
-  copyFileSync(legacyPath, targetPath);
+  try {
+    renameSync(legacyPath, targetPath);
+  } catch (error) {
+    if (!isCrossDeviceRenameError(error)) throw error;
+    copyFileSync(legacyPath, targetPath);
+    rmSync(legacyPath, { force: true });
+  }
+
   ensurePrivateFile(targetPath);
+}
+
+function isCrossDeviceRenameError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "EXDEV"
+  );
 }
 
 export class ConfigStore {
@@ -81,6 +107,10 @@ export class ConfigStore {
 
     ensurePrivateDir(cwd);
     if (!options.cwd) {
+      migrateLegacyConfig(
+        defaultConfigPath(options.home),
+        legacyUnifiedConfigPath(options.home),
+      );
       migrateLegacyConfig(
         defaultConfigPath(options.home),
         options.legacyPath ?? legacyConfigPath(projectName),
@@ -128,6 +158,54 @@ export class ConfigStore {
   clearLarkApp(): void {
     this.conf.delete("larkApp");
     ensurePrivateFile(this.path);
+  }
+
+  getWorkflowConfig(): WorkflowConfig | undefined {
+    const workflow = this.conf.get("workflow");
+    return workflow ? workflowConfigSchema.parse(workflow) : undefined;
+  }
+
+  setWorkflowConfig(workflow: WorkflowConfig): WorkflowConfig {
+    const parsed = workflowConfigSchema.parse(workflow);
+    this.conf.set("workflow", parsed);
+    ensurePrivateFile(this.path);
+    return parsed;
+  }
+
+  setActiveMode(input: {
+    configuredBy?: string;
+    mode: WorkflowMode;
+  }): WorkflowConfig {
+    const previous = this.getWorkflowConfig();
+    return this.setWorkflowConfig({
+      activeMode: input.mode,
+      configuredAt: new Date().toISOString(),
+      configuredBy: input.configuredBy,
+      modeConfigs: previous?.modeConfigs ?? {},
+    });
+  }
+
+  setModeDefaultOwner(input: {
+    mode: WorkflowMode;
+    owner?: string;
+  }): WorkflowConfig {
+    const previous = this.getWorkflowConfig() ?? {
+      activeMode: input.mode,
+      configuredAt: new Date().toISOString(),
+      modeConfigs: {},
+    };
+    const trimmedOwner = input.owner?.trim();
+    return this.setWorkflowConfig({
+      ...previous,
+      modeConfigs: {
+        ...previous.modeConfigs,
+        [input.mode]: {
+          ...previous.modeConfigs[input.mode],
+          ...(trimmedOwner ? { defaultOwner: trimmedOwner } : {}),
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    });
   }
 
   getSelection(): TriageSelection | undefined {

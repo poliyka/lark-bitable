@@ -11,7 +11,14 @@ import {
   filterRecords,
   type FilterOperator,
 } from "../../lark/record-mapper.js";
-import { loadRecordCommandData } from "../shared-records.js";
+import {
+  applyQueryLimit,
+  parsePositiveLimit,
+} from "../../mode/owner-filter.js";
+import {
+  applyOwnerCriteria,
+  loadRecordCommandData,
+} from "../shared-records.js";
 
 export default class FilterCommand extends BaseCommand {
   static description = "Return records matching field criteria.";
@@ -31,14 +38,28 @@ export default class FilterCommand extends BaseCommand {
       description: "Field name to filter.",
     }),
     fixture: Flags.string({ hidden: true }),
+    limit: Flags.integer({
+      description: "Maximum matching records to return.",
+    }),
+    "no-default-owner": Flags.boolean({
+      description: "Ignore the stored default owner for this run.",
+    }),
+    owner: Flags.string({
+      description: "Filter records by owner when an owner field is configured.",
+    }),
   };
 
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(FilterCommand);
-    const { records, source } = await loadRecordCommandData({
+    const context = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
       fixture: flags.fixture,
+    });
+    const ownerResult = applyOwnerCriteria({
+      ...context,
+      commandOwner: flags.owner,
+      ignoreDefaultOwner: flags["no-default-owner"],
     });
     const interactive = process.stdin.isTTY && !flags.json;
     const field =
@@ -46,7 +67,11 @@ export default class FilterCommand extends BaseCommand {
       (interactive
         ? await promptSelect({
             choices: Array.from(
-              new Set(records.flatMap((record) => Object.keys(record.fields))),
+              new Set(
+                ownerResult.records.flatMap((record) =>
+                  Object.keys(record.fields),
+                ),
+              ),
             ).map((name) => ({ name, value: name })),
             message: "Choose a field to filter",
           })
@@ -77,23 +102,37 @@ export default class FilterCommand extends BaseCommand {
         "Filter requires --field plus --equals or --contains, or an interactive terminal.",
       );
     }
-    const matches = filterRecords(records, field, operator, value);
+    const matches = filterRecords(ownerResult.records, field, operator, value);
+    const limit = parsePositiveLimit({
+      defaultLimit: 20,
+      flagLimit: flags.limit,
+    });
+    const limitedResult = applyQueryLimit(matches, {
+      appliedAfter: ["owner", "filter"],
+      ...limit,
+    });
     const output: CommandOutput = {
       command: "filter",
       status: "ok",
       source: {
-        appToken: source.appToken,
-        tableId: source.tableId,
-        viewId: source.viewId,
+        appToken: context.source.appToken,
+        tableId: context.source.tableId,
+        viewId: context.source.viewId,
         retrievedAt: new Date().toISOString(),
       },
+      mode: {
+        active: context.mode.active,
+        source: context.mode.source,
+      },
+      ownerCriteria: ownerResult.criteria,
+      queryLimit: limitedResult.queryLimit,
       data: {
         criteria: {
           field,
           operator,
           value,
         },
-        records: matches,
+        records: limitedResult.items,
       },
     };
 

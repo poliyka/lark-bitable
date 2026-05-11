@@ -128,13 +128,14 @@ export default class LarkCommand extends BaseCommand {
 
   private async logout(flags: Record<string, unknown>): Promise<CommandOutput> {
     const authPath = flags["auth-path"] as string;
-    const removed = await new AuthStore(authPath).delete();
+    const authStore = new AuthStore(authPath);
+    const removed = await authStore.delete();
     const output: CommandOutput = {
       command: "lark",
       status: "ok",
       auth: {
         status: "missing",
-        storagePath: "~/.lark-bitable-cli/auth.json",
+        storagePath: authStore.path,
       },
       data: {
         result: removed ? "removed" : "already absent",
@@ -245,10 +246,11 @@ export default class LarkCommand extends BaseCommand {
     });
 
     const authPath = flags["auth-path"] as string;
+    const authStore = new AuthStore(authPath);
     const session = createAuthSession({
       accessToken: exchanged.accessToken,
       refreshToken: exchanged.refreshToken,
-      storagePath: authPath,
+      storagePath: authStore.path,
       domain,
       accountLabel: flags.account as string | undefined,
       appIdentity: appId,
@@ -257,14 +259,14 @@ export default class LarkCommand extends BaseCommand {
       refreshExpiresAt: exchanged.refreshExpiresAt,
     });
 
-    await new AuthStore(authPath).write(session);
+    await authStore.write(session);
 
     const output: CommandOutput = {
       command: "lark",
       status: "ok",
       auth: {
         status: "ready",
-        storagePath: "~/.lark-bitable-cli/auth.json",
+        storagePath: authStore.path,
         domain: session.domain,
         accountLabel: session.accountLabel,
         expiresAt: session.expiresAt,

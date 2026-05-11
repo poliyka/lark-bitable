@@ -33,6 +33,28 @@ export function toEvidence(
   };
 }
 
+export function dedupeEvidence(
+  evidence: ResearchEvidence[],
+): ResearchEvidence[] {
+  const seen = new Set<string>();
+  const deduped: ResearchEvidence[] = [];
+  for (const item of evidence) {
+    const key =
+      item.id ??
+      [
+        item.type,
+        item.reference,
+        item.status,
+        item.excerpt,
+        item.collectedAt,
+      ].join("\u0000");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+  return deduped;
+}
+
 export function assertClaimsHaveEvidence(
   claims: string[],
   evidenceIds: string[],

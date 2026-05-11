@@ -47,8 +47,8 @@ Expected validation:
 - The CLI stores Lark app id/secret for login and token refresh, while command
   output reports only redacted app metadata and never prints the app secret.
 - Configure state is stored outside the repository at
-  `~/.lark-bitable-cli/config.json`, alongside auth state in the same
-  `~/.lark-bitable-cli/` directory.
+  `~/.lark-bitable/config.json`, alongside auth state in the same
+  `~/.lark-bitable/` directory.
 - The CLI stores the OAuth redirect URI from Lark Developer Console > Security
   Settings > Redirect URL. Event callback URLs from the app event callback page
   are not used for login.
@@ -99,7 +99,7 @@ Expected validation:
   app permission is not active for OAuth. Open Lark Developer Console >
   Permissions, add the user-identity `bitable:app:readonly` permission, publish
   the app version, wait for enterprise approval if required, then retry login.
-- Successful login stores token state at `~/.lark-bitable-cli/auth.json`.
+- Successful login stores token state at `~/.lark-bitable/auth.json`.
 - Normal output shows only redacted account/domain/status metadata.
 - Raw access or refresh tokens never appear in output.
 - Failed or canceled login leaves API access unavailable.
@@ -219,7 +219,7 @@ lark-bitable lark --logout
 
 Expected validation:
 
-- Auth state is removed from `~/.lark-bitable-cli/auth.json`.
+- Auth state is removed from `~/.lark-bitable/auth.json`.
 - The next Lark API command refuses to run and instructs the user to run
   `lark-bitable lark --login`.
 

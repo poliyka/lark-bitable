@@ -6,7 +6,14 @@ import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
 import { searchRecords } from "../../lark/record-mapper.js";
-import { loadRecordCommandData } from "../shared-records.js";
+import {
+  applyQueryLimit,
+  parsePositiveLimit,
+} from "../../mode/owner-filter.js";
+import {
+  applyOwnerCriteria,
+  loadRecordCommandData,
+} from "../shared-records.js";
 
 export default class SearchCommand extends BaseCommand {
   static args = {
@@ -25,6 +32,15 @@ export default class SearchCommand extends BaseCommand {
       multiple: true,
     }),
     fixture: Flags.string({ hidden: true }),
+    limit: Flags.integer({
+      description: "Maximum matching records to return.",
+    }),
+    "no-default-owner": Flags.boolean({
+      description: "Ignore the stored default owner for this run.",
+    }),
+    owner: Flags.string({
+      description: "Filter records by owner when an owner field is configured.",
+    }),
   };
 
   async run(): Promise<CommandOutput> {
@@ -44,24 +60,43 @@ export default class SearchCommand extends BaseCommand {
         remediation: "Run lark-bitable search <query>.",
       });
     }
-    const { records, source } = await loadRecordCommandData({
+    const context = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
       fixture: flags.fixture,
     });
-    const matches = searchRecords(records, query, flags.field);
+    const ownerResult = applyOwnerCriteria({
+      ...context,
+      commandOwner: flags.owner,
+      ignoreDefaultOwner: flags["no-default-owner"],
+    });
+    const matches = searchRecords(ownerResult.records, query, flags.field);
+    const limit = parsePositiveLimit({
+      defaultLimit: 20,
+      flagLimit: flags.limit,
+    });
+    const limitedResult = applyQueryLimit(matches, {
+      appliedAfter: ["owner", "search"],
+      ...limit,
+    });
     const output: CommandOutput = {
       command: "search",
       status: "ok",
       source: {
-        appToken: source.appToken,
-        tableId: source.tableId,
-        viewId: source.viewId,
+        appToken: context.source.appToken,
+        tableId: context.source.tableId,
+        viewId: context.source.viewId,
         retrievedAt: new Date().toISOString(),
       },
+      mode: {
+        active: context.mode.active,
+        source: context.mode.source,
+      },
+      ownerCriteria: ownerResult.criteria,
+      queryLimit: limitedResult.queryLimit,
       data: {
         query,
-        records: matches,
+        records: limitedResult.items,
       },
     };
 

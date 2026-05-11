@@ -1,12 +1,14 @@
 import type { BitableRecord } from "../config/schema.js";
 import { AuthStore } from "../config/auth-store.js";
 import { ConfigStore } from "../config/store.js";
-import {
-  authStatusFor,
-  createAuthSession,
-  refreshAuthorizationToken,
-} from "../lark/auth.js";
+import { authStatusFor, ensureReadyAuthSession } from "../lark/auth.js";
 import { LarkClient, createLarkSdkTransport } from "../lark/client.js";
+import { resolveWorkflowMode } from "../mode/mode-config.js";
+import {
+  applyOwnerFilter,
+  resolveOwnerCriteria,
+  type OwnerFilterResult,
+} from "../mode/owner-filter.js";
 import { CliError } from "./errors.js";
 
 export interface RecordCommandContext {
@@ -46,7 +48,27 @@ export async function loadRecordCommandData(context: RecordCommandContext) {
         source,
       );
 
-  return { auth: readyAuth, records, source };
+  const mode = resolveWorkflowMode(configStore);
+  return { auth: readyAuth, configStore, mode, records, source };
+}
+
+export function applyOwnerCriteria(
+  input: {
+    commandOwner?: string;
+    ignoreDefaultOwner?: boolean;
+  } & Pick<
+    Awaited<ReturnType<typeof loadRecordCommandData>>,
+    "configStore" | "mode" | "records" | "source"
+  >,
+): OwnerFilterResult {
+  const criteria = resolveOwnerCriteria({
+    commandOwner: input.commandOwner,
+    ignoreDefaultOwner: input.ignoreDefaultOwner,
+    mode: input.mode.active,
+    source: input.source,
+    workflowConfig: input.configStore.getWorkflowConfig(),
+  });
+  return applyOwnerFilter(input.records, criteria);
 }
 
 async function ensureReadyAuth(
@@ -63,25 +85,14 @@ async function ensureReadyAuth(
       process.env.LARK_APP_ID ?? configured?.appId ?? auth.appIdentity;
     const appSecret = process.env.LARK_APP_SECRET ?? configured?.appSecret;
     if (appId && appSecret) {
-      const refreshed = await refreshAuthorizationToken({
+      const refreshed = await ensureReadyAuthSession({
         appId,
         appSecret,
         domain: auth.domain,
-        refreshToken: auth.refreshToken,
+        session: auth,
+        storagePath: authStore.path,
       });
-      return authStore.write(
-        createAuthSession({
-          accessToken: refreshed.accessToken,
-          refreshToken: refreshed.refreshToken ?? auth.refreshToken,
-          storagePath: authStore.path,
-          domain: auth.domain,
-          accountLabel: refreshed.accountLabel ?? auth.accountLabel,
-          appIdentity: auth.appIdentity,
-          scopes: refreshed.scopes ?? auth.scopes,
-          expiresAt: refreshed.expiresAt,
-          refreshExpiresAt: refreshed.refreshExpiresAt,
-        }),
-      );
+      return authStore.write(refreshed);
     }
   }
 

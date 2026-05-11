@@ -14,6 +14,11 @@ import {
 } from "../../config/schema.js";
 import { ConfigStore } from "../../config/store.js";
 import {
+  normalizeWorkflowMode,
+  resolveWorkflowMode,
+} from "../../mode/mode-config.js";
+
+import {
   discoverBitableFieldsWithAppCredentials,
   discoverBitableFieldValuesWithAppCredentials,
   type BitableFieldInfo,
@@ -79,8 +84,18 @@ export default class ConfigureCommand extends BaseCommand {
     "actionable-status": Flags.string({
       description: "Status value treated as actionable.",
     }),
+    "default-owner": Flags.string({
+      description: "Default owner for the active workflow mode.",
+    }),
+    mode: Flags.string({
+      description: "Workflow mode to activate.",
+      options: ["QA", "Developer"],
+    }),
     name: Flags.string({
       description: "Optional source name.",
+    }),
+    "owner-field": Flags.string({
+      description: "Optional field name used as owner/assignee.",
     }),
     "priority-field": Flags.string({
       description: "Field name used for priority sorting.",
@@ -115,6 +130,7 @@ export default class ConfigureCommand extends BaseCommand {
 
     const previous = store.getSource();
     const previousLarkApp = store.getLarkApp();
+    const previousMode = resolveWorkflowMode(store);
     const callbackPort =
       flags["lark-callback-port"] ?? previousLarkApp?.callbackPort ?? 14543;
     const larkDomain =
@@ -127,7 +143,7 @@ export default class ConfigureCommand extends BaseCommand {
             "Paste the Lark Base/Bitable URL",
             previous?.sourceUrl,
           )
-        : undefined);
+        : previous?.sourceUrl);
 
     if (!sourceUrl) {
       this.error("Missing required Lark Base/Bitable URL", {
@@ -164,13 +180,21 @@ export default class ConfigureCommand extends BaseCommand {
               `http://127.0.0.1:${callbackPort}/callback`,
           )
         : undefined);
+    const requestedMode =
+      flags.mode ??
+      (interactive
+        ? await promptWorkflowMode(previousMode.active)
+        : previousMode.active);
+    const activeMode = normalizeWorkflowMode(requestedMode);
+
     const mappingNeedsFieldDiscovery =
       interactive &&
       larkAppId &&
       larkAppSecret &&
       (!flags["status-field"] ||
         !flags["priority-field"] ||
-        !flags["title-field"]);
+        !flags["title-field"] ||
+        flags["owner-field"] === undefined);
     const discovery = mappingNeedsFieldDiscovery
       ? await discoverFieldsForInteractiveConfigure({
           appId: larkAppId,
@@ -222,6 +246,15 @@ export default class ConfigureCommand extends BaseCommand {
         : interactive
           ? requireDiscoveredFields(discovery.summary)
           : undefined);
+    const ownerField =
+      flags["owner-field"] ??
+      (interactive && discoveredFields.length > 0
+        ? await promptOptionalFieldChoice(
+            "Choose the optional owner field",
+            discoveredFields,
+            previous?.fieldAliases.owner,
+          )
+        : undefined);
     const actionableStatusValues =
       interactive && !flags["actionable-status"] && statusField
         ? await discoverActionableStatusValues({
@@ -256,21 +289,36 @@ export default class ConfigureCommand extends BaseCommand {
       appToken: parsedUrl.appToken,
       tableId: parsedUrl.tableId,
       viewId: parsedUrl.viewId,
-      name: flags.name,
-      statusField,
-      actionableStatus,
-      priorityField,
-      priorityOrder: flags["priority-order"]
-        ?.split(",")
-        .map((part) => part.trim())
-        .filter(Boolean),
+      name: flags.name ?? previous?.name,
+      statusField: statusField ?? previous?.statusField,
+      actionableStatus: actionableStatus ?? previous?.actionableStatus,
+      priorityField: priorityField ?? previous?.priorityField,
+      priorityOrder:
+        flags["priority-order"]
+          ?.split(",")
+          .map((part) => part.trim())
+          .filter(Boolean) ?? previous?.priorityOrder,
       fieldAliases: {
-        title: titleField,
+        ...previous?.fieldAliases,
+        title: titleField ?? previous?.fieldAliases.title,
+        owner: ownerField ?? previous?.fieldAliases.owner,
       },
       updatedAt: new Date().toISOString(),
     });
 
     store.setSource(source);
+    store.setActiveMode({
+      configuredBy: "configure",
+      mode: activeMode,
+    });
+    const defaultOwner = flags["default-owner"];
+    const workflowWithOwner =
+      defaultOwner !== undefined
+        ? store.setModeDefaultOwner({
+            mode: activeMode,
+            owner: defaultOwner,
+          })
+        : store.getWorkflowConfig();
 
     const larkApp =
       larkAppId && larkAppSecret
@@ -317,6 +365,11 @@ export default class ConfigureCommand extends BaseCommand {
           priorityField: source.priorityField,
           fieldAliases: source.fieldAliases,
         },
+        mode: {
+          active: activeMode,
+          defaultOwner:
+            workflowWithOwner?.modeConfigs?.[activeMode]?.defaultOwner ?? null,
+        },
         larkApp: larkApp
           ? {
               appId: larkApp.appId,
@@ -334,6 +387,17 @@ export default class ConfigureCommand extends BaseCommand {
     this.emit(output, Boolean(flags.json));
     return output;
   }
+}
+
+async function promptWorkflowMode(defaultValue: "QA" | "Developer") {
+  return await promptRawlist({
+    choices: [
+      { name: "QA", value: "QA" },
+      { name: "Developer", value: "Developer" },
+    ],
+    default: defaultValue,
+    message: "Choose workflow mode",
+  });
 }
 
 async function discoverFieldsForInteractiveConfigure(input: {
@@ -450,6 +514,26 @@ async function promptFieldChoice(
     default: defaultValue,
     message,
   });
+}
+
+async function promptOptionalFieldChoice(
+  message: string,
+  fields: BitableFieldInfo[],
+  defaultValue?: string,
+): Promise<string | undefined> {
+  const noneValue = "__none__";
+  const selected = await promptRawlist({
+    choices: [
+      { name: "(leave blank)", value: noneValue },
+      ...fields.map((field) => ({
+        name: field.fieldName,
+        value: field.fieldName,
+      })),
+    ],
+    default: defaultValue ?? noneValue,
+    message,
+  });
+  return selected === noneValue ? undefined : selected;
 }
 
 async function promptValueChoice(

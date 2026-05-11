@@ -1,7 +1,10 @@
 import type {
+  OwnerCriteria,
+  QueryLimit,
   Issue,
   ResearchEvidence,
   SourceMetadata,
+  WorkflowMode,
 } from "../config/schema.js";
 import { redactSecrets } from "../reporting/evidence.js";
 
@@ -22,6 +25,12 @@ export interface CommandOutput<T = unknown> {
   auth?: AuthOutput;
   evidence?: ResearchEvidence[];
   issues?: Issue[];
+  mode?: {
+    active: WorkflowMode | null;
+    source?: "explicit" | "defaulted" | "invalid";
+  };
+  ownerCriteria?: OwnerCriteria;
+  queryLimit?: QueryLimit;
   data?: T;
 }
 
@@ -32,6 +41,9 @@ export interface NormalizedCommandOutput<T = unknown> {
   auth: AuthOutput | null;
   evidence: ResearchEvidence[];
   issues: Issue[];
+  mode: CommandOutput["mode"] | null;
+  ownerCriteria: OwnerCriteria | null;
+  queryLimit: QueryLimit | null;
   data: T | null;
 }
 
@@ -45,6 +57,9 @@ export function normalizeOutput<T>(
     auth: output.auth ?? null,
     evidence: output.evidence ?? [],
     issues: output.issues ?? [],
+    mode: output.mode ?? null,
+    ownerCriteria: output.ownerCriteria ?? null,
+    queryLimit: output.queryLimit ?? null,
     data: output.data ?? null,
   };
 }
@@ -68,6 +83,27 @@ export function formatHuman(output: CommandOutput): string {
     lines.push(
       `source: app=${normalized.source.appToken} table=${normalized.source.tableId}` +
         (normalized.source.viewId ? ` view=${normalized.source.viewId}` : ""),
+    );
+  }
+
+  if (normalized.mode) {
+    lines.push(
+      `mode: ${normalized.mode.active ?? "missing"}${normalized.mode.source ? ` (${normalized.mode.source})` : ""}`,
+    );
+  }
+
+  if (normalized.ownerCriteria) {
+    lines.push(
+      `owner: ${normalized.ownerCriteria.value ?? "(none)"} applied=${normalized.ownerCriteria.applied}` +
+        (normalized.ownerCriteria.notAppliedReason
+          ? ` reason=${normalized.ownerCriteria.notAppliedReason}`
+          : ""),
+    );
+  }
+
+  if (normalized.queryLimit) {
+    lines.push(
+      `limit: ${normalized.queryLimit.limit} returned=${normalized.queryLimit.returned} hasMore=${normalized.queryLimit.hasMore}`,
     );
   }
 

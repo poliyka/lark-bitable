@@ -28,8 +28,8 @@ persisted configuration and validation, and Vitest for TypeScript tests.
 `@larksuiteoapi/node-sdk`, `@inquirer/prompts`, `conf`, `zod`, `vitest`  
 **Storage**: Local per-user CLI configuration for active Bitable source, field
 mappings, Lark app settings, and last triage selection stored outside the repo at
-`~/.lark-bitable-cli/config.json`; Lark auth state stored outside the repo at
-`~/.lark-bitable-cli/auth.json`; generated research reports written to
+`~/.lark-bitable/config.json`; Lark auth state stored outside the repo at
+`~/.lark-bitable/auth.json`; generated research reports written to
 repository-local files  
 **Testing**: Vitest for unit and integration-style CLI tests; mocked Lark client
 responses for deterministic validation  

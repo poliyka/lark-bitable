@@ -13,6 +13,15 @@ export interface BitableFieldOption {
   name: string;
 }
 
+export interface RawBitableFieldInfo {
+  field_name?: string;
+  property?: {
+    options?: Array<{ color?: number; id?: string; name?: string }>;
+  };
+  type?: number;
+  ui_type?: string;
+}
+
 export interface FieldDiscoveryInput {
   appId: string;
   appSecret: string;
@@ -93,16 +102,10 @@ export async function discoverBitableFieldsWithAppCredentials(
     assertLarkOk(response, "Lark field list");
 
     for (const item of response.data?.items ?? []) {
-      const fieldName = item.field_name?.trim();
-      if (!fieldName || seen.has(fieldName)) continue;
-      seen.add(fieldName);
-      const options = normalizeFieldOptions(item.property?.options);
-      fields.push({
-        fieldName,
-        ...(options.length > 0 ? { options } : {}),
-        type: item.type,
-        ...(item.ui_type ? { uiType: item.ui_type } : {}),
-      });
+      const normalized = normalizeBitableFieldInfo(item);
+      if (!normalized || seen.has(normalized.fieldName)) continue;
+      seen.add(normalized.fieldName);
+      fields.push(normalized);
     }
 
     pageToken =
@@ -112,6 +115,20 @@ export async function discoverBitableFieldsWithAppCredentials(
   } while (pageToken);
 
   return fields;
+}
+
+export function normalizeBitableFieldInfo(
+  item: RawBitableFieldInfo,
+): BitableFieldInfo | undefined {
+  const fieldName = item.field_name?.trim();
+  if (!fieldName) return undefined;
+  const options = normalizeFieldOptions(item.property?.options);
+  return {
+    fieldName,
+    ...(options.length > 0 ? { options } : {}),
+    type: item.type,
+    ...(item.ui_type ? { uiType: item.ui_type } : {}),
+  };
 }
 
 export async function discoverBitableFieldValuesWithAppCredentials(

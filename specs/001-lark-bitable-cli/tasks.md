@@ -48,7 +48,7 @@ must exist before user-story commands can be implemented.
 - [x] T010 Implement human and JSON output rendering with stable field order in src/cli/output.ts
 - [x] T011 Implement secret redaction helpers for tokens, auth paths, command output, and reports in src/reporting/evidence.ts
 - [x] T012 Implement local configuration store using conf for active source, field mappings, and last selection in src/config/store.ts
-- [x] T013 Implement auth storage path resolution and atomic read/write/delete helpers for `~/.lark-bitable-cli/auth.json` in src/config/auth-store.ts
+- [x] T013 Implement auth storage path resolution and atomic read/write/delete helpers for `~/.lark-bitable/auth.json` in src/config/auth-store.ts
 - [x] T014 Implement Lark Base/Bitable URL parser for app token, table id, view id, and domain metadata in src/lark/url-parser.ts
 - [x] T015 Implement Bitable record normalization and visible field rendering helpers in src/lark/record-mapper.ts
 - [x] T016 Implement official Lark SDK client wrapper interface with injectable transport for tests in src/lark/client.ts
@@ -73,7 +73,7 @@ tested by user story.
 or re-login handling, logout, and fail-closed auth checks before Lark API calls.
 
 **Independent Test**: Starting with no auth file fixture, run mocked login,
-verify `~/.lark-bitable-cli/auth.json` state is written outside the repository
+verify `~/.lark-bitable/auth.json` state is written outside the repository
 with redacted output, then run logout and confirm API commands require login.
 
 ### Tests for User Story 7

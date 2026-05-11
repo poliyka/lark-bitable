@@ -72,3 +72,64 @@ export function searchRecords(
     })
     .filter((record) => record.matchedFields.length > 0);
 }
+
+export interface MediaReference {
+  contentType?: string;
+  field: string;
+  fileToken: string;
+  name?: string;
+  size?: number;
+  url?: string;
+}
+
+export function extractMediaReferences(
+  record: BitableRecord,
+): MediaReference[] {
+  const refs: MediaReference[] = [];
+  for (const [field, value] of Object.entries(record.fields)) {
+    collectMediaReferences(field, value, refs);
+  }
+  return refs;
+}
+
+function collectMediaReferences(
+  field: string,
+  value: unknown,
+  refs: MediaReference[],
+): void {
+  if (!value) return;
+  if (Array.isArray(value)) {
+    for (const item of value) collectMediaReferences(field, item, refs);
+    return;
+  }
+  if (typeof value !== "object") return;
+
+  const record = value as Record<string, unknown>;
+  const fileToken =
+    stringValue(record.file_token) ??
+    stringValue(record.fileToken) ??
+    tokenFromUrl(stringValue(record.url));
+  if (fileToken) {
+    refs.push({
+      contentType: stringValue(record.type) ?? stringValue(record.mime_type),
+      field,
+      fileToken,
+      name: stringValue(record.name),
+      size: numberValue(record.size),
+      url: stringValue(record.url),
+    });
+  }
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function numberValue(value: unknown): number | undefined {
+  return typeof value === "number" ? value : undefined;
+}
+
+function tokenFromUrl(value: string | undefined): string | undefined {
+  const match = value?.match(/\/medias\/([^/]+)\/download/);
+  return match?.[1];
+}

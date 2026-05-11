@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { AuthStore } from "../../src/config/auth-store.js";
 import { checkReadiness } from "../../src/config/readiness.js";
 import { ConfigStore } from "../../src/config/store.js";
-import { readyAuthSession } from "../fixtures/auth.js";
+import { expiredAuthSession, readyAuthSession } from "../fixtures/auth.js";
 import { fixtureSource } from "../fixtures/lark.js";
 import { selectedBugFixture } from "../fixtures/research.js";
 
@@ -96,5 +96,47 @@ describe("checkReadiness", () => {
         })
       ).status,
     ).toBe("ready");
+  });
+
+  it("refreshes expired auth before reporting readiness when app credentials are stored", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "readiness-"));
+    const authPath = join(cwd, "auth.json");
+    const authStore = new AuthStore(authPath);
+    const configStore = new ConfigStore({ cwd });
+    await authStore.write({ ...expiredAuthSession, storagePath: authPath });
+    configStore.setSource(fixtureSource);
+    configStore.setLarkApp({
+      appId: "cli-app",
+      appSecret: "cli-secret",
+      callbackPort: 14543,
+      domain: "larksuite.com",
+      scopes: ["bitable:app:readonly"],
+      updatedAt: "2026-05-11T08:00:00.000Z",
+    });
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          code: 0,
+          data: {
+            access_token: "refreshed-access",
+            expires_in: 3600,
+            refresh_token: "refreshed-refresh",
+          },
+        }),
+      )) as typeof fetch;
+    try {
+      const result = await checkReadiness("inspect", {
+        authStore,
+        bootstrapInstalled: true,
+        configStore,
+      });
+
+      expect(result.status).toBe("ready");
+      expect((await authStore.read())?.accessToken).toBe("refreshed-access");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });

@@ -26,6 +26,7 @@ export const researchEvidenceSchema = z.object({
     "command-output",
     "user-input",
     "runtime-observation",
+    "lark-media",
   ]),
   reference: z.string().min(1),
   excerpt: z.string().min(1),
@@ -38,6 +39,26 @@ export const sourceMetadataSchema = z.object({
   tableId: z.string().min(1),
   viewId: z.string().min(1).optional(),
   retrievedAt: isoTimestampSchema,
+});
+
+export const workflowModeSchema = z.enum(["QA", "Developer"]);
+
+export const modeConfigSchema = z.object({
+  checkPolicy: z.enum(["auto", "manual-only", "report-only"]).optional(),
+  defaultOwner: z.string().min(1).optional(),
+  updatedAt: isoTimestampSchema,
+});
+
+export const workflowConfigSchema = z.object({
+  activeMode: workflowModeSchema.default("Developer"),
+  configuredAt: isoTimestampSchema,
+  configuredBy: z.string().min(1).optional(),
+  modeConfigs: z
+    .object({
+      QA: modeConfigSchema.optional(),
+      Developer: modeConfigSchema.optional(),
+    })
+    .default({}),
 });
 
 export const bitableSourceSchema = z.object({
@@ -125,12 +146,91 @@ export const bugCandidateSchema = z.object({
 export const triageSelectionSchema = z.object({
   selectedRecordId: z.string().min(1),
   selectedAt: isoTimestampSchema,
+  mode: workflowModeSchema.optional(),
   selectionEvidence: z.record(z.string(), z.unknown()),
   candidateSnapshot: z.record(z.string(), z.unknown()),
 });
 
+export const ownerCriteriaSchema = z.object({
+  applied: z.boolean(),
+  field: z.string().min(1).nullable(),
+  matchedRecords: z.number().int().min(0).default(0),
+  mode: workflowModeSchema,
+  notAppliedReason: z
+    .enum([
+      "missing-owner-field",
+      "empty-owner-value",
+      "default-owner-disabled",
+    ])
+    .optional(),
+  source: z.enum(["command", "mode-default", "none"]),
+  totalRecordsBeforeFilter: z.number().int().min(0).default(0),
+  value: z.string().min(1).optional(),
+});
+
+export const queryLimitSchema = z.object({
+  appliedAfter: z.array(z.string().min(1)).default([]),
+  hasMore: z.union([z.boolean(), z.literal("unknown")]).default("unknown"),
+  limit: z.number().int().positive(),
+  returned: z.number().int().min(0),
+  source: z.enum(["command", "default"]),
+});
+
+export const qaCheckCandidateSchema = z.object({
+  command: z.array(z.string().min(1)).default([]),
+  confidence: z.enum(["high", "medium", "low"]),
+  cwd: z.string().min(1),
+  evidence: z.array(researchEvidenceSchema).default([]),
+  id: z.string().min(1),
+  kind: z.enum([
+    "unit-test",
+    "integration-test",
+    "e2e-test",
+    "lint",
+    "typecheck",
+    "other",
+  ]),
+  safety: z.enum(["safe", "needs-confirmation", "blocked"]),
+  skipReason: z.string().min(1).optional(),
+});
+
+export const executedQaCheckSchema = z.object({
+  candidateId: z.string().min(1),
+  command: z.array(z.string().min(1)).min(1),
+  cwd: z.string().min(1),
+  evidence: z.array(researchEvidenceSchema).default([]),
+  exitCode: z.number().int().nullable(),
+  finishedAt: isoTimestampSchema,
+  outputExcerpt: z.string().default(""),
+  startedAt: isoTimestampSchema,
+  status: z.enum(["passed", "failed", "error"]),
+});
+
+export const skippedQaCheckSchema = z.object({
+  candidateId: z.string().min(1).optional(),
+  evidence: z.array(researchEvidenceSchema).default([]),
+  manualNextStep: z.string().min(1),
+  reason: z.string().min(1),
+});
+
+export const qaVerificationResultSchema = z.object({
+  assumptions: z.array(z.string().min(1)).default([]),
+  checkCandidates: z.array(qaCheckCandidateSchema).default([]),
+  evidence: z.array(researchEvidenceSchema).default([]),
+  executedChecks: z.array(executedQaCheckSchema).default([]),
+  manualNextSteps: z.array(z.string().min(1)).default([]),
+  mode: z.literal("QA"),
+  nextActions: z.array(z.string().min(1)).default([]),
+  observedFacts: z.array(z.string().min(1)).default([]),
+  ownerCriteria: ownerCriteriaSchema.optional(),
+  risks: z.array(z.string().min(1)).default([]),
+  skippedChecks: z.array(skippedQaCheckSchema).default([]),
+  taskSummary: z.record(z.string(), z.unknown()),
+  workspaceEvidence: z.array(researchEvidenceSchema).default([]),
+});
+
 export const validationResultSchema = z.object({
-  workflow: z.enum(["global", "inspect", "triage", "research"]),
+  workflow: z.enum(["global", "inspect", "triage", "research", "verify"]),
   status: z.enum(["ready", "partial", "blocked"]),
   checkedPrerequisites: z.array(z.string().min(1)),
   blockingIssues: z.array(issueSchema).default([]),
@@ -138,6 +238,8 @@ export const validationResultSchema = z.object({
   remediationSteps: z.array(z.string().min(1)).default([]),
   nextSafeCommand: z.string().min(1).optional(),
   evidence: z.array(researchEvidenceSchema).default([]),
+  activeMode: workflowModeSchema.optional(),
+  modeSource: z.enum(["explicit", "defaulted", "invalid"]).optional(),
   checkedAt: isoTimestampSchema,
 });
 
@@ -156,6 +258,9 @@ export const researchReportSchema = z.object({
 export type Issue = z.infer<typeof issueSchema>;
 export type ResearchEvidence = z.infer<typeof researchEvidenceSchema>;
 export type BitableSource = z.infer<typeof bitableSourceSchema>;
+export type WorkflowMode = z.infer<typeof workflowModeSchema>;
+export type ModeConfig = z.infer<typeof modeConfigSchema>;
+export type WorkflowConfig = z.infer<typeof workflowConfigSchema>;
 export type LarkAuthSession = z.infer<typeof authSessionSchema>;
 export type LarkAppConfig = z.infer<typeof larkAppConfigSchema>;
 export type BitableRecord = z.infer<typeof bitableRecordSchema>;
@@ -164,3 +269,9 @@ export type BugCandidate = z.infer<typeof bugCandidateSchema>;
 export type TriageSelection = z.infer<typeof triageSelectionSchema>;
 export type ValidationResult = z.infer<typeof validationResultSchema>;
 export type ResearchReport = z.infer<typeof researchReportSchema>;
+export type OwnerCriteria = z.infer<typeof ownerCriteriaSchema>;
+export type QueryLimit = z.infer<typeof queryLimitSchema>;
+export type QaCheckCandidate = z.infer<typeof qaCheckCandidateSchema>;
+export type ExecutedQaCheck = z.infer<typeof executedQaCheckSchema>;
+export type SkippedQaCheck = z.infer<typeof skippedQaCheckSchema>;
+export type QaVerificationResult = z.infer<typeof qaVerificationResultSchema>;

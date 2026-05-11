@@ -46,7 +46,7 @@ export default class ValidCommand extends BaseCommand {
     workflow: Flags.string({
       default: "global",
       description: "Workflow to validate.",
-      options: ["global", "inspect", "triage", "research"],
+      options: ["global", "inspect", "triage", "research", "verify"],
     }),
   };
 
@@ -77,6 +77,10 @@ export default class ValidCommand extends BaseCommand {
             : "error",
       issues: [...result.blockingIssues, ...result.partialIssues],
       evidence: result.evidence,
+      mode: {
+        active: result.activeMode ?? null,
+        source: result.modeSource,
+      },
       data: {
         ...result,
         guidedRemediation: Boolean(flags.guide),

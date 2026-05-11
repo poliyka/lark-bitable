@@ -5,16 +5,21 @@ import { describe, expect, it } from "vitest";
 import { CliError } from "../../src/cli/errors.js";
 import HelpCommand, { commandNames } from "../../src/cli/commands/help.js";
 
+function normalizeCommandNames(names: string[]): string[] {
+  return names.map((name) => name.replace(/\.ts$/, "")).sort();
+}
+
 describe("command-specific help", () => {
   it("covers every command module with human-readable command help", async () => {
     const commandFiles = readdirSync(
       new URL("../../src/cli/commands/", import.meta.url),
     )
       .filter((file) => file.endsWith(".ts"))
-      .map((file) => file.replace(/\.ts$/, ""))
-      .sort();
+      .map((file) => file.replace(/\.ts$/, ""));
 
-    expect([...commandNames].sort()).toEqual(commandFiles);
+    expect(normalizeCommandNames([...commandNames])).toEqual(
+      normalizeCommandNames([...commandFiles, "media download"]),
+    );
 
     for (const command of commandFiles) {
       const result = await HelpCommand.run([command, "--json"]);
@@ -52,6 +57,13 @@ describe("command-specific help", () => {
     expect(serialized).toContain("For humans");
     expect(serialized).toContain("For AI agents");
     expect(serialized).toContain("Common failures");
+  });
+
+  it("supports topic command help with separate human arguments", async () => {
+    const result = await HelpCommand.run(["media", "download", "--json"]);
+
+    expect(result.data?.command).toBe("media download");
+    expect(result.data?.rendered).toContain("Download Lark Media");
   });
 
   it("rejects unknown command-specific help with available command names", async () => {

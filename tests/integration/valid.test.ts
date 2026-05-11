@@ -59,6 +59,10 @@ describe("valid command", () => {
 
     expect(JSON.stringify(result)).toContain("ready");
     expect(JSON.stringify(result)).toContain("lark-bitable list");
+    expect(result.mode).toMatchObject({
+      active: "Developer",
+      source: "defaulted",
+    });
   });
 
   it("blocks on missing bootstrap skill even when auth and source are configured", async () => {
@@ -85,5 +89,91 @@ describe("valid command", () => {
 
     expect(JSON.stringify(result)).toContain("blocked");
     expect(JSON.stringify(result)).toContain("missing-bootstrap");
+  });
+
+  it("reports explicit QA mode and verify readiness guidance", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "valid-"));
+    const authPath = join(cwd, "auth.json");
+    const skillDir = join(cwd, "skills");
+    await new AuthStore(authPath).write({
+      ...readyAuthSession,
+      storagePath: authPath,
+    });
+    const store = new ConfigStore({ cwd });
+    store.setSource(fixtureSource);
+    store.setActiveMode({ mode: "QA" });
+    await installBootstrapSkill({ targetDir: skillDir });
+
+    const result = await ValidCommand.run([
+      "--workflow",
+      "verify",
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--skill-dir",
+      skillDir,
+      "--json",
+    ]);
+
+    expect(result.mode).toMatchObject({
+      active: "QA",
+      source: "explicit",
+    });
+    expect(result.status).toBe("partial");
+    expect(JSON.stringify(result)).toContain("missing-selection");
+    expect(JSON.stringify(result)).toContain("lark-bitable verify <record-id>");
+  });
+
+  it("blocks verify in Developer mode and warns when research runs in QA mode", async () => {
+    const developerCwd = await mkdtemp(join(tmpdir(), "valid-"));
+    const developerAuthPath = join(developerCwd, "auth.json");
+    const developerSkillDir = join(developerCwd, "skills");
+    await new AuthStore(developerAuthPath).write({
+      ...readyAuthSession,
+      storagePath: developerAuthPath,
+    });
+    const developerStore = new ConfigStore({ cwd: developerCwd });
+    developerStore.setSource(fixtureSource);
+    await installBootstrapSkill({ targetDir: developerSkillDir });
+
+    const developerVerify = await ValidCommand.run([
+      "--workflow",
+      "verify",
+      "--config-cwd",
+      developerCwd,
+      "--auth-path",
+      developerAuthPath,
+      "--skill-dir",
+      developerSkillDir,
+      "--json",
+    ]);
+    expect(developerVerify.status).toBe("error");
+    expect(JSON.stringify(developerVerify)).toContain("wrong-mode");
+
+    const qaCwd = await mkdtemp(join(tmpdir(), "valid-"));
+    const qaAuthPath = join(qaCwd, "auth.json");
+    const qaSkillDir = join(qaCwd, "skills");
+    await new AuthStore(qaAuthPath).write({
+      ...readyAuthSession,
+      storagePath: qaAuthPath,
+    });
+    const qaStore = new ConfigStore({ cwd: qaCwd });
+    qaStore.setSource(fixtureSource);
+    qaStore.setActiveMode({ mode: "QA" });
+    await installBootstrapSkill({ targetDir: qaSkillDir });
+
+    const qaResearch = await ValidCommand.run([
+      "--workflow",
+      "research",
+      "--config-cwd",
+      qaCwd,
+      "--auth-path",
+      qaAuthPath,
+      "--skill-dir",
+      qaSkillDir,
+      "--json",
+    ]);
+    expect(JSON.stringify(qaResearch)).toContain("qa-mode-research");
   });
 });

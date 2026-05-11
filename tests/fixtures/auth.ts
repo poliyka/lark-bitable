@@ -1,7 +1,7 @@
 import type { LarkAuthSession } from "../../src/config/schema.js";
 
 export const readyAuthSession: LarkAuthSession = {
-  storagePath: "~/.lark-bitable-cli/auth.json",
+  storagePath: "~/.lark-bitable/auth.json",
   domain: "larksuite.com",
   accountLabel: "qa-user@example.com",
   appIdentity: "hybrid-im-qa-lark-cli",

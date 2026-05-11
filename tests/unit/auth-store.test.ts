@@ -1,4 +1,11 @@
-import { mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -10,7 +17,7 @@ import { readyAuthSession } from "../fixtures/auth.js";
 describe("AuthStore", () => {
   it("stores auth outside the repository under the user home path", () => {
     expect(defaultAuthPath("/home/alice")).toBe(
-      "/home/alice/.lark-bitable-cli/auth.json",
+      "/home/alice/.lark-bitable/auth.json",
     );
   });
 
@@ -26,6 +33,26 @@ describe("AuthStore", () => {
     expect(JSON.parse(await readFile(path, "utf8")).accessToken).toBe(
       "access-secret",
     );
+  });
+
+  it("migrates the previous .lark-bitable-cli auth path into .lark-bitable", async () => {
+    const home = await mkdtemp(join(tmpdir(), "lark-home-"));
+    const oldDir = join(home, ".lark-bitable-cli");
+    const oldPath = join(oldDir, "auth.json");
+    const newPath = defaultAuthPath(home);
+    await mkdir(oldDir, { recursive: true });
+    await writeFile(
+      oldPath,
+      `${JSON.stringify({ ...readyAuthSession, storagePath: oldPath }, null, 2)}\n`,
+    );
+
+    const store = new AuthStore(newPath);
+
+    await expect(store.read()).resolves.toMatchObject({
+      accessToken: "access-secret",
+      storagePath: newPath,
+    });
+    await expect(access(oldPath)).rejects.toThrow();
   });
 
   it("returns undefined when the auth file is missing and throws on malformed JSON", async () => {

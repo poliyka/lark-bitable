@@ -87,7 +87,7 @@ Commands must never print raw access tokens or refresh tokens.
 **Outputs**:
 
 - Redacted account/app/domain summary.
-- Auth file path `~/.lark-bitable-cli/auth.json`.
+- Auth file path `~/.lark-bitable/auth.json`.
 - Token readiness status and expiration metadata.
 - For SSO login, local callback metadata and the generated authorization URL.
 
@@ -156,7 +156,7 @@ guide users through missing configuration.
 - Field mapping summary.
 - Redacted Lark app settings, including stored OAuth redirect URI and secret
   state but never the app secret.
-- Storage path `~/.lark-bitable-cli/config.json`; existing legacy config is
+- Storage path `~/.lark-bitable/config.json`; existing legacy config is
   migrated into this unified CLI directory when the default store is opened.
 - Field discovery status. Interactive configure uses Lark app credentials to
   read table fields and present numbered choices for field mappings. The

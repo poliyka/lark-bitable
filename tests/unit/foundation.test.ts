@@ -10,7 +10,11 @@ import {
   authSessionSchema,
   bitableRecordSchema,
   bitableSourceSchema,
+  ownerCriteriaSchema,
+  qaVerificationResultSchema,
+  queryLimitSchema,
   validationResultSchema,
+  workflowConfigSchema,
 } from "../../src/config/schema.js";
 import { redactSecrets, toEvidence } from "../../src/reporting/evidence.js";
 import { parseBitableUrl } from "../../src/lark/url-parser.js";
@@ -36,7 +40,7 @@ describe("foundation schemas", () => {
   it("rejects incomplete auth sessions and accepts redacted-ready metadata", () => {
     expect(() =>
       authSessionSchema.parse({
-        storagePath: "~/.lark-bitable-cli/auth.json",
+        storagePath: "~/.lark-bitable/auth.json",
         status: "ready",
         accessToken: "",
       }),
@@ -44,7 +48,7 @@ describe("foundation schemas", () => {
 
     expect(
       authSessionSchema.parse({
-        storagePath: "~/.lark-bitable-cli/auth.json",
+        storagePath: "~/.lark-bitable/auth.json",
         domain: "larksuite.com",
         accountLabel: "user@example.com",
         appIdentity: "cli-app",
@@ -88,6 +92,70 @@ describe("foundation schemas", () => {
     expect(record.recordId).toBe("recA");
     expect(validation.status).toBe("blocked");
   });
+
+  it("validates mode, owner, query limit, QA result, and lark-media evidence schemas", () => {
+    expect(
+      workflowConfigSchema.parse({
+        activeMode: "QA",
+        configuredAt: "2026-05-11T10:00:00.000Z",
+        modeConfigs: {
+          QA: {
+            updatedAt: "2026-05-11T10:00:00.000Z",
+          },
+        },
+      }).activeMode,
+    ).toBe("QA");
+
+    expect(
+      ownerCriteriaSchema.parse({
+        applied: false,
+        field: null,
+        mode: "Developer",
+        notAppliedReason: "missing-owner-field",
+        source: "command",
+        value: "openclaw",
+      }).notAppliedReason,
+    ).toBe("missing-owner-field");
+
+    expect(
+      queryLimitSchema.parse({
+        appliedAfter: ["owner", "search"],
+        hasMore: false,
+        limit: 10,
+        returned: 2,
+        source: "command",
+      }).limit,
+    ).toBe(10);
+
+    const larkMediaEvidence = toEvidence({
+      type: "lark-media",
+      reference: "boxcnimage",
+      excerpt: "Downloaded image/png through authenticated media API",
+      status: "verified",
+    });
+    const qaResult = qaVerificationResultSchema.parse({
+      mode: "QA",
+      evidence: [larkMediaEvidence],
+      checkCandidates: [
+        {
+          command: [],
+          confidence: "low",
+          cwd: process.cwd(),
+          evidence: [],
+          id: "manual-workspace-check",
+          kind: "other",
+          safety: "blocked",
+          skipReason: "No package.json was found in the workspace.",
+        },
+      ],
+      taskSummary: {
+        recordId: "recA",
+      },
+    });
+
+    expect(qaResult.evidence[0]?.type).toBe("lark-media");
+    expect(qaResult.checkCandidates[0]?.command).toEqual([]);
+  });
 });
 
 describe("foundation output and redaction", () => {
@@ -111,6 +179,9 @@ describe("foundation output and redaction", () => {
       "auth",
       "evidence",
       "issues",
+      "mode",
+      "ownerCriteria",
+      "queryLimit",
       "data",
     ]);
     expect(formatJson(output)).toContain('"status": "blocked"');
@@ -119,12 +190,12 @@ describe("foundation output and redaction", () => {
 
   it("redacts raw tokens and creates citable evidence", () => {
     const redacted = redactSecrets(
-      "accessToken=abc123 refresh_token=def456 ~/.lark-bitable-cli/auth.json",
+      "accessToken=abc123 refresh_token=def456 ~/.lark-bitable/auth.json",
     );
 
     expect(redacted).not.toContain("abc123");
     expect(redacted).not.toContain("def456");
-    expect(redacted).toContain("~/.lark-bitable-cli/auth.json");
+    expect(redacted).toContain("~/.lark-bitable/auth.json");
 
     expect(
       toEvidence({
@@ -133,7 +204,7 @@ describe("foundation output and redaction", () => {
         excerpt: "3 passed",
         status: "verified",
       }).id,
-    ).toBe("E1");
+    ).toMatch(/^E\d+$/);
   });
 
   it("represents fail-closed CLI errors with remediation", () => {
