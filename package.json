@@ -1,6 +1,6 @@
 {
   "name": "lark-bitable",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "AI-facing Lark Bitable CLI for bug triage and evidence-backed reports.",
   "license": "MIT",
@@ -32,6 +32,7 @@
   },
   "files": [
     "bin/",
+    "change-log.md",
     "dist/",
     "README.md",
     "src/bootstrap/skill/SKILL.md"
