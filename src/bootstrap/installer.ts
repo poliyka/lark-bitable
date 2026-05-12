@@ -8,8 +8,26 @@ export interface BootstrapSkillState {
   stale?: boolean;
 }
 
-export interface BootstrapInstallResult extends BootstrapSkillState {
+export interface BootstrapSkillTargetState extends BootstrapSkillState {
+  targetDir: string;
+}
+
+export interface BootstrapSkillGroupState extends BootstrapSkillState {
+  targets: BootstrapSkillTargetState[];
+}
+
+export interface BootstrapInstallResult extends BootstrapSkillTargetState {
   installed: true;
+}
+
+export interface BootstrapInstallGroupResult extends BootstrapSkillGroupState {
+  installed: true;
+}
+
+const DEFAULT_SKILL_TARGET_DIRS = [".agents/skills", ".claude/skills"] as const;
+
+export function defaultSkillTargetDirs(): string[] {
+  return [...DEFAULT_SKILL_TARGET_DIRS];
 }
 
 export function defaultSkillSourcePath(): string {
@@ -23,21 +41,44 @@ export function skillTargetPath(targetDir: string): string {
 
 export async function inspectBootstrapSkill(input: {
   targetDir: string;
-}): Promise<BootstrapSkillState> {
+}): Promise<BootstrapSkillTargetState> {
   const skillPath = skillTargetPath(input.targetDir);
   try {
     const content = await readFile(skillPath, "utf8");
     return {
       installed: true,
       skillPath,
+      targetDir: input.targetDir,
       stale: !content.includes("lark-bitable valid"),
     };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return { installed: false, skillPath };
+      return { installed: false, skillPath, targetDir: input.targetDir };
     }
     throw error;
   }
+}
+
+export async function inspectBootstrapSkillTargets(input: {
+  targetDirs: string[];
+}): Promise<BootstrapSkillGroupState> {
+  const targets = await Promise.all(
+    uniqueTargetDirs(input.targetDirs).map((targetDir) =>
+      inspectBootstrapSkill({ targetDir }),
+    ),
+  );
+  const firstProblem = targets.find(
+    (target) => !target.installed || target.stale,
+  );
+  const representative = firstProblem ?? targets[0];
+
+  return {
+    installed:
+      targets.length > 0 && targets.every((target) => target.installed),
+    skillPath: representative?.skillPath ?? "",
+    stale: targets.some((target) => target.stale),
+    targets,
+  };
 }
 
 export async function installBootstrapSkill(input: {
@@ -52,8 +93,35 @@ export async function installBootstrapSkill(input: {
   return {
     installed: true,
     skillPath,
+    targetDir: input.targetDir,
     stale: false,
   };
+}
+
+export async function installBootstrapSkillTargets(input: {
+  sourcePath?: string;
+  targetDirs: string[];
+}): Promise<BootstrapInstallGroupResult> {
+  const targets: BootstrapInstallResult[] = [];
+  for (const targetDir of uniqueTargetDirs(input.targetDirs)) {
+    targets.push(
+      await installBootstrapSkill({
+        sourcePath: input.sourcePath,
+        targetDir,
+      }),
+    );
+  }
+
+  return {
+    installed: true,
+    skillPath: targets[0]?.skillPath ?? "",
+    stale: false,
+    targets,
+  };
+}
+
+function uniqueTargetDirs(targetDirs: string[]): string[] {
+  return [...new Set(targetDirs)];
 }
 
 async function pathExists(path: string): Promise<boolean> {

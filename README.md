@@ -70,8 +70,10 @@ SETUP AND AUTH COMMANDS
     Reports CLI bin/version, config path, auth path, active mode,
     source configuration, Lark app configuration, required field mappings,
     and bootstrap skill install/staleness.
-    With --install-skill, installs the shipped AI bootstrap skill to:
+    With --install-skill, installs the shipped AI bootstrap skill to Codex
+    and Claude Code project skill directories:
       .agents/skills/lark-bitable/SKILL.md
+      .claude/skills/lark-bitable/SKILL.md
 
   valid [--workflow global|inspect|triage|research|verify|write]
     Validate whether the current setup can safely run a workflow.
@@ -629,7 +631,10 @@ lark-bitable doctor --install-skill
 
 ```text
 .agents/skills/lark-bitable/SKILL.md
+.claude/skills/lark-bitable/SKILL.md
 ```
+
+`.agents/skills` 供 Codex 使用，`.claude/skills` 供 Claude Code 使用。若只想檢查或安裝單一 agent 的目錄，可用進階參數 `--skill-dir <dir>` 指定。
 
 之後檢查：
 

@@ -2,7 +2,11 @@ import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../base-command.js";
 import type { CommandOutput } from "../output.js";
-import { inspectBootstrapSkill } from "../../bootstrap/installer.js";
+import {
+  defaultSkillTargetDirs,
+  inspectBootstrapSkill,
+  inspectBootstrapSkillTargets,
+} from "../../bootstrap/installer.js";
 import { AuthStore, defaultAuthPath } from "../../config/auth-store.js";
 import { checkReadiness, type Workflow } from "../../config/readiness.js";
 import { ConfigStore } from "../../config/store.js";
@@ -52,9 +56,13 @@ export default class ValidCommand extends BaseCommand {
 
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(ValidCommand);
-    const bootstrap = await inspectBootstrapSkill({
-      targetDir: flags["skill-dir"] ?? ".agents/skills",
-    });
+    const bootstrap = flags["skill-dir"]
+      ? await inspectBootstrapSkill({
+          targetDir: flags["skill-dir"],
+        })
+      : await inspectBootstrapSkillTargets({
+          targetDirs: defaultSkillTargetDirs(),
+        });
     const result = await checkReadiness(flags.workflow as Workflow, {
       authStore: new AuthStore(flags["auth-path"]),
       bootstrap,

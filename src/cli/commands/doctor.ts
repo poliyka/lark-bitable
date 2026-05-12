@@ -5,8 +5,11 @@ import type { CommandOutput } from "../output.js";
 import { AuthStore, defaultAuthPath } from "../../config/auth-store.js";
 import { ConfigStore } from "../../config/store.js";
 import {
+  defaultSkillTargetDirs,
   installBootstrapSkill,
+  installBootstrapSkillTargets,
   inspectBootstrapSkill,
+  inspectBootstrapSkillTargets,
 } from "../../bootstrap/installer.js";
 import { resolveWorkflowMode } from "../../mode/mode-config.js";
 
@@ -51,13 +54,21 @@ export default class DoctorCommand extends BaseCommand {
           source.fieldAliases.title ? null : "title-field",
         ].filter((value): value is string => Boolean(value))
       : [];
-    const bootstrap = flags["install-skill"]
-      ? await installBootstrapSkill({
-          targetDir: flags["skill-dir"] ?? ".agents/skills",
-        })
-      : await inspectBootstrapSkill({
-          targetDir: flags["skill-dir"] ?? ".agents/skills",
-        });
+    const bootstrap = flags["skill-dir"]
+      ? flags["install-skill"]
+        ? await installBootstrapSkill({
+            targetDir: flags["skill-dir"],
+          })
+        : await inspectBootstrapSkill({
+            targetDir: flags["skill-dir"],
+          })
+      : flags["install-skill"]
+        ? await installBootstrapSkillTargets({
+            targetDirs: defaultSkillTargetDirs(),
+          })
+        : await inspectBootstrapSkillTargets({
+            targetDirs: defaultSkillTargetDirs(),
+          });
     const output: CommandOutput = {
       command: "doctor",
       status: auth && source && bootstrap.installed ? "ok" : "partial",
@@ -82,6 +93,26 @@ export default class DoctorCommand extends BaseCommand {
         authPath: authStore.path,
         bootstrapSkillInstalled: bootstrap.installed,
         bootstrapSkillPath: bootstrap.skillPath,
+        bootstrapSkillPaths:
+          "targets" in bootstrap
+            ? bootstrap.targets.map((target) => target.skillPath)
+            : [bootstrap.skillPath],
+        bootstrapSkillTargets:
+          "targets" in bootstrap
+            ? bootstrap.targets.map((target) => ({
+                installed: target.installed,
+                path: target.skillPath,
+                stale: target.stale,
+                targetDir: target.targetDir,
+              }))
+            : [
+                {
+                  installed: bootstrap.installed,
+                  path: bootstrap.skillPath,
+                  stale: bootstrap.stale,
+                  targetDir: bootstrap.targetDir,
+                },
+              ],
         bootstrapSkillStale: bootstrap.stale,
         sourceConfigured: Boolean(source),
         larkAppConfigured: Boolean(larkApp),
