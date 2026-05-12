@@ -31,9 +31,15 @@ describe("bootstrap skill contract", () => {
     expect(skill).toContain(
       "Query commands support `--limit <positive-integer>`",
     );
+    expect(skill).toContain("refresh before starting a browser login");
+    expect(skill).toContain("Inspect the stored scopes");
+    expect(skill).toContain('lark-bitable lark --login --scope="<scope>"');
     expect(skill).toContain("run `lark-bitable get <record-id>`");
     expect(skill).toContain("media download <file-token>");
     expect(skill).toContain("not as anonymous public URLs");
+    expect(skill).toContain("representative QA snapshot photos");
+    expect(skill).toContain("not limited to one photo");
+    expect(skill).toContain("Preserve existing attachments");
     expect(skill).toContain("A list result is only a candidate summary");
     expect(skill).toContain("Every factual claim");
     expect(skill).toContain("Stop");

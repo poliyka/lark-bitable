@@ -76,9 +76,22 @@ version conflicts, or inconclusive live access.
   or inactive application-identity permission, not as a field-name problem.
 - For AI setup, run `lark-bitable configure <Lark Base URL> --lark-app-id <id> --lark-app-secret <secret> --lark-redirect-uri <registered-redirect-uri>`
   with explicit values provided by the user or environment.
-- Run `lark-bitable lark --login` when auth is missing, expired, invalid, or
+- Run `lark-bitable lark --login` when auth is missing, invalid, or
   insufficient. The command opens a browser and waits for the local SSO
   callback using the configured Lark app settings.
+- If auth is expired but a refresh token is present, use the refresh token to
+  refresh before starting a browser login. Run the intended command again or run
+  `lark-bitable valid --workflow <scope> --json` after confirming stored Lark
+  app credentials exist; the CLI can refresh with the stored refresh token and
+  app secret. Only fall back to `lark-bitable lark --login` when refresh is not
+  possible or still leaves auth unusable.
+- Inspect the stored scopes before fallback login. Check the current auth scopes
+  in `~/.lark-bitable/auth.json` and the configured `larkApp.scopes` in
+  `~/.lark-bitable/config.json`, then preserve the required scope set when
+  logging in again. Use `lark-bitable lark --login --scope="<scope>"` for each
+  required scope; for write-capable Bitable access this normally means
+  `lark-bitable lark --login --scope="bitable:app"`. Do not replace an expired
+  write-capable token with a fresh readonly token.
 - For committed Bitable writes, the user access token must be requested with
   write scope. After the Lark app has published and approved the user-identity
   write permission, run `lark-bitable lark --login --scope="bitable:app"`.
@@ -185,6 +198,20 @@ When a human or AI asks for high-risk bugs, the workflow must be:
 - If `verify` lists media references, download them with
   `lark-bitable media download <file-token> --out <path>` and inspect the local
   file before making claims about image or attachment contents.
+- If QA verification produces or identifies representative QA snapshot photos,
+  write those photos back to the selected Bitable record with `lark-bitable write`
+  when an attachment/photo field is available. This is not limited to one photo:
+  include every representative snapshot needed to show the verified state,
+  failure, or reproduction result.
+- Preserve existing attachments: before writing snapshot photos, run
+  `get <record-id>` and write the attachment field as the existing file-token
+  objects plus the new representative snapshot file-token objects. Do not
+  overwrite existing attachments with only the new snapshots unless the user
+  explicitly requests replacement.
+- If a representative snapshot exists only as a local file and no Bitable/Drive
+  `file_token` is available, report the upload/write as blocked instead of
+  claiming the photo was written. The current `write` command can set attachment
+  fields from file-token values; it does not upload local files by itself.
 - Do not use `research` as the QA verification workflow unless the user
   explicitly asks for Developer-style research; prefer `verify` in QA mode.
 

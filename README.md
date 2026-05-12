@@ -8,19 +8,57 @@
 `configure` 設定目前專案要使用的 Lark Base/Bitable URL，再由 CLI 和 AI
 基於同一份本機設定工作。
 
+## 目錄
+
+- [功能範圍](#功能範圍)
+- [前置條件](#前置條件)
+- [安裝 CLI](#安裝-cli)
+- [本機儲存位置](#本機儲存位置)
+- [Lark Developer Console 設定](#lark-developer-console-設定)
+  - [1. 建立或打開自建應用](#1-建立或打開自建應用)
+  - [2. 設定 OAuth Redirect URL](#2-設定-oauth-redirect-url)
+  - [3. 開通應用身份權限](#3-開通應用身份權限)
+  - [4. 開通使用者身份權限](#4-開通使用者身份權限)
+  - [5. 發布版本並等待審核](#5-發布版本並等待審核)
+  - [6. 確認 app 可以讀取目標 Base](#6-確認-app-可以讀取目標-base)
+- [多維表格準備](#多維表格準備)
+- [Workflow Mode](#workflow-mode)
+- [第一次設定 CLI](#第一次設定-cli)
+- [登入 Lark](#登入-lark)
+- [安裝 AI Bootstrap Skill](#安裝-ai-bootstrap-skill)
+- [驗證完整設定](#驗證完整設定)
+- [讀取多維表格](#讀取多維表格)
+- [寫入多維表格](#寫入多維表格)
+- [Bug Triage 工作流](#bug-triage-工作流)
+- [QA Verification 工作流](#qa-verification-工作流)
+- [產出 Research Report](#產出-research-report)
+- [Help](#help)
+- [常見問題](#常見問題)
+- [開發驗證](#開發驗證)
+
 ## 功能範圍
 
-- `configure`: 設定 Lark app、OAuth redirect URI、Base URL、workflow mode、bug 欄位對應、可選負責人欄位。
-- `lark --login`: 使用 Lark SSO/OAuth 登入，取得可呼叫 API 的 token。
-- `valid`: 檢查安裝、bootstrap skill、登入、Base 設定、欄位對應是否完成。
-- `schema`: 預設只輸出欄位 headers；加上 `--json` 會輸出完整 schema、欄位型別、選項、mappings 與 sample 統計。
-- `list`, `get`, `filter`, `search`: 讀取與查詢多維表格資料。
-- `triage`: 依狀態和優先級挑出可處理 bug，讓使用者選擇要修的項目。
-- `research`: 依已選 bug 和 repo 證據產出第一份分析報告。
-- `verify`: QA mode 下讀取選定任務、探索 workspace 可安全執行的檢查，產出 QA verification report。
-- `write`: 預覽或提交單筆新增、單筆更新。沒有 `--confirm` 時只產生 no-write preview，不修改表格。
-- `media download`: 使用登入 token 下載多維表格圖片或附件。
-- `doctor --install-skill`: 安裝 AI Agent 可讀的 bootstrap skill。
+`lark-bitable` 的功能分成設定、驗證、讀取、證據下載、Developer triage/research、QA verify、以及安全寫入幾個部分。所有主要命令都支援人類可讀輸出；需要給 AI Agent 或 script 使用時，請加 `--json` 取得結構化輸出。
+
+- `configure`：建立或更新目前 repo 使用的 Lark Base/Bitable source。它會解析 Base URL 中的 `appToken`、`tableId`、`viewId`，儲存 Lark app id、app secret、OAuth redirect URI、Lark domain、workflow mode（`Developer` 或 `QA`）、狀態欄位、優先級欄位、標題欄位、actionable status、可選 owner 欄位和 mode-specific default owner。互動式 configure 會用 application identity 權限讀取欄位 metadata，讓使用者用編號選欄位；如果欄位探索失敗，會回報缺少哪些 Lark app 權限，而不是要求使用者盲猜欄位名稱。
+- `doctor`：檢查 CLI 本身和本機設定是否完整，包括 CLI bin/version、`~/.lark-bitable/config.json`、`~/.lark-bitable/auth.json`、active mode、source 是否已設定、Lark app 設定是否存在、必要欄位 mapping 是否完整、bootstrap skill 是否已安裝或過期。`doctor --install-skill` 會把隨 CLI 發布的 bootstrap skill 安裝到 `.agents/skills/lark-bitable-cli/SKILL.md`，讓 AI Agent 知道正確 workflow、權限邊界和證據規則。
+- `valid`：針對 workflow 做 readiness 驗證，支援 `global`、`inspect`、`triage`、`research`、`verify`、`write`。它會把結果分成 `ready`、`partial`、`blocked`，並輸出 blocking issues、partial issues、evidence、active mode、下一步 remediation。這個命令適合在 AI Agent 執行 `list/get/triage/research/verify/write` 前先確認設定是否足夠；例如 `valid --workflow write` 會檢查 write 前置條件，並在寫入權限尚未被真實提交證明時標示 `write-permission-unverified`。
+- `lark --login` / `lark --logout`：管理使用者身份 OAuth token。`lark --login` 預設使用本機 SSO callback，讀取 configure 儲存的 app id、app secret、redirect URI 後打開瀏覽器登入，也支援 authorization code 模式。登入會把 access token、refresh token、過期時間、domain、scopes 寫入 `~/.lark-bitable/auth.json`。需要 committed write 時，必須使用 `lark-bitable lark --login --scope="bitable:app"` 取得 write scope；`lark --logout` 只清除本機 auth 狀態。
+- `schema`：讀取目前表格欄位。預設輸出欄位 header 清單，方便人類快速確認欄位名稱；`schema --json` 會輸出欄位名稱、field type / UI type、單選或多選 options、目前 configure 的 mappings、sample records 的非空統計和 observed values。AI Agent 不確定欄位名稱、狀態值、owner 欄位或繁簡語系時，應先跑 `schema --json`。
+- `list` / `get` / `filter` / `search`：讀取與查詢目前 Base 的 records。`list` 可限制回傳數量、挑選欄位、套用 owner filter；`get` 依 stable record id 讀完整 record，並抽取圖片/附件 media references；`filter` 支援指定欄位 `equals` 或 `contains`；`search` 搜尋可見文字欄位，也可限制搜尋欄位。這些命令都會回傳 source、active mode、ownerCriteria、queryLimit 等資訊，讓 AI 不把候選摘要誤當完整 record。
+- `media download`：使用登入後的 Lark access token 透過官方 Drive media API 下載多維表格圖片或附件 file token，輸出檔案大小、content type、content disposition 和 evidence。它支援需要進階權限的 `--extra` 參數，也支援 HTTP range。這個命令的目的，是避免直接匿名打開多維表格圖片 URL 時拿到權限頁或 redirect，卻誤以為已經檢查了圖片內容。
+- `triage`：Developer/QA 都可用來選任務。它會讀取 records，套用 owner 條件、actionable status、priority order 和 limit，挑出候選 bug/task，並把選中的 record id、候選摘要、篩選條件、排序依據、ownerCriteria、queryLimit 存到本機 selection state，供後續 `research` 或 `verify` 使用。
+- `research`：Developer-oriented report 產生器。它依賴最近一次 `triage` selection，接受額外 `--evidence type:reference:excerpt`，輸出包含 observed facts、assumptions、repository findings、likely causes、recommended fixes、risks、next actions、evidence 的 Markdown report。`research` 不會替代 repo 分析或圖片檢查；它只會把已提供或已選定的證據整理成有邊界的第一份分析報告。
+- `verify`：QA mode 的驗證命令。它要求 active mode 是 `QA`，可使用最近一次 triage selection 或指定 `<record-id>`，讀完整任務 record、抽取 media references、探索目前 workspace 中可安全執行的檢查，依 `--checks auto|none|unit|integration|e2e` 執行或略過檢查，並輸出 QA verification report。結果會把 executed checks、skipped checks、manual next steps、assumptions、risks、evidence 分開，避免把未下載的圖片或未執行的測試寫成事實。
+- `write`：對目前 Base 做單筆 create 或 update。預設永遠是 preview，不加 `--confirm` 不會修改表格；preview 會顯示 source、operation、before values、planned field changes、next safe command。提交時支援 `--op create`、`--op update --record-id <id>`、重複 `--field "欄位=值"`、或 `--fields-json '{"欄位":"值"}'`。它會拒絕未知欄位、空 field set、create 帶 record id、update 缺 record id、重複欄位、以及沒有 write scope 的 committed write。create commit 可用 `--client-token` 做 idempotency；若 Lark 回應無法確認最終狀態，會標成 partial/unknown 並要求先 `get` 或人工檢查，避免重複寫入。
+- `help`：提供整體 workflow help 和 command-specific help。人類可用 `lark-bitable help <command>` 看下一步，AI Agent 可用 `lark-bitable help <command> --json` 讀取 purpose、inputs、outputs、common failures、next steps。
+
+明確不在功能範圍內：
+
+- 不會替你在 Lark Developer Console 新增權限、發布 app version、處理企業審核或修改 Base 協作者設定；這些必須由有權限的人在 Lark 後台完成。
+- 不支援 delete、batch write、upsert、schema mutation、view mutation、permission management。
+- `write` 目前只能把已有的 Bitable/Drive `file_token` 寫進附件欄位；不會把本機圖片檔直接 upload 成 Lark 附件。
+- `research` 和 `verify` 不會自動判讀未下載的圖片或附件內容；看到 media reference 只代表 record 裡有素材，必須先用 `media download` 下載並檢查，才能把內容當成證據。
 
 ## 前置條件
 
@@ -39,6 +77,7 @@ Lark 端需要：
 - Lark app 已設定 OAuth Redirect URL
 - Lark app 已開通並發布 application identity 和 user identity 兩類必要 API 權限
 - 目標多維表格允許這個應用讀取欄位與記錄
+- 如果要使用 `write --confirm`，目標多維表格也要允許這個應用和登入使用者新增或更新記錄
 
 ## 安裝 CLI
 
@@ -157,24 +196,29 @@ http://127.0.0.1:14543/callback
 
 這一步使用的是 application identity，也就是 `tenant_access_token`。
 
-請在 Lark Developer Console 的權限管理中加入 application identity 權限：
+請在 Lark Developer Console 的權限管理中加入 application identity 權限。最低建議開齊：
 
 ```text
 base:field:read
-```
-
-如果要一次開齊、避免 configure 在讀取既有狀態值或記錄值時又遇到權限不足，也建議同時加入 application identity 的：
-
-```text
 bitable:app:readonly
 ```
 
-這兩個不要理解成二選一。它們覆蓋的是不同讀取面：
+如果這個 app 要支援 `write --confirm`，或你想避免 write workflow 在 Lark app
+權限檢查時缺少寫入 scope，也要加入 application identity 的多維表格讀寫權限：
+
+```text
+bitable:app
+```
+
+這些權限不要理解成二選一。它們覆蓋的是不同能力面：
 
 - `base:field:read`：讓 configure 讀取欄位 metadata，顯示可選欄位。
 - application identity `bitable:app:readonly`：讓 app 身份讀取多維表格資料；configure 在需要從既有記錄推導狀態值時會用到記錄讀取能力。
+- application identity `bitable:app`：讓 app 身份具備多維表格讀寫能力；使用 write-capable app 時應開通，避免 Lark 回報缺少 `bitable:app` scope。
 
-如果你只開 `base:field:read`，欄位選擇可能能跑，但 configure 需要讀取記錄值時仍可能失敗。如果你只開 application identity `bitable:app:readonly`，部分 Lark 權限策略下也可能能列欄位，但語義上缺少明確的欄位讀取授權。實務上建議 application identity 兩個都開。
+如果你只開 `base:field:read`，欄位選擇可能能跑，但 configure 需要讀取記錄值時仍可能失敗。如果你只開 application identity `bitable:app:readonly`，部分 Lark 權限策略下也可能能列欄位，但語義上缺少明確的欄位讀取授權。若要使用 write，application identity 還要開通 `bitable:app`。
+
+注意：application identity 的 `bitable:app` 不會自動讓使用者 OAuth token 升權。實際提交 `write --confirm` 時，下一節的 user identity `bitable:app` 和 `lark-bitable lark --login --scope="bitable:app"` 仍然必須完成。
 
 ### 4. 開通使用者身份權限
 
@@ -237,7 +281,7 @@ bitable:app:readonly
 
 - app 權限沒有發布或審核未通過
 - application identity 權限和 user identity 權限只開了其中一種
-- 目標 Base 沒有授權該 app 讀取
+- 目標 Base 沒有授權該 app 讀取，或 write 場景沒有授權新增/更新
 - app id/app secret 填錯
 - 使用了錯誤 tenant 或錯誤 Lark domain
 
@@ -823,6 +867,7 @@ lark-bitable help doctor
 - app id/app secret 是否正確
 - application identity 是否有 `base:field:read`
 - application identity 是否也有 `bitable:app:readonly`
+- 如果錯誤訊息要求 `bitable:app`，application identity 是否也開了 `bitable:app`
 - 權限是否已發布
 - 企業審核是否已通過
 - 目標 Base 是否授權 app 讀取
@@ -841,10 +886,11 @@ Access denied. One of the following scopes is required:
 1. 到 Lark Developer Console > Permissions。
 2. 新增 application identity `base:field:read`。
 3. 同時新增 application identity `bitable:app:readonly`，避免 configure 後續讀取既有記錄值時再次缺權限。
-4. 發布新版。
-5. 等企業審核通過。
-6. 確認 Base 允許 app 讀取。
-7. 重新執行：
+4. 如果會使用 write，或錯誤訊息明確列出 `bitable:app`，也新增 application identity `bitable:app`。
+5. 發布新版。
+6. 等企業審核通過。
+7. 確認 Base 允許 app 讀取；write 場景也要確認 app 和登入使用者可新增或更新記錄。
+8. 重新執行：
 
    ```bash
    lark-bitable configure
@@ -889,6 +935,7 @@ https://open.larksuite.com/app/<app-id>/event?tab=callback
 - app 權限是否已發布並審核通過
 - Base 是否允許 app 讀取
 - application identity 是否同時開了 `base:field:read` 和 `bitable:app:readonly`
+- 如果是 write-capable app，application identity 是否也開了 `bitable:app`
 - user identity 是否開了 `bitable:app:readonly`
 - 如果是 `write --confirm`，user identity 是否也有可新增/更新記錄的多維表格寫入權限
 - 如果是 `write --confirm`，是否已用 `lark-bitable lark --login --scope="bitable:app"`
