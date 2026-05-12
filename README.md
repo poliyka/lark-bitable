@@ -38,27 +38,147 @@
 
 ## 功能範圍
 
-`lark-bitable` 的功能分成設定、驗證、讀取、證據下載、Developer triage/research、QA verify、以及安全寫入幾個部分。所有主要命令都支援人類可讀輸出；需要給 AI Agent 或 script 使用時，請加 `--json` 取得結構化輸出。
+```text
+lark-bitable
 
-- `configure`：建立或更新目前 repo 使用的 Lark Base/Bitable source。它會解析 Base URL 中的 `appToken`、`tableId`、`viewId`，儲存 Lark app id、app secret、OAuth redirect URI、Lark domain、workflow mode（`Developer` 或 `QA`）、狀態欄位、優先級欄位、標題欄位、actionable status、可選 owner 欄位和 mode-specific default owner。互動式 configure 會用 application identity 權限讀取欄位 metadata，讓使用者用編號選欄位；如果欄位探索失敗，會回報缺少哪些 Lark app 權限，而不是要求使用者盲猜欄位名稱。
-- `doctor`：檢查 CLI 本身和本機設定是否完整，包括 CLI bin/version、`~/.lark-bitable/config.json`、`~/.lark-bitable/auth.json`、active mode、source 是否已設定、Lark app 設定是否存在、必要欄位 mapping 是否完整、bootstrap skill 是否已安裝或過期。`doctor --install-skill` 會把隨 CLI 發布的 bootstrap skill 安裝到 `.agents/skills/lark-bitable-cli/SKILL.md`，讓 AI Agent 知道正確 workflow、權限邊界和證據規則。
-- `valid`：針對 workflow 做 readiness 驗證，支援 `global`、`inspect`、`triage`、`research`、`verify`、`write`。它會把結果分成 `ready`、`partial`、`blocked`，並輸出 blocking issues、partial issues、evidence、active mode、下一步 remediation。這個命令適合在 AI Agent 執行 `list/get/triage/research/verify/write` 前先確認設定是否足夠；例如 `valid --workflow write` 會檢查 write 前置條件，並在寫入權限尚未被真實提交證明時標示 `write-permission-unverified`。
-- `lark --login` / `lark --logout`：管理使用者身份 OAuth token。`lark --login` 預設使用本機 SSO callback，讀取 configure 儲存的 app id、app secret、redirect URI 後打開瀏覽器登入，也支援 authorization code 模式。登入會把 access token、refresh token、過期時間、domain、scopes 寫入 `~/.lark-bitable/auth.json`。需要 committed write 時，必須使用 `lark-bitable lark --login --scope="bitable:app"` 取得 write scope；`lark --logout` 只清除本機 auth 狀態。
-- `schema`：讀取目前表格欄位。預設輸出欄位 header 清單，方便人類快速確認欄位名稱；`schema --json` 會輸出欄位名稱、field type / UI type、單選或多選 options、目前 configure 的 mappings、sample records 的非空統計和 observed values。AI Agent 不確定欄位名稱、狀態值、owner 欄位或繁簡語系時，應先跑 `schema --json`。
-- `list` / `get` / `filter` / `search`：讀取與查詢目前 Base 的 records。`list` 可限制回傳數量、挑選欄位、套用 owner filter；`get` 依 stable record id 讀完整 record，並抽取圖片/附件 media references；`filter` 支援指定欄位 `equals` 或 `contains`；`search` 搜尋可見文字欄位，也可限制搜尋欄位。這些命令都會回傳 source、active mode、ownerCriteria、queryLimit 等資訊，讓 AI 不把候選摘要誤當完整 record。
-- `media download`：使用登入後的 Lark access token 透過官方 Drive media API 下載多維表格圖片或附件 file token，輸出檔案大小、content type、content disposition 和 evidence。它支援需要進階權限的 `--extra` 參數，也支援 HTTP range。這個命令的目的，是避免直接匿名打開多維表格圖片 URL 時拿到權限頁或 redirect，卻誤以為已經檢查了圖片內容。
-- `triage`：Developer/QA 都可用來選任務。它會讀取 records，套用 owner 條件、actionable status、priority order 和 limit，挑出候選 bug/task，並把選中的 record id、候選摘要、篩選條件、排序依據、ownerCriteria、queryLimit 存到本機 selection state，供後續 `research` 或 `verify` 使用。
-- `research`：Developer-oriented report 產生器。它依賴最近一次 `triage` selection，接受額外 `--evidence type:reference:excerpt`，輸出包含 observed facts、assumptions、repository findings、likely causes、recommended fixes、risks、next actions、evidence 的 Markdown report。`research` 不會替代 repo 分析或圖片檢查；它只會把已提供或已選定的證據整理成有邊界的第一份分析報告。
-- `verify`：QA mode 的驗證命令。它要求 active mode 是 `QA`，可使用最近一次 triage selection 或指定 `<record-id>`，讀完整任務 record、抽取 media references、探索目前 workspace 中可安全執行的檢查，依 `--checks auto|none|unit|integration|e2e` 執行或略過檢查，並輸出 QA verification report。結果會把 executed checks、skipped checks、manual next steps、assumptions、risks、evidence 分開，避免把未下載的圖片或未執行的測試寫成事實。
-- `write`：對目前 Base 做單筆 create 或 update。預設永遠是 preview，不加 `--confirm` 不會修改表格；preview 會顯示 source、operation、before values、planned field changes、next safe command。提交時支援 `--op create`、`--op update --record-id <id>`、重複 `--field "欄位=值"`、或 `--fields-json '{"欄位":"值"}'`。它會拒絕未知欄位、空 field set、create 帶 record id、update 缺 record id、重複欄位、以及沒有 write scope 的 committed write。create commit 可用 `--client-token` 做 idempotency；若 Lark 回應無法確認最終狀態，會標成 partial/unknown 並要求先 `get` 或人工檢查，避免重複寫入。
-- `help`：提供整體 workflow help 和 command-specific help。人類可用 `lark-bitable help <command>` 看下一步，AI Agent 可用 `lark-bitable help <command> --json` 讀取 purpose、inputs、outputs、common failures、next steps。
+AI-facing Lark Bitable CLI for bug triage, QA verification,
+evidence handling, and guarded single-record writes.
 
-明確不在功能範圍內：
+USAGE
+  lark-bitable <command> [flags]
+  lark-bitable <command> --json
+  lark-bitable help [command]
 
-- 不會替你在 Lark Developer Console 新增權限、發布 app version、處理企業審核或修改 Base 協作者設定；這些必須由有權限的人在 Lark 後台完成。
-- 不支援 delete、batch write、upsert、schema mutation、view mutation、permission management。
-- `write` 目前只能把已有的 Bitable/Drive `file_token` 寫進附件欄位；不會把本機圖片檔直接 upload 成 Lark 附件。
-- `research` 和 `verify` 不會自動判讀未下載的圖片或附件內容；看到 media reference 只代表 record 裡有素材，必須先用 `media download` 下載並檢查，才能把內容當成證據。
+GLOBAL OUTPUT
+  Human-readable output by default.
+  Structured JSON output with --json for AI agents and scripts.
+
+SETUP AND AUTH COMMANDS
+  configure [LARK_BASE_URL]
+    Store the active Base/Bitable source for this repo.
+    Parses appToken, tableId, and viewId from the Base URL.
+    Stores Lark app id, app secret, OAuth redirect URI, domain,
+    workflow mode, field mappings, actionable status, owner field,
+    and optional mode-specific default owner.
+    Interactive mode discovers Bitable fields with application identity
+    credentials, then lets the user choose fields by number.
+    If field discovery is blocked, reports the missing Lark permissions
+    instead of asking the user to guess field names.
+
+  doctor [--install-skill]
+    Check local CLI health and setup completeness.
+    Reports CLI bin/version, config path, auth path, active mode,
+    source configuration, Lark app configuration, required field mappings,
+    and bootstrap skill install/staleness.
+    With --install-skill, installs the shipped AI bootstrap skill to:
+      .agents/skills/lark-bitable-cli/SKILL.md
+
+  valid [--workflow global|inspect|triage|research|verify|write]
+    Validate whether the current setup can safely run a workflow.
+    Reports ready, partial, or blocked readiness with issues,
+    evidence, active mode, remediation steps, and next safe command.
+    For write, reports write-permission-unverified until a committed
+    write has proven the target app/user can write.
+
+  lark --login [--scope <scope>]
+    Start browser SSO/OAuth login using configured Lark app settings.
+    Stores access token, refresh token, expiry, domain, scopes,
+    account/app metadata in ~/.lark-bitable/auth.json.
+    For committed writes, use:
+      lark-bitable lark --login --scope="bitable:app"
+
+  lark --logout
+    Clear local Lark auth state.
+
+READ COMMANDS
+  schema [--json] [--sample-limit <n>]
+    Inspect the active table schema.
+    Default output lists field headers for humans.
+    JSON output includes field names, field/UI types, options,
+    configured mappings, sample non-empty counts, and observed values.
+
+  list [--limit <n>] [--field <name>] [--owner <name>]
+    List records from the active source.
+    Supports field selection, owner criteria, and positive limit metadata.
+
+  get [record-id]
+    Read one stable record id.
+    Returns full visible fields and extracted media references.
+    Use this before treating any list/triage candidate as authoritative.
+
+  filter --field <name> (--equals <value> | --contains <value>)
+    Return records matching one field criterion.
+    Supports owner criteria and positive limit metadata.
+
+  search <query> [--field <name>] [--owner <name>] [--limit <n>]
+    Search visible text-like fields.
+    Can restrict search to selected fields.
+
+MEDIA COMMANDS
+  media download <file-token> --out <path> [--extra <extra>] [--range <range>]
+    Download a Bitable image/attachment file token using the stored
+    authenticated Lark access token.
+    Uses Drive media API:
+      GET /open-apis/drive/v1/medias/:file_token/download
+    Reports output path, size, content type, content disposition,
+    and verified media evidence.
+
+DEVELOPER WORKFLOW
+  triage [--owner <name>] [--limit <n>] [--actionable-status <value>]
+    Select actionable bug/task candidates by owner, status, priority order,
+    and limit. Stores selected record id and selection evidence for
+    follow-up research or QA verification.
+
+  research [--evidence type:reference:excerpt] [--out <path>]
+    Produce a first evidence-backed research report from the latest
+    triage selection plus provided evidence.
+    Separates observed facts, assumptions, repository findings,
+    likely causes, recommended fixes, risks, next actions, and evidence.
+    Does not replace repository analysis or media inspection.
+
+QA WORKFLOW
+  configure --mode QA
+    Activate QA mode.
+
+  verify [record-id] [--checks auto|none|unit|integration|e2e] [--out <path>]
+    Verify a selected Bitable task in QA mode.
+    Reads the full task record, extracts media references, discovers safe
+    workspace checks, runs only supported checks, and reports executed checks,
+    skipped checks, manual next steps, assumptions, risks, and evidence.
+    Un-downloaded media references are listed but not treated as inspected facts.
+
+WRITE COMMANDS
+  write --op create --field "欄位=值"
+  write --op create --fields-json '{"欄位":"值"}'
+  write --op update --record-id <id> --field "欄位=值"
+  write --op update --record-id <id> --fields-json '{"欄位":"值"}'
+
+    Preview one create or update operation against the active table.
+    Without --confirm, no table content is changed.
+    Preview output includes source, operation metadata, before values,
+    planned field changes, evidence, and next safe command.
+
+  write ... --confirm [--client-token <token>]
+    Commit the previewed single-record create/update.
+    Requires write-capable user auth scope:
+      bitable:app
+    Rejects unknown fields, empty field sets, duplicate fields,
+    create with record id, update without record id, invalid values,
+    and missing write permission.
+    If final confirmation is uncertain, reports partial/unknown and asks
+    the user to run get or inspect the table before retrying.
+
+NOT SUPPORTED
+  - Managing Lark Developer Console permissions, app version publishing,
+    enterprise approval, or Base collaborator settings.
+  - delete, batch write, upsert, schema mutation, view mutation,
+    or permission management.
+  - Uploading local image files into Lark attachments.
+    write can set attachment fields only from existing Bitable/Drive file_token
+    values.
+  - Treating un-downloaded images or attachments as inspected evidence.
+    Use media download first, then inspect the local file.
+```
 
 ## 前置條件
 
