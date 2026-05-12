@@ -1,6 +1,6 @@
 # Feature Specification: Lark Bitable CLI for AI Bug Triage
 
-**Feature Branch**: `001-lark-bitable-cli`  
+**Feature Branch**: `001-lark-bitable`  
 **Created**: 2026-05-07  
 **Status**: Draft  
 **Input**: User description: "$speckit-specify 參考 Lark 多維表格官方文件，

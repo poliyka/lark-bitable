@@ -18,7 +18,7 @@ export function defaultSkillSourcePath(): string {
 }
 
 export function skillTargetPath(targetDir: string): string {
-  return join(targetDir, "lark-bitable-cli", "SKILL.md");
+  return join(targetDir, "lark-bitable", "SKILL.md");
 }
 
 export async function inspectBootstrapSkill(input: {

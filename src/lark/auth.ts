@@ -194,7 +194,7 @@ async function createDefaultAuthSdk(input: {
     appSecret: input.appSecret,
     domain: normalizeOpenApiDomain(input.domain),
     loggerLevel: LoggerLevel.error,
-    source: "hybrid-im-qa-lark-cli",
+    source: "lark-bitable",
   }) as unknown as LarkAuthSdk;
 }
 

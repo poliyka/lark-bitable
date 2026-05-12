@@ -1,11 +1,29 @@
 {
-  "name": "hybrid-im-qa-lark-cli",
-  "version": "0.1.0",
-  "private": true,
+  "name": "lark-bitable",
+  "version": "1.0.0",
   "type": "module",
   "description": "AI-facing Lark Bitable CLI for bug triage and evidence-backed reports.",
+  "license": "MIT",
+  "keywords": [
+    "lark",
+    "feishu",
+    "bitable",
+    "cli",
+    "qa",
+    "triage"
+  ],
+  "homepage": "https://github.com/poliyka/lark-bitable#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/poliyka/lark-bitable.git"
+  },
+  "bugs": {
+    "url": "https://github.com/poliyka/lark-bitable/issues"
+  },
+  "main": "./dist/cli/index.js",
+  "types": "./dist/cli/index.d.ts",
   "bin": {
-    "lark-bitable": "./bin/run.js"
+    "lark-bitable": "bin/run.js"
   },
   "oclif": {
     "bin": "lark-bitable",
@@ -23,6 +41,8 @@
     "dev": "tsx src/cli/index.ts",
     "format:check": "prettier --check .",
     "format:fix": "prettier --write .",
+    "prepack": "pnpm build",
+    "prepublishOnly": "pnpm test && pnpm format:check",
     "quickstart:validate": "tsx scripts/quickstart-validate.ts",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -45,5 +65,6 @@
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "packageManager": "pnpm@10.33.0"
 }

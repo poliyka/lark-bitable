@@ -71,7 +71,7 @@ SETUP AND AUTH COMMANDS
     source configuration, Lark app configuration, required field mappings,
     and bootstrap skill install/staleness.
     With --install-skill, installs the shipped AI bootstrap skill to:
-      .agents/skills/lark-bitable-cli/SKILL.md
+      .agents/skills/lark-bitable/SKILL.md
 
   valid [--workflow global|inspect|triage|research|verify|write]
     Validate whether the current setup can safely run a workflow.
@@ -201,7 +201,25 @@ Lark 端需要：
 
 ## 安裝 CLI
 
-在此 repo 內安裝依賴並 build：
+從 npm 安裝正式版本：
+
+```bash
+npm install --global lark-bitable
+```
+
+安裝後會提供 `lark-bitable` 指令：
+
+```bash
+lark-bitable help
+```
+
+如果只想臨時執行，也可以用：
+
+```bash
+npx lark-bitable help
+```
+
+從原始碼開發時，在此 repo 內安裝依賴並 build：
 
 ```bash
 pnpm install
@@ -253,7 +271,7 @@ CLI 的設定和 auth 都放在同一個私有目錄：
 `lark-bitable` 指令，不是 CLI 設定檔。實際設定檔只看
 `~/.lark-bitable/config.json`，auth 只看 `~/.lark-bitable/auth.json`。
 
-舊版曾使用 `~/.lark-bitable-cli/`；新版第一次讀取時會把
+舊版曾使用 `~/.lark-bitable/`；新版第一次讀取時會把
 `config.json` 和 `auth.json` 自動遷移到 `~/.lark-bitable/`。
 
 `config.json` 儲存：
@@ -610,7 +628,7 @@ lark-bitable doctor --install-skill
 預設會安裝到：
 
 ```text
-.agents/skills/lark-bitable-cli/SKILL.md
+.agents/skills/lark-bitable/SKILL.md
 ```
 
 之後檢查：

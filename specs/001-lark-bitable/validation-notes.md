@@ -1,7 +1,7 @@
 # Validation Notes: Lark Bitable CLI for AI Bug Triage
 
 Validation started on 2026-05-07 in
-`/Users/openclaw/im-app/hybrid-im-qa-lark-cli`.
+`/Users/openclaw/im-app/lark-bitable`.
 
 ## Commands
 

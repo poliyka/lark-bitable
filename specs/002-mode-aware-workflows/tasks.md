@@ -258,7 +258,7 @@ Write these tests first and confirm they fail before implementation.
 - [x] T092 [US5] Expand valid output with mode-specific prerequisites, inactive owner default notes, owner not-applied guidance, verify workflow readiness, research workflow readiness, and nextSafeCommand rules in src/config/readiness.ts
 - [x] T093 [US5] Update valid command flags and workflow options for `verify`, owner checks, and query-related remediation in src/cli/commands/valid.ts
 - [x] T094 [US5] Update bootstrap skill instructions for QA verify, Developer research, owner optionality, not-applied owner filtering, query limits, mandatory get-before-research, authenticated media download, and evidence boundaries in src/bootstrap/skill/SKILL.md
-- [x] T095 [US5] Sync installed bootstrap skill copy with generated skill instructions in .agents/skills/lark-bitable-cli/SKILL.md
+- [x] T095 [US5] Sync installed bootstrap skill copy with generated skill instructions in .agents/skills/lark-bitable/SKILL.md
 - [x] T096 [US5] Update README usage sections for mode setup, QA verify, Developer research, owner optionality, query limits, exact status value selection, get detail workflow, media download, and Lark permission wording in README.md
 
 **Checkpoint**: User Story 5 is complete when humans and AI agents can discover

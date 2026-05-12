@@ -76,7 +76,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 - **Evidence sources**: PASS. Planning evidence comes from the user request,
   [spec.md](./spec.md), existing source files under `src/config`, `src/cli`,
   `src/triage`, and `src/reporting`, `package.json`, and previous planning
-  artifacts under `specs/001-lark-bitable-cli/`.
+  artifacts under `specs/001-lark-bitable/`.
 - **Unsupported-claim prevention**: PASS. The plan marks QA check selection as
   evidence-based and fail-closed. Reports must label unverified causes, skipped
   checks, and missing workspace evidence instead of converting them into facts.

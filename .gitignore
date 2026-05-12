@@ -17,5 +17,5 @@ Thumbs.db
 .vscode/
 .idea/
 reports/
-.lark-bitable-cli/
+.lark-bitable/
 auth.json

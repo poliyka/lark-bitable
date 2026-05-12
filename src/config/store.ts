@@ -46,10 +46,6 @@ export function defaultConfigPath(home = homedir()): string {
   return join(defaultConfigDir(home), "config.json");
 }
 
-function legacyUnifiedConfigPath(home = homedir()): string {
-  return join(home, ".lark-bitable-cli", "config.json");
-}
-
 function legacyConfigPath(projectName: string): string {
   return new Conf<StoreShape>({
     projectName,
@@ -102,15 +98,11 @@ export class ConfigStore {
   readonly path: string;
 
   constructor(options: StoreOptions = {}) {
-    const projectName = options.projectName ?? "lark-bitable-cli";
+    const projectName = options.projectName ?? "lark-bitable";
     const cwd = options.cwd ?? defaultConfigDir(options.home);
 
     ensurePrivateDir(cwd);
     if (!options.cwd) {
-      migrateLegacyConfig(
-        defaultConfigPath(options.home),
-        legacyUnifiedConfigPath(options.home),
-      );
       migrateLegacyConfig(
         defaultConfigPath(options.home),
         options.legacyPath ?? legacyConfigPath(projectName),

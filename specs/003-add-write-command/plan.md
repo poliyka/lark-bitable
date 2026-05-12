@@ -77,7 +77,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 - **Evidence sources**: PASS. Planning evidence comes from the user request,
   [spec.md](./spec.md), [package.json](../../package.json), existing source
   files under `src/cli`, `src/config`, `src/lark`, and `src/reporting`,
-  previous planning artifacts under `specs/001-lark-bitable-cli/` and
+  previous planning artifacts under `specs/001-lark-bitable/` and
   `specs/002-mode-aware-workflows/`, the installed
   `@larksuiteoapi/node-sdk` type definitions, and official Feishu record
   create/update documentation.

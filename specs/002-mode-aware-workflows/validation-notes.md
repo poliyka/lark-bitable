@@ -12,8 +12,8 @@
 
 - Default config path is `~/.lark-bitable/config.json`.
 - Default auth path is `~/.lark-bitable/auth.json`.
-- Legacy `~/.lark-bitable-cli/config.json` and
-  `~/.lark-bitable-cli/auth.json` are migration inputs only. They are read once
+- Legacy `~/.lark-bitable/config.json` and
+  `~/.lark-bitable/auth.json` are migration inputs only. They are read once
   when the new target file is missing, then moved or copied into
   `~/.lark-bitable/`.
 - `/Users/openclaw/.config/pnpm/lark-bitable` is a pnpm executable shim that

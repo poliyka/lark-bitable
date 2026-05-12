@@ -1,6 +1,5 @@
 import {
   access,
-  mkdir,
   mkdtemp,
   readFile,
   rm,
@@ -49,23 +48,6 @@ describe("ConfigStore", () => {
 
     expect(store.path).toBe(defaultConfigPath(home));
     expect(store.getSource()?.tableId).toBe(fixtureSource.tableId);
-  });
-
-  it("migrates the previous .lark-bitable-cli config path into .lark-bitable", async () => {
-    const home = await mkdtemp(join(tmpdir(), "lark-home-"));
-    const oldDir = join(home, ".lark-bitable-cli");
-    const oldPath = join(oldDir, "config.json");
-    await mkdir(oldDir, { recursive: true });
-    await writeFile(
-      oldPath,
-      `${JSON.stringify({ activeSource: fixtureSource }, null, 2)}\n`,
-    );
-
-    const store = new ConfigStore({ home });
-
-    expect(store.path).toBe(defaultConfigPath(home));
-    expect(store.getSource()?.tableId).toBe(fixtureSource.tableId);
-    await expect(access(oldPath)).rejects.toThrow();
   });
 
   it("does not resurrect legacy config after the unified config is deleted", async () => {

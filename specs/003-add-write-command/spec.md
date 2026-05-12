@@ -153,7 +153,7 @@ remediation steps.
 - **Source Evidence**: User request in this conversation; current project plan
   at `specs/002-mode-aware-workflows/plan.md`; current README describing
   configure, login, read, triage, research, verify, and media download commands;
-  prior feature spec at `specs/001-lark-bitable-cli/spec.md` stating the first
+  prior feature spec at `specs/001-lark-bitable/spec.md` stating the first
   version avoids destructive Lark record changes unless a later specification
   explicitly adds write-back behavior; existing mode-aware spec at
   `specs/002-mode-aware-workflows/spec.md`.

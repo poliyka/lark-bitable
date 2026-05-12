@@ -45,7 +45,7 @@ describe("configure command", () => {
 
     expect(JSON.stringify(result)).toContain("tblp8ig36Itp0yOU");
     expect(
-      new ConfigStore({ cwd, projectName: "lark-bitable-cli" }).getSource(),
+      new ConfigStore({ cwd, projectName: "lark-bitable" }).getSource(),
     ).toMatchObject({
       name: "bugs",
       statusField: "狀態",
@@ -55,7 +55,7 @@ describe("configure command", () => {
 
   it("does not mutate previous config when the URL is invalid", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "lark-configure-"));
-    const store = new ConfigStore({ cwd, projectName: "lark-bitable-cli" });
+    const store = new ConfigStore({ cwd, projectName: "lark-bitable" });
     await ConfigureCommand.run([validUrl, "--config-cwd", cwd, "--json"]);
 
     await expect(
@@ -82,7 +82,7 @@ describe("configure command", () => {
 
     expect(JSON.stringify(result)).toContain("cleared");
     expect(
-      new ConfigStore({ cwd, projectName: "lark-bitable-cli" }).getSource(),
+      new ConfigStore({ cwd, projectName: "lark-bitable" }).getSource(),
     ).toBeUndefined();
   });
 
@@ -107,7 +107,7 @@ describe("configure command", () => {
     const output = JSON.stringify(result);
     const stored = new ConfigStore({
       cwd,
-      projectName: "lark-bitable-cli",
+      projectName: "lark-bitable",
     }).getLarkApp();
 
     expect(stored).toMatchObject({
@@ -192,7 +192,7 @@ describe("configure command", () => {
 
     const store = new ConfigStore({
       cwd,
-      projectName: "lark-bitable-cli",
+      projectName: "lark-bitable",
     });
 
     expect(store.getSource()).toMatchObject({
@@ -305,7 +305,7 @@ describe("configure command", () => {
       ),
     });
     expect(
-      new ConfigStore({ cwd, projectName: "lark-bitable-cli" }).getSource(),
+      new ConfigStore({ cwd, projectName: "lark-bitable" }).getSource(),
     ).toBeUndefined();
     expect(inputPrompts).not.toContain("Bug status field");
     expect(inputPrompts).not.toContain("Bug priority field");
@@ -316,7 +316,7 @@ describe("configure command", () => {
     const cwd = await mkdtemp(join(tmpdir(), "lark-configure-"));
     const store = new ConfigStore({
       cwd,
-      projectName: "lark-bitable-cli",
+      projectName: "lark-bitable",
     });
     store.setSource({
       sourceUrl: validUrl,

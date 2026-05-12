@@ -182,7 +182,7 @@ examples relevant to that mode.
 ### Evidence & Fact Boundaries _(mandatory)_
 
 - **Source Evidence**: User request in this conversation; existing feature spec
-  at `specs/001-lark-bitable-cli/spec.md`; current README and CLI behavior for
+  at `specs/001-lark-bitable/spec.md`; current README and CLI behavior for
   configure, list, filter, search, triage, research, help, and valid; current
   storage model in `~/.lark-bitable/config.json` and auth file in
   `~/.lark-bitable/auth.json`.

@@ -4,7 +4,7 @@ export const readyAuthSession: LarkAuthSession = {
   storagePath: "~/.lark-bitable/auth.json",
   domain: "larksuite.com",
   accountLabel: "qa-user@example.com",
-  appIdentity: "hybrid-im-qa-lark-cli",
+  appIdentity: "lark-bitable",
   scopes: ["bitable:app:readonly"],
   accessToken: "access-secret",
   refreshToken: "refresh-secret",

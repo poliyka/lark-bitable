@@ -209,12 +209,12 @@ async function createDefaultBitableSdk(
 ): Promise<LarkBitableSdk> {
   const { Client, LoggerLevel } = await import("@larksuiteoapi/node-sdk");
   return new Client({
-    appId: session.appIdentity ?? "lark-bitable-cli",
+    appId: session.appIdentity ?? "lark-bitable",
     appSecret: "unused-for-user-access-token",
     disableTokenCache: true,
     domain: normalizeOpenApiDomain(session.domain),
     loggerLevel: LoggerLevel.error,
-    source: "hybrid-im-qa-lark-cli",
+    source: "lark-bitable",
   }) as unknown as LarkBitableSdk;
 }
 

@@ -1,5 +1,5 @@
 ---
-name: lark-bitable-cli
+name: lark-bitable
 description: Use the local Lark Bitable CLI to inspect bug records, run triage, and produce evidence-backed reports.
 ---
 

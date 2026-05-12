@@ -1,6 +1,6 @@
 # Tasks: Lark Bitable CLI for AI Bug Triage
 
-**Input**: Design documents from `/specs/001-lark-bitable-cli/`
+**Input**: Design documents from `/specs/001-lark-bitable/`
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md),
 [research.md](./research.md), [data-model.md](./data-model.md),
 [contracts/cli-contract.md](./contracts/cli-contract.md),
@@ -125,7 +125,7 @@ configure with an invalid URL and verify previous config remains unchanged.
 - [x] T043 [US1] Add source summary rendering and invalid URL remediation messages in src/cli/output.ts
 - [x] T044 [US1] Add active source checks to doctor output without attempting Lark table access in src/cli/commands/doctor.ts
 - [x] T045 [US1] Add configure workflow examples and required URL shape to README.md
-- [x] T046 [US1] Add configure quickstart validation notes for source replacement and invalid URL behavior in specs/001-lark-bitable-cli/quickstart.md
+- [x] T046 [US1] Add configure quickstart validation notes for source replacement and invalid URL behavior in specs/001-lark-bitable/quickstart.md
 
 **Checkpoint**: Source configuration works without hard-coded tables and can be
 validated independently of record inspection.
@@ -158,7 +158,7 @@ steps until each workflow reports the correct readiness state.
 - [x] T054 [US8] Add readiness result formatting with checked prerequisites, evidence, issues, remediation, and next safe command in src/cli/output.ts
 - [x] T055 [US8] Integrate valid-ready and valid-blocked summaries into doctor output in src/cli/commands/doctor.ts
 - [x] T056 [US8] Add `valid` workflow guidance and remediation examples to README.md
-- [x] T057 [US8] Add valid scenario coverage notes to specs/001-lark-bitable-cli/quickstart.md
+- [x] T057 [US8] Add valid scenario coverage notes to specs/001-lark-bitable/quickstart.md
 
 **Checkpoint**: `valid` can be used as the gate before table inspection,
 triage, and research workflows.
@@ -262,7 +262,7 @@ missing prerequisites.
 - [x] T090 [US6] Integrate bootstrap readiness into valid global workflow checks in src/config/readiness.ts
 - [x] T091 [US6] Integrate bootstrap status, CLI command path, and version evidence into doctor output in src/cli/commands/doctor.ts
 - [x] T092 [US6] Add bootstrap installation and AI-agent workflow instructions to README.md
-- [x] T093 [US6] Add bootstrap validation flow to specs/001-lark-bitable-cli/quickstart.md
+- [x] T093 [US6] Add bootstrap validation flow to specs/001-lark-bitable/quickstart.md
 
 **Checkpoint**: A fresh AI agent can learn the install and usage workflow from
 the shipped skill and self-check before attempting table access.
@@ -333,7 +333,7 @@ output path is provided.
 - [x] T115 [US4] Integrate missing selection, missing evidence, and partial report states in src/config/readiness.ts
 - [x] T116 [US4] Add research report formatting for human and JSON outputs in src/cli/output.ts
 - [x] T117 [US4] Add research workflow examples and report evidence rules to README.md
-- [x] T118 [US4] Add report accuracy validation notes to specs/001-lark-bitable-cli/quickstart.md
+- [x] T118 [US4] Add report accuracy validation notes to specs/001-lark-bitable/quickstart.md
 
 **Checkpoint**: The CLI can produce the first AI-facing report without turning
 unverified analysis into facts.
@@ -349,12 +349,12 @@ across all user stories.
 - [x] T120 [P] Add deterministic large-record test fixtures in tests/fixtures/lark-large.ts
 - [x] T121 Add quickstart command validation script for the full CLI flow in scripts/quickstart-validate.ts
 - [x] T122 Add package script for quickstart validation in package.json
-- [x] T123 Run and record `pnpm test` validation results in specs/001-lark-bitable-cli/validation-notes.md
-- [x] T124 Run and record TypeScript build validation results in specs/001-lark-bitable-cli/validation-notes.md
-- [x] T125 Audit command output, test snapshots, README examples, and report fixtures for raw token leakage in specs/001-lark-bitable-cli/validation-notes.md
-- [x] T126 Audit research report fixtures for unsupported claims in specs/001-lark-bitable-cli/validation-notes.md
-- [x] T127 Compare bootstrap skill examples against oclif help output and record consistency results in specs/001-lark-bitable-cli/validation-notes.md
-- [x] T128 Run `git diff --check` and record whitespace validation results in specs/001-lark-bitable-cli/validation-notes.md
+- [x] T123 Run and record `pnpm test` validation results in specs/001-lark-bitable/validation-notes.md
+- [x] T124 Run and record TypeScript build validation results in specs/001-lark-bitable/validation-notes.md
+- [x] T125 Audit command output, test snapshots, README examples, and report fixtures for raw token leakage in specs/001-lark-bitable/validation-notes.md
+- [x] T126 Audit research report fixtures for unsupported claims in specs/001-lark-bitable/validation-notes.md
+- [x] T127 Compare bootstrap skill examples against oclif help output and record consistency results in specs/001-lark-bitable/validation-notes.md
+- [x] T128 Run `git diff --check` and record whitespace validation results in specs/001-lark-bitable/validation-notes.md
 
 ---
 

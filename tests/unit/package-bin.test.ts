@@ -9,7 +9,7 @@ describe("package binary contract", () => {
     };
 
     expect(packageJson.bin).toEqual({
-      "lark-bitable": "./bin/run.js",
+      "lark-bitable": "bin/run.js",
     });
   });
 });
