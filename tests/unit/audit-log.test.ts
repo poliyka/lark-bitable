@@ -351,9 +351,39 @@ describe("audit log", () => {
     ]);
   });
 
-  it("returns a non-blocking failure when the audit lock cannot be acquired", async () => {
+  it("does not wait for the audit maintenance lock when appending current-day entries", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "audit-current-day-lock-"));
+    const path = join(dir, "logs", "audit.json");
+    await mkdir(`${path}.lock`, { recursive: true });
+
+    const result = await appendAuditEntry(
+      path,
+      buildAuditEntry({
+        argv: ["help"],
+        output: output({ command: "help" }),
+        startedAt: now,
+        finishedAt: now,
+      }),
+      { lockTimeoutMs: 1, now },
+    );
+
+    const entries = await readAuditEntries(path);
+    expect(result).toMatchObject({ ok: true, prunedEntries: 0 });
+    expect(entries).toEqual([expect.objectContaining({ command: "help" })]);
+  });
+
+  it("returns a non-blocking failure when maintenance needs the audit lock and it cannot be acquired", async () => {
     const dir = await mkdtemp(join(tmpdir(), "audit-lock-"));
     const path = join(dir, "logs", "audit.json");
+    const previousDayEntry = buildAuditEntry({
+      argv: ["list"],
+      output: output({ command: "list" }),
+      startedAt: new Date("2026-05-12T07:00:00.000Z"),
+      finishedAt: new Date("2026-05-12T07:00:00.000Z"),
+    });
+
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, `${JSON.stringify(previousDayEntry)}\n`, "utf8");
     await mkdir(`${path}.lock`, { recursive: true });
 
     const result = await appendAuditEntry(

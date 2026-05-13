@@ -25,8 +25,8 @@ import { redactSecrets } from "../reporting/evidence.js";
 import type { CommandOutput } from "../cli/output.js";
 
 const AUDIT_RETENTION_DAYS = 14;
-const AUDIT_LOCK_TIMEOUT_MS = 2000;
-const AUDIT_LOCK_RETRY_MS = 25;
+const AUDIT_LOCK_TIMEOUT_MS = 50;
+const AUDIT_LOCK_RETRY_MS = 5;
 const MAX_STRING_LENGTH = 4000;
 const MAX_SNAPSHOT_LENGTH = 64 * 1024;
 const REDACTED = "[REDACTED]";
@@ -156,25 +156,28 @@ export function appendAuditEntry(
   options: AppendAuditOptions = {},
 ): AppendAuditResult {
   try {
-    return withAuditLock(path, options, () => {
-      const now = options.now ?? new Date();
-      rotateActiveAuditLog(path, now);
-      const prunedEntries = pruneRotatedAuditLogs(path, now);
-      const nextEntry: AuditLogEntry = {
-        ...entry,
-        retentionApplied: {
-          retentionDays: AUDIT_RETENTION_DAYS,
+    ensureAuditDir(path);
+    const now = options.now ?? new Date();
+    const active = readAuditLog(path);
+    if (activeNeedsMaintenance(active, now)) {
+      return withAuditLock(path, options, () => {
+        const prunedEntries = maintainAuditLogs(path, now);
+        appendAuditLine(path, auditEntryWithRetention(entry, prunedEntries));
+        return {
+          ok: true,
+          path,
           prunedEntries,
-        },
-      };
+        };
+      });
+    }
 
-      appendAuditLine(path, auditLogEntrySchema.parse(nextEntry));
-      return {
-        ok: true,
-        path,
-        prunedEntries,
-      };
-    });
+    const prunedEntries = pruneRotatedAuditLogs(path, now);
+    appendAuditLine(path, auditEntryWithRetention(entry, prunedEntries));
+    return {
+      ok: true,
+      path,
+      prunedEntries,
+    };
   } catch (error) {
     return {
       ok: false,
@@ -183,6 +186,36 @@ export function appendAuditEntry(
       prunedEntries: 0,
     };
   }
+}
+
+function auditEntryWithRetention(
+  entry: AuditLogEntry,
+  prunedEntries: number,
+): AuditLogEntry {
+  return auditLogEntrySchema.parse({
+    ...entry,
+    retentionApplied: {
+      retentionDays: AUDIT_RETENTION_DAYS,
+      prunedEntries,
+    },
+  });
+}
+
+function activeNeedsMaintenance(
+  active: AuditLogReadResult,
+  now: Date,
+): boolean {
+  if (active.format === "missing") return false;
+  if (active.format === "wrapped") return true;
+  if (active.entries.length === 0) return active.format !== "empty";
+
+  const currentDay = dayKeyForDate(now);
+  return active.entries.some((entry) => dayKeyForEntry(entry) !== currentDay);
+}
+
+function maintainAuditLogs(path: string, now: Date): number {
+  rotateActiveAuditLog(path, now);
+  return pruneRotatedAuditLogs(path, now);
 }
 
 function withAuditLock<T>(
