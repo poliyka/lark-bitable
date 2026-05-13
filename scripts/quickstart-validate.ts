@@ -26,10 +26,22 @@ const validUrl =
 const cwd = await mkdtemp(join(tmpdir(), "lark-quickstart-"));
 const skillDir = join(cwd, "skills");
 const authPath = join(cwd, "auth.json");
+const auditPath = join(cwd, "logs", "audit.json");
 const reportPath = join(cwd, "report.md");
 const fixture = JSON.stringify(fixtureRecords);
+const auditFlags = ["--audit-path", auditPath];
 
-await DoctorCommand.run(["--skill-dir", skillDir, "--install-skill", "--json"]);
+await DoctorCommand.run([
+  "--config-cwd",
+  cwd,
+  "--auth-path",
+  authPath,
+  "--skill-dir",
+  skillDir,
+  "--install-skill",
+  "--json",
+  ...auditFlags,
+]);
 await ConfigureCommand.run([
   validUrl,
   "--config-cwd",
@@ -47,6 +59,7 @@ await ConfigureCommand.run([
   "--title-field",
   "標題",
   "--json",
+  ...auditFlags,
 ]);
 await LarkCommand.run([
   "--login",
@@ -59,6 +72,7 @@ await LarkCommand.run([
   "--mock-refresh-token",
   "refresh-secret",
   "--json",
+  ...auditFlags,
 ]);
 await ValidCommand.run([
   "--workflow",
@@ -70,6 +84,7 @@ await ValidCommand.run([
   "--skill-dir",
   skillDir,
   "--json",
+  ...auditFlags,
 ]);
 await ValidCommand.run([
   "--workflow",
@@ -81,6 +96,7 @@ await ValidCommand.run([
   "--skill-dir",
   skillDir,
   "--json",
+  ...auditFlags,
 ]);
 await ListCommand.run([
   "--config-cwd",
@@ -90,6 +106,7 @@ await ListCommand.run([
   "--fixture",
   fixture,
   "--json",
+  ...auditFlags,
 ]);
 await GetCommand.run([
   "recLogin",
@@ -100,6 +117,7 @@ await GetCommand.run([
   "--fixture",
   fixture,
   "--json",
+  ...auditFlags,
 ]);
 await FilterCommand.run([
   "--field",
@@ -113,6 +131,7 @@ await FilterCommand.run([
   "--fixture",
   fixture,
   "--json",
+  ...auditFlags,
 ]);
 await SearchCommand.run([
   "login",
@@ -123,6 +142,7 @@ await SearchCommand.run([
   "--fixture",
   fixture,
   "--json",
+  ...auditFlags,
 ]);
 const writePreview = await WriteCommand.run([
   "--config-cwd",
@@ -136,6 +156,7 @@ const writePreview = await WriteCommand.run([
   "--field",
   "標題=Write command preview",
   "--json",
+  ...auditFlags,
 ]);
 if (
   (writePreview.data as { result?: { confirmationStatus?: string } }).result
@@ -163,6 +184,7 @@ const writeCreate = await WriteCommand.run([
   "manual-write-create-001",
   "--confirm",
   "--json",
+  ...auditFlags,
 ]);
 if (
   (writeCreate.data as { result?: { confirmationStatus?: string } }).result
@@ -187,6 +209,7 @@ await WriteCommand.run([
   "--field",
   "狀態=處理中",
   "--json",
+  ...auditFlags,
 ]);
 await TriageCommand.run([
   "--config-cwd",
@@ -198,6 +221,7 @@ await TriageCommand.run([
   "--select",
   "0",
   "--json",
+  ...auditFlags,
 ]);
 await ResearchCommand.run([
   "--config-cwd",
@@ -207,12 +231,41 @@ await ResearchCommand.run([
   "--out",
   reportPath,
   "--json",
+  ...auditFlags,
 ]);
-await LarkCommand.run(["--logout", "--auth-path", authPath, "--yes", "--json"]);
+await LarkCommand.run([
+  "--logout",
+  "--auth-path",
+  authPath,
+  "--yes",
+  "--json",
+  ...auditFlags,
+]);
 
 const report = await readFile(reportPath, "utf8");
 if (!report.includes("## Evidence")) {
   throw new Error("Quickstart validation report is missing evidence section.");
+}
+
+const auditEntries = (await readFile(auditPath, "utf8"))
+  .split("\n")
+  .filter((line) => line.trim().length > 0)
+  .map(
+    (line) =>
+      JSON.parse(line) as {
+        command?: string;
+        retentionApplied?: { retentionDays?: number };
+      },
+  );
+if (auditEntries.length < 10) {
+  throw new Error(
+    "Quickstart validation audit log is missing command entries.",
+  );
+}
+if (
+  auditEntries.some((entry) => entry.retentionApplied?.retentionDays !== 14)
+) {
+  throw new Error("Quickstart validation audit log retention is invalid.");
 }
 
 console.log(`quickstart validation passed in ${cwd}`);

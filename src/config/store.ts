@@ -113,6 +113,7 @@ export class ConfigStore {
       cwd,
       projectName,
       schema: {},
+      serialize: (value) => JSON.stringify(value, undefined, 2),
     });
     this.path = this.conf.path;
     ensurePrivateFile(this.path);

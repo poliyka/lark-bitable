@@ -22,10 +22,11 @@ describe("AuthStore", () => {
     await store.write({ ...readyAuthSession, storagePath: path });
 
     const fileStat = await stat(path);
+    const raw = await readFile(path, "utf8");
     expect(fileStat.mode & 0o077).toBe(0);
-    expect(JSON.parse(await readFile(path, "utf8")).accessToken).toBe(
-      "access-secret",
-    );
+    expect(JSON.parse(raw).accessToken).toBe("access-secret");
+    expect(raw).toContain('\n  "storagePath"');
+    expect(raw).not.toContain('\n\t"storagePath"');
   });
 
   it("returns undefined when the auth file is missing and throws on malformed JSON", async () => {

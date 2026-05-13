@@ -297,6 +297,69 @@ export const writeReadinessSchema = z.object({
 
 export const writeEvidenceSchema = researchEvidenceSchema;
 
+export const auditCommandStatusSchema = z.enum(["ok", "partial", "error"]);
+
+export const auditRetentionAppliedSchema = z.object({
+  retentionDays: z.number().int().positive(),
+  prunedEntries: z.number().int().min(0),
+});
+
+export const auditEvidenceSummarySchema = z.object({
+  id: z.string().min(1).optional(),
+  type: researchEvidenceSchema.shape.type,
+  reference: z.string().min(1),
+  collectedAt: isoTimestampSchema,
+  status: evidenceStatusSchema,
+});
+
+export const auditLogEntrySchema = z.object({
+  id: z.string().min(1),
+  startedAt: isoTimestampSchema,
+  finishedAt: isoTimestampSchema,
+  durationMs: z.number().int().min(0),
+  command: z.string().min(1),
+  argv: z.array(z.string()),
+  status: auditCommandStatusSchema,
+  exitCode: z.number().int().nullable(),
+  source: sourceMetadataSchema.nullable().optional(),
+  auth: z
+    .object({
+      status: authSessionSchema.shape.status,
+      storagePath: z.string().min(1).optional(),
+      domain: z.string().min(1).optional(),
+      accountLabel: z.string().min(1).optional(),
+      expiresAt: z.string().datetime().optional(),
+    })
+    .nullable()
+    .optional(),
+  mode: z
+    .object({
+      active: workflowModeSchema.nullable(),
+      source: z.enum(["explicit", "defaulted", "invalid"]).optional(),
+    })
+    .nullable()
+    .optional(),
+  ownerCriteria: ownerCriteriaSchema.nullable().optional(),
+  queryLimit: queryLimitSchema.nullable().optional(),
+  issues: z.array(issueSchema).default([]),
+  evidenceSummary: z.array(auditEvidenceSummarySchema).default([]),
+  dataSnapshot: z.unknown().optional(),
+  error: z
+    .object({
+      name: z.string().min(1),
+      message: z.string().min(1),
+      code: z.string().min(1).optional(),
+    })
+    .optional(),
+  retentionApplied: auditRetentionAppliedSchema,
+});
+
+export const auditLogFileSchema = z.object({
+  schemaVersion: z.literal(1),
+  retentionDays: z.literal(14),
+  entries: z.array(auditLogEntrySchema).default([]),
+});
+
 export const validationResultSchema = z.object({
   workflow: z.enum([
     "global",
@@ -356,3 +419,7 @@ export type WritePreview = z.infer<typeof writePreviewSchema>;
 export type WriteResult = z.infer<typeof writeResultSchema>;
 export type WriteReadiness = z.infer<typeof writeReadinessSchema>;
 export type WriteEvidence = z.infer<typeof writeEvidenceSchema>;
+export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
+export type AuditLogFile = z.infer<typeof auditLogFileSchema>;
+export type AuditEvidenceSummary = z.infer<typeof auditEvidenceSummarySchema>;
+export type AuditRetentionApplied = z.infer<typeof auditRetentionAppliedSchema>;

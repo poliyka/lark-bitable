@@ -1,9 +1,13 @@
 import { readdirSync } from "node:fs";
+import { mkdtemp } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 import { describe, expect, it } from "vitest";
 
 import { CliError } from "../../src/cli/errors.js";
 import HelpCommand, { commandNames } from "../../src/cli/commands/help.js";
+import { readAuditEntries } from "../fixtures/audit.js";
 
 function normalizeCommandNames(names: string[]): string[] {
   return names.map((name) => name.replace(/\.ts$/, "")).sort();
@@ -50,13 +54,27 @@ describe("command-specific help", () => {
   });
 
   it("renders command help in human-readable sections by default", async () => {
-    const result = await HelpCommand.run(["configure"]);
+    const dir = await mkdtemp(join(tmpdir(), "help-audit-"));
+    const auditPath = join(dir, "logs", "audit.json");
+    const result = await HelpCommand.run([
+      "configure",
+      "--audit-path",
+      auditPath,
+    ]);
     const serialized = JSON.stringify(result);
 
     expect(serialized).toContain("Configure Lark Bitable");
     expect(serialized).toContain("For humans");
     expect(serialized).toContain("For AI agents");
     expect(serialized).toContain("Common failures");
+
+    const entries = await readAuditEntries(auditPath);
+    expect(entries).toEqual([
+      expect.objectContaining({
+        command: "help",
+        status: "ok",
+      }),
+    ]);
   });
 
   it("supports topic command help with separate human arguments", async () => {

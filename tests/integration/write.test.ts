@@ -1,5 +1,5 @@
-import { mkdtemp } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, mkdtemp, readdir, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 
 import { describe, expect, it } from "vitest";
@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import WriteCommand from "../../src/cli/commands/write.js";
 import { AuthStore } from "../../src/config/auth-store.js";
 import { ConfigStore } from "../../src/config/store.js";
+import { readAuditEntries } from "../fixtures/audit.js";
 import { readyAuthSession } from "../fixtures/auth.js";
 import { fixtureSource } from "../fixtures/lark.js";
 import {
@@ -35,12 +36,15 @@ async function configuredWriteContext(
 describe("write command", () => {
   it("previews a create without committing table content", async () => {
     const { authPath, cwd } = await configuredWriteContext();
+    const auditPath = join(cwd, "logs", "audit.json");
 
     const result = await WriteCommand.run([
       "--config-cwd",
       cwd,
       "--auth-path",
       authPath,
+      "--audit-path",
+      auditPath,
       "--fixture-fields",
       JSON.stringify(fixtureWriteFields),
       "--op",
@@ -59,16 +63,30 @@ describe("write command", () => {
       },
     });
     expect(JSON.stringify(result.data)).toContain("Write command preview");
+
+    const auditEntries = await readAuditEntries(auditPath);
+    expect(auditEntries[0]).toMatchObject({
+      command: "write",
+      status: "ok",
+      dataSnapshot: expect.objectContaining({
+        result: expect.objectContaining({
+          confirmationStatus: "not-written",
+        }),
+      }),
+    });
   });
 
   it("commits a create and reports created record evidence", async () => {
     const { authPath, cwd } = await configuredWriteContext();
+    const auditPath = join(cwd, "logs", "audit.json");
 
     const result = await WriteCommand.run([
       "--config-cwd",
       cwd,
       "--auth-path",
       authPath,
+      "--audit-path",
+      auditPath,
       "--fixture-fields",
       JSON.stringify(fixtureWriteFields),
       "--mock-create-record",
@@ -91,6 +109,75 @@ describe("write command", () => {
         targetRecordId: "recCreatedWrite",
       },
     });
+
+    const auditEntries = await readAuditEntries(auditPath);
+    expect(auditEntries[0]).toMatchObject({
+      command: "write",
+      status: "ok",
+      dataSnapshot: {
+        result: expect.objectContaining({
+          confirmationStatus: "confirmed",
+          targetRecordId: "recCreatedWrite",
+        }),
+      },
+    });
+    expect(JSON.stringify(auditEntries)).not.toContain(
+      "manual-write-create-001",
+    );
+  });
+
+  it("prunes audit entries older than 14 days when writing a command entry", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    const auditPath = join(cwd, "logs", "audit.json");
+    await mkdir(dirname(auditPath), { recursive: true });
+    await writeFile(
+      join(dirname(auditPath), "audit-2000-01-01.json"),
+      `${JSON.stringify({
+        id: "expired",
+        startedAt: "2000-01-01T00:00:00.000Z",
+        finishedAt: "2000-01-01T00:00:00.000Z",
+        durationMs: 0,
+        command: "list",
+        argv: ["list"],
+        status: "ok",
+        exitCode: 0,
+        issues: [],
+        evidenceSummary: [],
+        retentionApplied: {
+          retentionDays: 14,
+          prunedEntries: 0,
+        },
+      })}\n`,
+      "utf8",
+    );
+
+    await WriteCommand.run([
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--audit-path",
+      auditPath,
+      "--fixture-fields",
+      JSON.stringify(fixtureWriteFields),
+      "--op",
+      "create",
+      "--field",
+      "標題=Retention write",
+      "--json",
+    ]);
+
+    const auditEntries = await readAuditEntries(auditPath);
+    const files = await readdir(dirname(auditPath));
+    expect(auditEntries).toHaveLength(1);
+    expect(auditEntries[0]).toMatchObject({
+      command: "write",
+      retentionApplied: {
+        retentionDays: 14,
+        prunedEntries: 1,
+      },
+    });
+    expect(files).not.toContain("audit-2000-01-01.json");
   });
 
   it("previews an update with before values", async () => {

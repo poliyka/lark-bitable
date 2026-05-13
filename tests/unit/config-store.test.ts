@@ -22,11 +22,12 @@ describe("ConfigStore", () => {
     store.setSource(fixtureSource);
 
     expect(store.path).toBe(defaultConfigPath(home));
-    expect(
-      JSON.parse(await readFile(store.path, "utf8")).activeSource,
-    ).toMatchObject({
+    const raw = await readFile(store.path, "utf8");
+    expect(JSON.parse(raw).activeSource).toMatchObject({
       tableId: fixtureSource.tableId,
     });
+    expect(raw).toContain('\n  "activeSource"');
+    expect(raw).not.toContain('\n\t"activeSource"');
 
     const dirStat = await stat(join(home, ".lark-bitable"));
     const fileStat = await stat(store.path);

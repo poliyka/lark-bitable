@@ -105,6 +105,7 @@ export default class SchemaCommand extends BaseCommand {
         process.stdout.write(`${index + 1}. ${field.fieldName}\n`);
       });
     }
+    this.writeAudit(output);
     return output;
   }
 }

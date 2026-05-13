@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import LarkCommand from "../../src/cli/commands/lark.js";
+import { readAuditEntries } from "../fixtures/audit.js";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -14,6 +15,7 @@ describe("login command", () => {
   it("writes redacted auth state from a mock authorization code exchange", async () => {
     const dir = await mkdtemp(join(tmpdir(), "lark-login-"));
     const authPath = join(dir, "auth.json");
+    const auditPath = join(dir, "logs", "audit.json");
 
     const result = await LarkCommand.run([
       "--login",
@@ -35,10 +37,13 @@ describe("login command", () => {
       "refresh-secret",
       "--auth-path",
       authPath,
+      "--audit-path",
+      auditPath,
       "--json",
     ]);
 
     const raw = await readFile(authPath, "utf8");
+    const auditEntries = await readAuditEntries(auditPath);
     const output = JSON.stringify(result);
 
     expect(JSON.parse(raw).accessToken).toBe("access-secret");
@@ -46,6 +51,44 @@ describe("login command", () => {
     expect(output).not.toContain("refresh-secret");
     expect(output).toContain("ready");
     expect(output).toContain("authorization-code");
+    expect(auditEntries).toHaveLength(1);
+    expect(auditEntries[0]).toMatchObject({
+      command: "lark",
+      status: "ok",
+      auth: {
+        status: "ready",
+      },
+    });
+    expect(JSON.stringify(auditEntries)).not.toContain("mock-code");
+    expect(JSON.stringify(auditEntries)).not.toContain("access-secret");
+    expect(JSON.stringify(auditEntries)).not.toContain("refresh-secret");
+  });
+
+  it("records failed login attempts without exposing authorization secrets", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "lark-login-error-"));
+    const auditPath = join(dir, "logs", "audit.json");
+
+    await expect(
+      LarkCommand.run([
+        "--login",
+        "--cancel",
+        "--auth-path",
+        join(dir, "auth.json"),
+        "--audit-path",
+        auditPath,
+        "--code",
+        "secret-code",
+      ]),
+    ).rejects.toThrow("Login was canceled");
+
+    const auditEntries = await readAuditEntries(auditPath);
+    expect(auditEntries).toHaveLength(1);
+    expect(auditEntries[0]).toMatchObject({
+      command: "larkcommand",
+      status: "error",
+      issues: [expect.objectContaining({ code: "login-canceled" })],
+    });
+    expect(JSON.stringify(auditEntries)).not.toContain("secret-code");
   });
 
   it("fails closed when the interactive flow is canceled", async () => {

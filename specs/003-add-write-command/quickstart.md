@@ -182,6 +182,9 @@ Expected validation:
 - `pnpm quickstart:validate` exercises `valid --workflow write`, create
   preview, committed create with a fixture response, and update preview through
   deterministic hidden test seams.
+- `pnpm quickstart:validate` writes audit entries to an isolated temporary
+  `logs/audit.json` file and verifies compact one-entry-per-line audit records
+  with 14-day retention metadata on each entry.
 - Field parser handles repeated `--field`, JSON values, `--fields-json`, empty
   values, malformed JSON, and duplicate fields.
 - Write operation validation rejects unsupported input combinations.

@@ -594,6 +594,7 @@ export default class HelpCommand extends BaseCommand {
       this.log(
         command ? renderCommandHelp(helpEntries[command]) : renderGlobalHelp(),
       );
+      this.writeAudit(output);
     }
     return output;
   }

@@ -8,12 +8,14 @@ import SchemaCommand from "../../src/cli/commands/schema.js";
 import { AuthStore } from "../../src/config/auth-store.js";
 import { ConfigStore } from "../../src/config/store.js";
 import { readyAuthSession } from "../fixtures/auth.js";
+import { readAuditEntries } from "../fixtures/audit.js";
 import { fixtureRecords, fixtureSource } from "../fixtures/lark.js";
 
 describe("schema command", () => {
   it("prints only numbered headers in human mode", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "schema-human-"));
     const authPath = join(cwd, "auth.json");
+    const auditPath = join(cwd, "logs", "audit.json");
     await new AuthStore(authPath).write({
       ...readyAuthSession,
       storagePath: authPath,
@@ -47,6 +49,8 @@ describe("schema command", () => {
         cwd,
         "--auth-path",
         authPath,
+        "--audit-path",
+        auditPath,
         "--fixture",
         JSON.stringify(records),
       ]);
@@ -60,6 +64,14 @@ describe("schema command", () => {
     expect(rendered).toContain("2. 狀態");
     expect(rendered).not.toContain("observedValues");
     expect(rendered).not.toContain('"mappings"');
+
+    const entries = await readAuditEntries(auditPath);
+    expect(entries).toEqual([
+      expect.objectContaining({
+        command: "schema",
+        status: "ok",
+      }),
+    ]);
   });
 
   it("returns field metadata summary and configured mappings", async () => {

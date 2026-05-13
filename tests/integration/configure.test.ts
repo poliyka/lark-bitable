@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import ConfigureCommand from "../../src/cli/commands/configure.js";
 import { ConfigStore } from "../../src/config/store.js";
+import { readAuditEntries } from "../fixtures/audit.js";
 
 const validUrl =
   "https://u5ijellsw5.sg.larksuite.com/base/TypDbjKBfaJcaSsoEI1lZjHsgIY?table=tblp8ig36Itp0yOU&view=vewb6FrjBe";
@@ -88,11 +89,14 @@ describe("configure command", () => {
 
   it("stores Lark app OAuth settings without exposing the app secret", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "lark-configure-"));
+    const auditPath = join(cwd, "logs", "audit.json");
 
     const result = await ConfigureCommand.run([
       validUrl,
       "--config-cwd",
       cwd,
+      "--audit-path",
+      auditPath,
       "--lark-app-id",
       "cli-app",
       "--lark-app-secret",
@@ -119,6 +123,19 @@ describe("configure command", () => {
     expect(output).toContain("larkApp");
     expect(output).toContain("http://127.0.0.1:14543/callback");
     expect(output).not.toContain("cli-secret");
+
+    const entries = await readAuditEntries(auditPath);
+    expect(entries).toEqual([
+      expect.objectContaining({
+        command: "configure",
+        status: "ok",
+        retentionApplied: {
+          retentionDays: 14,
+          prunedEntries: 0,
+        },
+      }),
+    ]);
+    expect(JSON.stringify(entries)).not.toContain("cli-secret");
   });
 
   it("guides humans through source, Lark app, and numbered field mapping choices", async () => {

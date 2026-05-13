@@ -14,6 +14,7 @@
 - [前置條件](#前置條件)
 - [安裝 CLI](#安裝-cli)
 - [本機儲存位置](#本機儲存位置)
+- [Audit Log](#audit-log)
 - [Lark Developer Console 設定](#lark-developer-console-設定)
   - [1. 建立或打開自建應用](#1-建立或打開自建應用)
   - [2. 設定 OAuth Redirect URL](#2-設定-oauth-redirect-url)
@@ -260,21 +261,30 @@ ls -l "$(which lark-bitable)"
 
 ## 本機儲存位置
 
-CLI 的設定和 auth 都放在同一個私有目錄：
+CLI 的設定和 auth 都放在同一個私有目錄，但檔案是平行存放，不是巢狀存放：
 
 ```text
 ~/.lark-bitable/
 ├── config.json
-└── auth.json
+├── auth.json
+└── logs/
+    ├── audit.json
+    └── audit-YYYY-MM-DD.json
 ```
+
+也就是：
+
+- 設定檔：`~/.lark-bitable/config.json`
+- Auth 檔：`~/.lark-bitable/auth.json`
+- Audit log：`~/.lark-bitable/logs/audit.json`
 
 如果你是用 `pnpm` 全域安裝，可能會看到
 `~/.config/pnpm/lark-bitable`。那是 pnpm 產生的可執行檔 shim，用來啟動
 `lark-bitable` 指令，不是 CLI 設定檔。實際設定檔只看
 `~/.lark-bitable/config.json`，auth 只看 `~/.lark-bitable/auth.json`。
 
-舊版曾使用 `~/.lark-bitable/`；新版第一次讀取時會把
-`config.json` 和 `auth.json` 自動遷移到 `~/.lark-bitable/`。
+舊版如果留下舊 Conf 位置的設定檔，新版第一次讀取時會把它遷移成
+`~/.lark-bitable/config.json`。Auth 固定使用 `~/.lark-bitable/auth.json`。
 
 `config.json` 儲存：
 
@@ -300,6 +310,40 @@ CLI 的設定和 auth 都放在同一個私有目錄：
 
 不要把 `config.json` 或 `auth.json` 貼到 issue、聊天或 report 裡。裡面可能有
 `appSecret`、`accessToken`、`refreshToken`。
+
+## Audit Log
+
+每次執行 `lark-bitable` command 都會寫入本機 audit log：
+
+```text
+~/.lark-bitable/logs/audit.json
+```
+
+`audit.json` 是目前日期的 active log。它不做 pretty format，也不是包成
+`entries` 陣列；每一行就是一筆 compact JSON object，方便 append，也避免每次
+command 都重寫整個檔案。
+
+每筆 entry 會記錄 command 名稱、redacted argv、狀態、時間、duration、source、
+auth 摘要、mode、issues、evidence summary、data snapshot，以及錯誤資訊。CLI
+會用類似 logrotate 的方式管理生命週期：跨日寫入時，前一天的 active
+`audit.json` 會 rotate 成 `audit-YYYY-MM-DD.json`；每次 append 會刪除超過 14
+天保留範圍的 rotated audit 檔。保留範圍以日期計算，包含今天在內最近 14 天。
+
+Audit log 只儲存 redacted 結構化摘要。常見 secret 會被遮蔽，包括 app secret、
+access token、refresh token、authorization bearer、OAuth code、client token，以及
+JSON snapshot 裡名稱像 token/secret/code/authorization 的欄位。
+
+Audit log 目錄權限會設定為 `0700`，檔案權限會設定為 `0600`。如果 audit log
+寫入失敗，原本的 CLI command 不會被擋下；CLI 只會在 stderr 顯示
+`warning: audit log write failed ...`。如果既有 `audit.json` 不是合法的逐行 JSON
+entry，且也不是舊版可遷移的 wrapped audit JSON，CLI 不會覆寫它，避免破壞可能需要人工檢查的檔案。
+
+進階測試或 automation 可以用隱藏參數或環境變數改寫 audit log 位置：
+
+```bash
+lark-bitable list --json --audit-path /tmp/lark-bitable-audit.json
+LARK_BITABLE_AUDIT_PATH=/tmp/lark-bitable-audit.json lark-bitable list --json
+```
 
 ## Lark Developer Console 設定
 
@@ -1122,7 +1166,7 @@ lark-bitable lark --logout
 rm -rf ~/.lark-bitable
 ```
 
-這會刪除 app secret、Base 設定、auth token、最近 triage 選擇。
+這會刪除 app secret、Base 設定、auth token、最近 triage 選擇和本機 audit log。
 
 ## 開發驗證
 

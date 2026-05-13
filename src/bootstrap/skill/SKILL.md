@@ -57,6 +57,24 @@ version conflicts, or inconclusive live access.
   `--confirm` after the requested source, target record, and field changes are
   explicit.
 
+## Audit Log
+
+- Every CLI command appends a structured audit entry to
+  `~/.lark-bitable/logs/audit.json`.
+- The active audit file is compact line-based JSON: each line is one complete
+  audit entry object. It is not pretty formatted and is not wrapped in an
+  `entries` array.
+- Retention is logrotate-like. When the active file belongs to a previous day,
+  it is rotated to `audit-YYYY-MM-DD.json`; rotated audit files outside the
+  14-day window are removed on append.
+- Audit entries are redacted. Do not expect app secrets, OAuth codes, bearer
+  tokens, refresh/access tokens, or write `--client-token` values to be present.
+- If audit writing fails, the original command should still be interpreted from
+  its normal output; the CLI emits only a stderr warning.
+- For tests or isolated automation, pass hidden `--audit-path <path>` or set
+  `LARK_BITABLE_AUDIT_PATH=<path>` so audit logs do not mix with the user's
+  normal local history.
+
 ## Login and Configure
 
 - For human setup, run `lark-bitable configure` first so the user can provide
