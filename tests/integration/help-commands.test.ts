@@ -9,12 +9,18 @@ import { CliError } from "../../src/cli/errors.js";
 import HelpCommand, { commandNames } from "../../src/cli/commands/help.js";
 import { readAuditEntries } from "../fixtures/audit.js";
 
+async function createAuditPath(): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), "help-audit-"));
+  return join(dir, "logs", "audit.json");
+}
+
 function normalizeCommandNames(names: string[]): string[] {
   return names.map((name) => name.replace(/\.ts$/, "")).sort();
 }
 
 describe("command-specific help", () => {
   it("covers every command module with human-readable command help", async () => {
+    const auditPath = await createAuditPath();
     const commandFiles = readdirSync(
       new URL("../../src/cli/commands/", import.meta.url),
     )
@@ -26,7 +32,12 @@ describe("command-specific help", () => {
     );
 
     for (const command of commandFiles) {
-      const result = await HelpCommand.run([command, "--json"]);
+      const result = await HelpCommand.run([
+        command,
+        "--json",
+        "--audit-path",
+        auditPath,
+      ]);
       const rendered = result.data?.rendered;
 
       expect(rendered).toContain("For humans:");
@@ -40,8 +51,15 @@ describe("command-specific help", () => {
   });
 
   it("describes each supported command with purpose, inputs, outputs, examples, and common failures", async () => {
+    const auditPath = await createAuditPath();
+
     for (const command of commandNames) {
-      const result = await HelpCommand.run([command, "--json"]);
+      const result = await HelpCommand.run([
+        command,
+        "--json",
+        "--audit-path",
+        auditPath,
+      ]);
       const serialized = JSON.stringify(result);
 
       expect(serialized).toContain(command);
@@ -54,8 +72,7 @@ describe("command-specific help", () => {
   });
 
   it("renders command help in human-readable sections by default", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "help-audit-"));
-    const auditPath = join(dir, "logs", "audit.json");
+    const auditPath = await createAuditPath();
     const result = await HelpCommand.run([
       "configure",
       "--audit-path",
@@ -78,19 +95,33 @@ describe("command-specific help", () => {
   });
 
   it("supports topic command help with separate human arguments", async () => {
-    const result = await HelpCommand.run(["media", "download", "--json"]);
+    const auditPath = await createAuditPath();
+    const result = await HelpCommand.run([
+      "media",
+      "download",
+      "--json",
+      "--audit-path",
+      auditPath,
+    ]);
 
     expect(result.data?.command).toBe("media download");
     expect(result.data?.rendered).toContain("Download Lark Media");
   });
 
   it("rejects unknown command-specific help with available command names", async () => {
+    const auditPath = await createAuditPath();
+
     await expect(
-      HelpCommand.run(["missing-command", "--json"]),
+      HelpCommand.run(["missing-command", "--json", "--audit-path", auditPath]),
     ).rejects.toThrow(CliError);
 
     try {
-      await HelpCommand.run(["missing-command", "--json"]);
+      await HelpCommand.run([
+        "missing-command",
+        "--json",
+        "--audit-path",
+        auditPath,
+      ]);
     } catch (error) {
       expect(error).toBeInstanceOf(CliError);
       expect((error as CliError).code).toBe("unknown-help-command");
