@@ -217,19 +217,26 @@ When a human or AI asks for high-risk bugs, the workflow must be:
   `lark-bitable media download <file-token> --out <path>` and inspect the local
   file before making claims about image or attachment contents.
 - If QA verification produces or identifies representative QA snapshot photos,
-  write those photos back to the selected Bitable record with `lark-bitable write`
-  when an attachment/photo field is available. This is not limited to one photo:
-  include every representative snapshot needed to show the verified state,
-  failure, or reproduction result.
-- Preserve existing attachments: before writing snapshot photos, run
-  `get <record-id>` and write the attachment field as the existing file-token
-  objects plus the new representative snapshot file-token objects. Do not
-  overwrite existing attachments with only the new snapshots unless the user
+  related images, or attachments, those assets can be written back to the
+  selected Bitable record with `lark-bitable write` when an attachment/photo
+  field is available.
+- QA write media evidence is optional enrichment, but when a QA result, status,
+  note, or conclusion is being written, prefer adding relevant media evidence in
+  the same `write` so the record stays self-contained. This is not limited to
+  one photo: include every representative snapshot or attachment that helps show
+  the verified state, failure, reproduction result, or fix confirmation.
+- Preserve existing attachments: before writing QA write media evidence, run
+  `get <record-id>` and write the attachment/photo field as the existing
+  `file_token` objects plus the new related evidence `file_token` objects. Do
+  not overwrite existing attachments with only the new evidence unless the user
   explicitly requests replacement.
-- If a representative snapshot exists only as a local file and no Bitable/Drive
-  `file_token` is available, report the upload/write as blocked instead of
-  claiming the photo was written. The current `write` command can set attachment
+- If related media exists only as a local file and no Bitable/Drive
+  `file_token` is available, report the upload/write as unavailable instead of
+  claiming the asset was written. The current `write` command can set attachment
   fields from file-token values; it does not upload local files by itself.
+- If no attachment/photo field is available, mention the media evidence and the
+  write limitation in the QA report or another writable note field instead of
+  inventing a field.
 - Do not use `research` as the QA verification workflow unless the user
   explicitly asks for Developer-style research; prefer `verify` in QA mode.
 

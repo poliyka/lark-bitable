@@ -38,7 +38,12 @@ describe("bootstrap skill contract", () => {
     expect(skill).toContain("media download <file-token>");
     expect(skill).toContain("not as anonymous public URLs");
     expect(skill).toContain("representative QA snapshot photos");
-    expect(skill).toContain("not limited to one photo");
+    expect(skill).toContain("QA write media evidence");
+    expect(skill).toContain("attachment/photo field");
+    expect(skill).toContain("file_token");
+    expect(skill).toContain("claiming the asset was written");
+    expect(skill).toContain("not limited to");
+    expect(skill).toContain("one photo");
     expect(skill).toContain("Preserve existing attachments");
     expect(skill).toContain("A list result is only a candidate summary");
     expect(skill).toContain("Every factual claim");
