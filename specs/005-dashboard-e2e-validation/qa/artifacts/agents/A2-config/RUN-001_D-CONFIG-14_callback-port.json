@@ -1,0 +1,17 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-14",
+  "status": "pass",
+  "action": "Filled Callback Port with abc and clicked Save.",
+  "observed": {
+    "requestPayloadCallbackPort": null,
+    "responseStatus": 500,
+    "visibleErrorMentionsCallbackPort": true,
+    "visibleError": "Invalid input: expected number, received null at callbackPort",
+    "routeStable": true
+  }
+}

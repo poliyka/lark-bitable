@@ -1,0 +1,48 @@
+{
+  "scenario": "D-AUTH-02",
+  "status": "pass",
+  "expected": "Missing auth state and remediation are visible",
+  "evidenceMethod": "mcp__chrome_devtools_isolated__ browser DOM observation plus /api/status fetch from the dashboard page",
+  "observed": {
+    "url": "http://127.0.0.1:48761/#auth",
+    "currentAuthPill": "missing",
+    "rows": [
+      {
+        "key": "account",
+        "value": ""
+      },
+      {
+        "key": "domain",
+        "value": ""
+      },
+      {
+        "key": "scopes",
+        "value": ""
+      },
+      {
+        "key": "expires",
+        "value": ""
+      },
+      {
+        "key": "storage",
+        "value": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/auth.json"
+      }
+    ],
+    "apiAuth": {
+      "status": "missing",
+      "storagePath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/auth.json",
+      "scopes": [],
+      "issues": [
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing.",
+          "remediation": "Start Lark login from the dashboard."
+        }
+      ]
+    },
+    "remediationVisible": true,
+    "remediationText": "Start Lark login from the dashboard.",
+    "noDashboardLoginVisible": true,
+    "dashboardLoginRequired": false
+  }
+}

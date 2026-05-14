@@ -1,0 +1,25 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-02",
+  "status": "pass",
+  "action": "Changed sourceName to a temporary probe value, clicked Reset, observed server draft restored.",
+  "beforeTemporaryValue": "A2 temporary reset probe",
+  "restoredSourceName": "A2 Config Source",
+  "expectedSourceName": "A2 Config Source",
+  "routeAfterReset": {
+    "hash": "#config",
+    "activePage": "config-page",
+    "breadcrumb": "∷ 設定"
+  },
+  "networkSummary": [
+    {
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    }
+  ]
+}

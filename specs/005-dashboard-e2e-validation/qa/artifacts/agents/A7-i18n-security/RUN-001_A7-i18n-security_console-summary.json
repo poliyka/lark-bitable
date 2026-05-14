@@ -1,0 +1,18 @@
+{
+  "tool": "mcp__chrome_devtools_isolated__",
+  "origin": "http://127.0.0.1:48801",
+  "consoleMessages": [
+    {
+      "type": "issue",
+      "message": "No label associated with a form field",
+      "count": 18
+    },
+    {
+      "type": "issue",
+      "message": "A form field element should have an id or name attribute",
+      "count": 1
+    }
+  ],
+  "blockingConsoleErrors": 0,
+  "notes": "Console output contained accessibility issues only; no JavaScript runtime errors were reported by the isolated DevTools console listing."
+}

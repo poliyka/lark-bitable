@@ -1,0 +1,169 @@
+{
+  "capturedAt": "2026-05-14T08:21:07.890Z",
+  "origin": "http://127.0.0.1:48781",
+  "scenarios": ["D-TABLE-07", "D-TABLE-08", "D-TABLE-09", "D-TABLE-10"],
+  "browserObservations": {
+    "schemaTabToggle": {
+      "action": "Clicked Schema tab.",
+      "actual": "Schema tab aria-pressed true, records pane hidden, schema pane visible, no schema fields empty state visible.",
+      "status": "pass"
+    },
+    "refreshPreservesSelectedTab": {
+      "action": "Clicked Source Table Refresh while Schema tab was selected.",
+      "actual": "Schema tab remained aria-pressed true and schema pane stayed visible.",
+      "status": "pass"
+    },
+    "schemaRows": {
+      "status": "blocked",
+      "blockers": [
+        "test-lark-auth-session",
+        "test-lark-bitable-source-url",
+        "test-lark-schema-fields"
+      ]
+    },
+    "exportCopy": {
+      "action": "Clicked Export JSON after installing clipboard stub.",
+      "actual": "Clipboard write contained JSON object with records and schema keys; both statuses partial/missing because live source/auth are unavailable.",
+      "status": "pass-for-current-missing-state"
+    }
+  },
+  "apiCorrelation": {
+    "schema": {
+      "status": "partial",
+      "dataSource": "missing",
+      "issues": [
+        {
+          "code": "[REDACTED]",
+          "message": "No active Lark Bitable source is configured.",
+          "remediation": "Save a source URL on the dashboard config page."
+        },
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing.",
+          "remediation": "Complete Lark login from the dashboard auth page."
+        }
+      ],
+      "data": {
+        "fields": [],
+        "issues": [
+          {
+            "code": "[REDACTED]",
+            "message": "No active Lark Bitable source is configured.",
+            "remediation": "Save a source URL on the dashboard config page."
+          },
+          {
+            "code": "[REDACTED]",
+            "message": "Lark auth is missing.",
+            "remediation": "Complete Lark login from the dashboard auth page."
+          }
+        ],
+        "mappings": {},
+        "status": "blocked"
+      }
+    },
+    "records": {
+      "status": "partial",
+      "dataSource": "missing",
+      "issues": [
+        {
+          "code": "[REDACTED]",
+          "message": "No active Lark Bitable source is configured.",
+          "remediation": "Save a source URL on the dashboard config page."
+        },
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing.",
+          "remediation": "Complete Lark login from the dashboard auth page."
+        }
+      ],
+      "data": {
+        "issues": [
+          {
+            "code": "[REDACTED]",
+            "message": "No active Lark Bitable source is configured.",
+            "remediation": "Save a source URL on the dashboard config page."
+          },
+          {
+            "code": "[REDACTED]",
+            "message": "Lark auth is missing.",
+            "remediation": "Complete Lark login from the dashboard auth page."
+          }
+        ],
+        "records": [],
+        "status": "blocked"
+      }
+    },
+    "status": {
+      "status": "ok",
+      "dataSource": "live",
+      "issues": [],
+      "data": {
+        "binding": {
+          "host": "127.0.0.1",
+          "origin": "http://127.0.0.1:48781",
+          "port": 48781,
+          "requestedPort": 48781,
+          "startedAt": "2026-05-14T08:14:24.969Z",
+          "status": "ready"
+        },
+        "dashboardLoginRequired": false,
+        "localOnly": true,
+        "nextSafeActions": ["Run lark-bitable lark --login"],
+        "overview": {
+          "auth": {
+            "status": "missing",
+            "storagePath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/auth.json",
+            "scopes": [],
+            "issues": [
+              {
+                "code": "[REDACTED]",
+                "message": "Lark auth is missing.",
+                "remediation": "Start Lark login from the dashboard."
+              }
+            ]
+          },
+          "mode": {
+            "active": "Developer",
+            "source": "defaulted"
+          },
+          "readiness": {
+            "workflow": "dashboard",
+            "status": "partial",
+            "checkedPrerequisites": [
+              "install",
+              "dashboard-server",
+              "config",
+              "auth",
+              "audit",
+              "research"
+            ],
+            "blockingIssues": [],
+            "partialIssues": [
+              {
+                "code": "[REDACTED]",
+                "message": "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.",
+                "remediation": "Run lark-bitable lark --login"
+              },
+              {
+                "code": "[REDACTED]",
+                "message": "No active Lark Bitable source is configured. The dashboard can start, but table-backed pages are blocked until configuration is saved.",
+                "remediation": "Run lark-bitable configure <url>"
+              }
+            ],
+            "remediationSteps": [
+              "Run lark-bitable lark --login",
+              "Run lark-bitable configure <url>"
+            ],
+            "nextSafeCommand": "Run lark-bitable lark --login",
+            "evidence": [],
+            "activeMode": "Developer",
+            "modeSource": "defaulted",
+            "checkedAt": "2026-05-14T08:21:08.009Z"
+          },
+          "source": null
+        }
+      }
+    }
+  },
+  "redactionStatus": "no-sensitive-data-observed"
+}

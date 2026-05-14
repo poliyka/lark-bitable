@@ -1,0 +1,70 @@
+{
+  "scenarioId": "D-I18N-07",
+  "status": "fail",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Ran a Playground command to create Run History.",
+    "Selected the Human response tab.",
+    "Switched from English to Traditional Chinese while Playground remained active.",
+    "Switched language while Configuration had unsaved form values."
+  ],
+  "observations": {
+    "playgroundBeforeLanguageSwitch": {
+      "activePage": "playground",
+      "hash": "#playground",
+      "crumb": "Playground",
+      "selectedResponseTab": "human",
+      "runHistoryRows": 1,
+      "selectedCommand": "schema"
+    },
+    "playgroundAfterLanguageSwitch": {
+      "activePage": "playground",
+      "hash": "#playground",
+      "crumb": "總覽",
+      "selectedResponseTab": "human",
+      "runHistoryRows": 1,
+      "selectedCommand": "schema"
+    },
+    "configFormFocusedCheck": {
+      "before": {
+        "activePage": "config",
+        "hash": "#config",
+        "crumb": "Configuration",
+        "sourceName": "A7 unsaved language-switch form value",
+        "defaultOwner": "A7 unsaved owner value",
+        "documentLang": "en"
+      },
+      "after": {
+        "activePage": "config",
+        "hash": "#config",
+        "crumb": "總覽",
+        "sourceName": "A7 unsaved language-switch form value",
+        "defaultOwner": "A7 unsaved owner value",
+        "documentLang": "zh-TW"
+      }
+    },
+    "preserved": {
+      "activePage": true,
+      "hash": true,
+      "selectedResponseTab": true,
+      "runHistory": true,
+      "unsavedFormValues": true
+    },
+    "failed": {
+      "breadcrumb": "Language switch resets #crumb-page to the navOverview translation even when the active page is Playground or Configuration."
+    }
+  },
+  "defect": {
+    "id": "A7-D-I18N-07-crumb-reset",
+    "severity": "medium",
+    "expected": "Language switching preserves active page breadcrumb for the current page.",
+    "actual": "After language switch, active page remains non-overview but breadcrumb becomes 總覽.",
+    "reproduction": [
+      "Open dashboard.",
+      "Navigate to Playground or Configuration.",
+      "Switch language.",
+      "Observe the active page stays selected while workspace breadcrumb changes to Overview/總覽."
+    ]
+  }
+}

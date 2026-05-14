@@ -1,0 +1,32 @@
+{
+  "scenarioId": "D-I18N-04",
+  "status": "pass",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Switched to English.",
+    "Navigated to Research Reports.",
+    "Reloaded the page with DevTools navigation.",
+    "Observed restored language and page state."
+  ],
+  "observations": {
+    "beforeRefresh": {
+      "href": "http://127.0.0.1:48801/#research",
+      "hash": "#research",
+      "documentLang": "en",
+      "storageLang": "en",
+      "heading": "Research Reports",
+      "crumb": "Research Reports"
+    },
+    "afterRefresh": {
+      "href": "http://127.0.0.1:48801/#research",
+      "hash": "#research",
+      "documentLang": "en",
+      "storageLang": "en",
+      "activePage": "research",
+      "heading": "Research Reports",
+      "crumb": "Research Reports"
+    }
+  },
+  "result": "Refresh restored the stored English language preference and preserved the hash-selected page."
+}

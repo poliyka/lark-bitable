@@ -1,0 +1,105 @@
+{
+  "capturedAt": "2026-05-14T08:21:48.497Z",
+  "origin": "http://127.0.0.1:48781",
+  "scenarios": ["D-RESEARCH-01", "D-RESEARCH-02", "D-RESEARCH-03"],
+  "browserEvidence": {
+    "screenshot": "RUN-001_D-RESEARCH-01_03.png",
+    "snapshot": "RUN-001_D-RESEARCH-01_03_snapshot.txt",
+    "emptyStateScreenshot": "RUN-001_D-RESEARCH-02_empty-stale-detail.png"
+  },
+  "browserObservations": {
+    "initialRender": {
+      "page": "Research Reports",
+      "controls": [
+        "search textbox",
+        "report count",
+        "reader",
+        "Copy Path directory button",
+        "Load Reports button",
+        "Copy Content button",
+        "Copy Path selected-report button"
+      ],
+      "visibleCount": "2 reports",
+      "visibleReports": [
+        "source-copy-boundary / rec_A5_COPY_002",
+        "dashboard-layout-regression / rec_A5_LAYOUT_001"
+      ],
+      "selectedInitialReport": "source-copy-boundary / rec_A5_COPY_002",
+      "status": "pass"
+    },
+    "emptyDirectoryCheck": {
+      "action": "Temporarily moved only A5 lane report JSON files aside, clicked Load Reports, then restored them.",
+      "expected": "No reports empty state and no stale report detail from an unavailable file.",
+      "actual": "List showed 0 reports and no research reports, but reader still displayed source-copy-boundary / rec_A5_COPY_002 detail from the prior state.",
+      "status": "fail",
+      "screenshot": "RUN-001_D-RESEARCH-02_empty-stale-detail.png"
+    },
+    "validReportList": {
+      "expected": "Valid reports render name, selected record, created time, canonical path, and snippet/list text.",
+      "actual": "Both valid report entries rendered with name, selected record id, localized created time, and canonical path text; malformed file was not visible in list.",
+      "status": "pass"
+    }
+  },
+  "apiCorrelation": {
+    "researchList": {
+      "status": "ok",
+      "dataSource": "file-backed",
+      "issues": [],
+      "data": {
+        "nextCursor": null,
+        "reports": [
+          {
+            "canonicalPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/source-copy-boundary-20260514T080500000Z.json",
+            "createdAt": "2026-05-14T08:05:00.000Z",
+            "evidenceCount": 2,
+            "name": "source-copy-boundary",
+            "outputLinkStatus": "none",
+            "reportId": "source-copy-boundary-20260514T080500000Z",
+            "selectedRecordId": "rec_A5_COPY_002"
+          },
+          {
+            "canonicalPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/dashboard-layout-regression-20260514T080000000Z.json",
+            "createdAt": "2026-05-14T08:00:00.000Z",
+            "evidenceCount": 1,
+            "name": "dashboard-layout-regression",
+            "outputLinkStatus": "none",
+            "reportId": "dashboard-layout-regression-20260514T080000000Z",
+            "selectedRecordId": "rec_A5_LAYOUT_001"
+          }
+        ],
+        "skippedFiles": [
+          {
+            "path": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/malformed-report.json",
+            "reason": "invalid research report: Expected double-quoted property name in JSON at position 94 (line 5 column 1)"
+          }
+        ]
+      }
+    },
+    "filteredList": {
+      "status": "ok",
+      "dataSource": "file-backed",
+      "issues": [],
+      "data": {
+        "nextCursor": null,
+        "reports": [
+          {
+            "canonicalPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/source-copy-boundary-20260514T080500000Z.json",
+            "createdAt": "2026-05-14T08:05:00.000Z",
+            "evidenceCount": 2,
+            "name": "source-copy-boundary",
+            "outputLinkStatus": "none",
+            "reportId": "source-copy-boundary-20260514T080500000Z",
+            "selectedRecordId": "rec_A5_COPY_002"
+          }
+        ],
+        "skippedFiles": [
+          {
+            "path": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/malformed-report.json",
+            "reason": "invalid research report: Expected double-quoted property name in JSON at position 94 (line 5 column 1)"
+          }
+        ]
+      }
+    }
+  },
+  "redactionStatus": "no-sensitive-data-observed"
+}

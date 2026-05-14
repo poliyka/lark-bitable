@@ -1,0 +1,56 @@
+{
+  "runId": "RUN-001",
+  "collectedAt": "2026-05-14T09:05:00.000Z",
+  "source": "A0 merge of lane console summary artifacts",
+  "browserToolPolicy": "mcp__chrome_devtools_isolated__ for browser-visible validation after restart note",
+  "laneSummaries": [
+    {
+      "lane": "A1-shell",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A1-shell/RUN-001_A1_console-summary.json",
+      "summary": "A1 isolated run recorded no behavior-blocking console messages; rerun noted form-label accessibility issues in lane report."
+    },
+    {
+      "lane": "A2-config",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A2-config/RUN-001_A2-config_console-summary.json",
+      "summary": "Intentional invalid-save probes produced expected errors; product failures are classified in A2 lane report."
+    },
+    {
+      "lane": "A3-auth",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A3-auth/RUN-001_A3-auth_console-summary.json",
+      "summary": "No auth-token leakage or auth behavior blocker reported in console summary."
+    },
+    {
+      "lane": "A4-ops",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A4-ops/RUN-001_A4-ops_console-summary.json",
+      "summary": "Accessibility issues and expected Playground 500 error resources were observed; behavior defects are classified in A4 lane report."
+    },
+    {
+      "lane": "A5-data",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A5-data/RUN-001_A5-data_browser-console-network.json",
+      "summary": "Research/Source Table browser console and network summary captured with isolated MCP."
+    },
+    {
+      "lane": "A6-ui",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A6-ui/RUN-001_console-summary.json",
+      "summary": "UI lane console summary includes expected induced config 500 and accessibility-related browser issues."
+    },
+    {
+      "lane": "A7-i18n-security",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A7-i18n-security/RUN-001_A7-i18n-security_console-summary.json",
+      "summary": "A7 console summary reports accessibility issues only, no runtime errors."
+    },
+    {
+      "lane": "A8-errors",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A8-errors/RUN-001_D-ERR-01_07_errors.json",
+      "summary": "A8 consolidated error evidence includes an empty consoleSummary.messages array."
+    }
+  ],
+  "finalClassification": {
+    "blockingConsoleErrors": 0,
+    "knownNonBlockingIssues": [
+      "favicon.ico 404 observed in initial smoke/A3 contexts",
+      "Browser accessibility tooling reports unlabeled form fields and missing form ids/names",
+      "Intentional invalid config/playground requests generated expected 500 responses for error-state evidence"
+    ]
+  }
+}

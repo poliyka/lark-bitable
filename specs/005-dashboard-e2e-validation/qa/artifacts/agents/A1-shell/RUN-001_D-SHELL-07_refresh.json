@@ -1,0 +1,18 @@
+{
+  "scenarioId": "D-SHELL-07",
+  "collectedAt": "2026-05-14T08:19:05.000Z",
+  "action": "Navigated to Research with Meta+6, clicked global refresh, waited for reload completion.",
+  "before": {
+    "hash": "#research",
+    "breadcrumb": "workspace / ◧ 研究報告",
+    "visibleH1": ["研究報告"],
+    "url": "http://127.0.0.1:48741/#research"
+  },
+  "after": {
+    "hash": "#research",
+    "breadcrumb": "workspace / ◧ 研究報告",
+    "visibleH1": ["研究報告"],
+    "url": "http://127.0.0.1:48741/#research"
+  },
+  "status": "pass"
+}

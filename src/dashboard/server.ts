@@ -12,9 +12,16 @@ export interface StartDashboardServerInput {
   auditPath?: string;
   authPath?: string;
   configCwd?: string;
+  dashboardTestFaults?: DashboardTestFaults;
   host?: string;
   port?: number;
   researchDir?: string;
+}
+
+export interface DashboardTestFaults {
+  status?: "error";
+  tableRecords?: "partial";
+  tableSchema?: "partial";
 }
 
 export interface DashboardServerHandle {
@@ -46,6 +53,7 @@ export async function startDashboardServer(
       authPath: input.authPath ?? defaultAuthPath(),
       binding,
       configCwd: input.configCwd,
+      dashboardTestFaults: input.dashboardTestFaults,
       researchDir: input.researchDir ?? defaultResearchDir(),
     })(request, response),
   );

@@ -1,0 +1,21 @@
+{
+  "capturedAt": "2026-05-14T07:49:07.420Z",
+  "title": "lark-bitable · dashboard",
+  "url": "http://127.0.0.1:48731/#overview",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+  "language": "zh-TW",
+  "viewport": {
+    "width": 1321,
+    "height": 636,
+    "devicePixelRatio": 1
+  },
+  "localStorage": {
+    "lark-bitable.dashboard.lang": "zh-TW"
+  },
+  "observedText": [
+    "no dashboard login",
+    "local only",
+    "port 48731",
+    "workspace / ◇ 總覽"
+  ]
+}

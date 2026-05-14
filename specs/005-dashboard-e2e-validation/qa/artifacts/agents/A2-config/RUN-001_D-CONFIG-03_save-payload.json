@@ -1,0 +1,60 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-03",
+  "status": "pass",
+  "action": "Saved all visible configuration values from the Configuration form.",
+  "sanitizedRequest": {
+    "method": "POST",
+    "path": "/api/config",
+    "status": 200,
+    "payloadKeys": [
+      "sourceUrl",
+      "sourceName",
+      "mode",
+      "larkAppId",
+      "larkAppSecret",
+      "redirectUri",
+      "callbackPort",
+      "larkDomain",
+      "scopes",
+      "statusField",
+      "actionableStatus",
+      "priorityField",
+      "titleField",
+      "ownerField",
+      "defaultOwner"
+    ],
+    "payload": {
+      "sourceUrl": "https://example.larksuite.com/base/appA2ConfigRun?table=tblA2Run&view=vewA2Run",
+      "sourceName": "A2 Config Source Final",
+      "mode": "Developer",
+      "larkAppId": "cli_a2_config_app_final",
+      "larkAppSecret": "[REDACTED]",
+      "redirectUri": "http://127.0.0.1:14543/callback",
+      "callbackPort": "14543",
+      "larkDomain": "larksuite.com",
+      "scopes": "bitable:app:readonly bitable:record:read base:field:read bitable:record:read",
+      "statusField": "Status A2 Saved",
+      "actionableStatus": "待處理-A2-Saved",
+      "priorityField": "Priority A2 Saved",
+      "titleField": "Title A2 Saved",
+      "ownerField": "Owner A2 Saved",
+      "defaultOwner": "A2 Owner Saved"
+    }
+  },
+  "responseDraft": {
+    "sourceName": "A2 Config Source Final",
+    "mode": "Developer",
+    "larkAppId": "cli_a2_config_app_final",
+    "larkAppSecretState": "stored-redacted",
+    "callbackPort": 14543,
+    "statusField": "Status A2 Saved",
+    "priorityField": "Priority A2 Saved",
+    "titleField": "Title A2 Saved",
+    "ownerField": "Owner A2 Saved"
+  }
+}

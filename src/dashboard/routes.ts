@@ -2,7 +2,9 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { AuthStore } from "../config/auth-store.js";
 import { checkReadiness } from "../config/readiness.js";
+import type { Issue } from "../config/schema.js";
 import { ConfigStore } from "../config/store.js";
+import { parseBitableUrl } from "../lark/url-parser.js";
 import {
   dashboardAppScript,
   dashboardHtml,
@@ -41,6 +43,11 @@ export interface DashboardRouteContext {
   authPath: string;
   binding: DashboardBinding;
   configCwd?: string;
+  dashboardTestFaults?: {
+    status?: "error";
+    tableRecords?: "partial";
+    tableSchema?: "partial";
+  };
   researchDir?: string;
 }
 
@@ -72,7 +79,11 @@ async function routeDashboardRequest(
 ): Promise<void> {
   const url = new URL(request.url ?? "/", context.binding.origin);
   if (request.method === "GET" && url.pathname === "/") {
-    sendText(response, dashboardHtml(), "text/html; charset=utf-8");
+    sendText(
+      response,
+      dashboardHtml(context.binding),
+      "text/html; charset=utf-8",
+    );
     return;
   }
   if (request.method === "GET" && url.pathname === "/assets/app.js") {
@@ -85,6 +96,21 @@ async function routeDashboardRequest(
   }
 
   if (url.pathname === "/api/status" && request.method === "GET") {
+    if (context.dashboardTestFaults?.status === "error") {
+      sendJson(
+        response,
+        dashboardError(
+          testFaultIssue(
+            "dashboard-status-test-fault",
+            "Dashboard status test fault was requested.",
+            "Disable dashboardTestFaults.status and retry the status request.",
+          ),
+          503,
+          "failed",
+        ),
+      );
+      return;
+    }
     const configStore = new ConfigStore({ cwd: context.configCwd });
     const authStore = new AuthStore(context.authPath);
     const readiness = await checkReadiness("dashboard", {
@@ -132,7 +158,26 @@ async function routeDashboardRequest(
   }
 
   if (url.pathname === "/api/config" && request.method === "POST") {
-    const draft = configDraftInputSchema.parse(await readJson(request));
+    const raw = await readJson(request);
+    const draft = configDraftInputSchema.parse(raw);
+    try {
+      parseBitableUrl(draft.sourceUrl);
+    } catch (error) {
+      sendJson(
+        response,
+        dashboardError(
+          {
+            code: "invalid-config",
+            message: `Invalid Lark Bitable URL: ${error instanceof Error ? error.message : String(error)}`,
+            remediation:
+              "Keep the current form values, correct the Lark Base / Bitable URL, then save again.",
+          },
+          400,
+          "failed",
+        ),
+      );
+      return;
+    }
     sendJson(
       response,
       dashboardOk(
@@ -273,6 +318,23 @@ async function routeDashboardRequest(
   }
 
   if (url.pathname === "/api/table/schema" && request.method === "GET") {
+    if (context.dashboardTestFaults?.tableSchema === "partial") {
+      sendJson(
+        response,
+        dashboardPartial(
+          { fields: [], issues: [], mappings: {}, status: "blocked" },
+          [
+            testFaultIssue(
+              "dashboard-table-schema-test-fault",
+              "Dashboard table schema test fault was requested.",
+              "Disable dashboardTestFaults.tableSchema and retry schema discovery.",
+            ),
+          ],
+          "partial",
+        ),
+      );
+      return;
+    }
     const table = await getDashboardSchema({
       authPath: context.authPath,
       configStore: new ConfigStore({ cwd: context.configCwd }),
@@ -287,6 +349,23 @@ async function routeDashboardRequest(
   }
 
   if (url.pathname === "/api/table/records" && request.method === "GET") {
+    if (context.dashboardTestFaults?.tableRecords === "partial") {
+      sendJson(
+        response,
+        dashboardPartial(
+          { issues: [], records: [], status: "blocked" },
+          [
+            testFaultIssue(
+              "dashboard-table-records-test-fault",
+              "Dashboard table records test fault was requested.",
+              "Disable dashboardTestFaults.tableRecords and retry record loading.",
+            ),
+          ],
+          "partial",
+        ),
+      );
+      return;
+    }
     const table = await getDashboardRecords({
       authPath: context.authPath,
       configStore: new ConfigStore({ cwd: context.configCwd }),
@@ -356,4 +435,12 @@ function sendJson(
     "content-type": "application/json; charset=utf-8",
   });
   response.end(`${JSON.stringify(envelope)}\n`);
+}
+
+function testFaultIssue(
+  code: string,
+  message: string,
+  remediation: string,
+): Issue {
+  return { code, message, remediation };
 }

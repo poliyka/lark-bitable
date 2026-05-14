@@ -1,0 +1,18 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-13",
+  "status": "pass",
+  "input": "bitable:app:readonly, bitable:record:read base:field:read bitable:record:read",
+  "savedScopesArray": [
+    "bitable:app:readonly",
+    "bitable:record:read",
+    "base:field:read",
+    "bitable:record:read"
+  ],
+  "normalizedToIndividualValues": true,
+  "note": "The dashboard tokenized comma/space separated scopes into array values; duplicate values were retained."
+}

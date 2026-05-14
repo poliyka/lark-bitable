@@ -1,0 +1,13 @@
+RUN-001 A4-ops audit seed
+
+State directory: /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A4-ops
+Audit path: /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A4-ops/audit.json
+Rotated audit path: /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A4-ops/audit-2026-05-13.json
+Seeded entries:
+- a4-audit-older-ok: schema ok entry with secret-like source data for redaction validation.
+- a4-audit-middle-partial: search partial entry with issue and secret-like query/token fixture.
+- a4-audit-newest-error: write error entry with app-secret/refresh-token fixtures.
+- a4-audit-rotated-ok: valid ok entry in rotated audit file.
+- malformed rotated line: intentionally invalid second line to validate skipped-file reporting.
+Dashboard startup also appended dashboard/run audit entries during validation.
+Recorded at: 2026-05-14T08:44:28.018Z

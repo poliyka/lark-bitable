@@ -1,0 +1,68 @@
+{
+  "status": "ok",
+  "dataSource": "live",
+  "issues": [],
+  "data": {
+    "binding": {
+      "host": "127.0.0.1",
+      "origin": "http://127.0.0.1:48731",
+      "port": 48731,
+      "requestedPort": 48731,
+      "startedAt": "2026-05-14T07:47:30.694Z",
+      "status": "ready"
+    },
+    "dashboardLoginRequired": false,
+    "localOnly": true,
+    "nextSafeActions": ["Run lark-bitable lark --login"],
+    "overview": {
+      "auth": {
+        "status": "missing",
+        "storagePath": ".lark-bitable/dashboard-e2e/RUN-001/state/A0-orchestrator/auth.json",
+        "scopes": [],
+        "issues": [
+          {
+            "code": "[REDACTED]",
+            "message": "Lark auth is missing.",
+            "remediation": "Start Lark login from the dashboard."
+          }
+        ]
+      },
+      "mode": { "active": "Developer", "source": "defaulted" },
+      "readiness": {
+        "workflow": "dashboard",
+        "status": "partial",
+        "checkedPrerequisites": [
+          "install",
+          "dashboard-server",
+          "config",
+          "auth",
+          "audit",
+          "research"
+        ],
+        "blockingIssues": [],
+        "partialIssues": [
+          {
+            "code": "[REDACTED]",
+            "message": "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.",
+            "remediation": "Run lark-bitable lark --login"
+          },
+          {
+            "code": "[REDACTED]",
+            "message": "No active Lark Bitable source is configured. The dashboard can start, but table-backed pages are blocked until configuration is saved.",
+            "remediation": "Run lark-bitable configure <url>"
+          }
+        ],
+        "remediationSteps": [
+          "Run lark-bitable lark --login",
+          "Run lark-bitable configure <url>"
+        ],
+        "nextSafeCommand": "Run lark-bitable lark --login",
+        "evidence": [],
+        "activeMode": "Developer",
+        "modeSource": "defaulted",
+        "checkedAt": "2026-05-14T07:47:39.744Z"
+      },
+      "source": null
+    }
+  }
+}

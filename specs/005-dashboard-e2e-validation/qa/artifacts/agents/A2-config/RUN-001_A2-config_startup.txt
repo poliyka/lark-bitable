@@ -1,0 +1,40 @@
+
+> lark-bitable@1.1.1 dev /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run
+> tsx src/cli/index.ts dashboard --no-open --json --port 48751 --host 127.0.0.1 --config-cwd /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A2-config/config --auth-path /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A2-config/auth.json --audit-path /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A2-config/audit.json --research-dir /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A2-config/research
+
+{
+  "command": "dashboard",
+  "status": "ok",
+  "source": null,
+  "auth": null,
+  "evidence": [
+    {
+      "id": "E1",
+      "type": "runtime-observation",
+      "reference": "dashboard",
+      "excerpt": "Dashboard bound to http://127.0.0.1:48751",
+      "collectedAt": "2026-05-14T08:14:23.389Z",
+      "status": "verified"
+    }
+  ],
+  "issues": [],
+  "mode": null,
+  "ownerCriteria": null,
+  "queryLimit": null,
+  "data": {
+    "binding": {
+      "host": "127.0.0.1",
+      "origin": "http://127.0.0.1:48751",
+      "port": 48751,
+      "requestedPort": 48751,
+      "startedAt": "2026-05-14T08:14:23.387Z",
+      "status": "ready"
+    },
+    "dashboardLoginRequired": false,
+    "localOnly": true,
+    "nextSafeActions": [
+      "Open http://127.0.0.1:48751"
+    ],
+    "opened": false
+  }
+}

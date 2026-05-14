@@ -1,0 +1,12 @@
+{
+  "scenario": "D-AUTH-07",
+  "status": "blocked",
+  "missingDependencies": [
+    "LIVE_LARK_TEST_ACCOUNT",
+    "LIVE_LARK_TEST_APP",
+    "LIVE_LARK_TEST_BITABLE",
+    "LARK_APP_SECRET_FOR_TEST_APP"
+  ],
+  "environmentProbe": "No LIVE_LARK*, LARK_APP*, LARK_*, FEISHU, or BITABLE credential variables were present in the lane shell environment.",
+  "impact": "Cannot complete a real Lark SSO redirect, exchange an authorization code, or verify ready Current Auth refresh without test credentials."
+}

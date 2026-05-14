@@ -1,0 +1,39 @@
+{
+  "scenarioId": "D-UI-04",
+  "status": "pass",
+  "dashboardOrigin": "http://127.0.0.1:48791",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "observations": {
+    "partialState": {
+      "page": "Overview",
+      "visibleText": "PART / dataSource: live / blocking 0 / partial 2",
+      "evidence": "RUN-001_D-UI-01_desktop-pages/RUN-001_D-UI-01_overview_desktop.png",
+      "result": "pass"
+    },
+    "blockedOrMissingAuthState": {
+      "page": "Lark Login",
+      "visibleText": "CURRENT AUTH / missing",
+      "evidence": "RUN-001_D-UI-01_desktop-pages/RUN-001_D-UI-01_auth_desktop.png",
+      "result": "pass"
+    },
+    "emptyResearchState": {
+      "page": "Research Reports",
+      "visibleText": "0 reports / no research reports / none / currently no displayable data",
+      "evidence": "RUN-001_D-UI-01_desktop-pages/RUN-001_D-UI-01_research_desktop.png",
+      "result": "pass"
+    },
+    "emptySourceTableState": {
+      "page": "Source Table",
+      "visibleText": "SOURCE missing / Records0 / no records",
+      "evidence": "RUN-001_D-UI-01_desktop-pages/RUN-001_D-UI-01_table_desktop.png",
+      "result": "pass"
+    },
+    "recoverableErrorState": {
+      "page": "Configuration",
+      "action": "Entered invalid source URL and saved within A6-only state.",
+      "visibleText": "status error / dataSource failed / Invalid Lark Bitable URL",
+      "evidence": "RUN-001_D-UI-04_state-screenshots/RUN-001_D-UI-04_config-error-state.png",
+      "result": "pass"
+    }
+  }
+}

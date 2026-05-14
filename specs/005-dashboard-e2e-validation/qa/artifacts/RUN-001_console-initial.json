@@ -1,0 +1,25 @@
+{
+  "capturedAt": "2026-05-14T07:49:07.419Z",
+  "tool": "chrome-devtools-mcp",
+  "messages": [
+    {
+      "level": "issue",
+      "text": "No label associated with a form field",
+      "count": 18
+    },
+    {
+      "level": "issue",
+      "text": "A form field element should have an id or name attribute",
+      "count": 1
+    },
+    {
+      "level": "verbose",
+      "text": "Input elements should have autocomplete attributes; suggested current-password"
+    },
+    {
+      "level": "error",
+      "text": "Failed to load resource: favicon.ico returned 404"
+    }
+  ],
+  "classification": "Initial smoke contains accessibility form-label issues and favicon 404; requires lane/final classification before report conclusion."
+}

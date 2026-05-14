@@ -1,0 +1,62 @@
+{
+  "scenarioId": "D-I18N-05",
+  "status": "pass",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Observed English language state before clearing storage.",
+    "Cleared browser localStorage and sessionStorage.",
+    "Reloaded the dashboard.",
+    "Queried /api/status and /api/config from the browser to check for server-side language state."
+  ],
+  "observations": {
+    "beforeClear": {
+      "localStorage": { "lark-bitable.dashboard.lang": "en" },
+      "sessionStorage": {},
+      "documentLang": "en"
+    },
+    "afterClearBeforeReload": {
+      "localStorage": {},
+      "sessionStorage": {}
+    },
+    "afterReload": {
+      "navigatorLanguage": "zh-TW",
+      "documentLang": "zh-TW",
+      "localStorage": { "lark-bitable.dashboard.lang": "zh-TW" },
+      "sessionStorage": {},
+      "activePage": "research",
+      "heading": "研究報告"
+    },
+    "serverLanguageStateSearch": {
+      "statusHasLanguageState": false,
+      "configHasLanguageState": false,
+      "statusTopLevelKeys": [
+        "binding",
+        "dashboardLoginRequired",
+        "localOnly",
+        "nextSafeActions",
+        "overview"
+      ],
+      "configDraftKeys": [
+        "sourceUrl",
+        "sourceName",
+        "mode",
+        "larkAppId",
+        "larkAppSecretState",
+        "larkDomain",
+        "redirectUri",
+        "callbackPort",
+        "scopes",
+        "statusField",
+        "priorityField",
+        "titleField",
+        "ownerField",
+        "actionableStatus",
+        "defaultOwner",
+        "validation"
+      ]
+    },
+    "filesystemSearchForLanguageState": "No lark-bitable.dashboard.lang, language, or locale keys found under the A7 config/audit/research state paths."
+  },
+  "result": "Clearing browser storage reset language fallback to the browser zh-TW preference, and no server-side language state was observed."
+}

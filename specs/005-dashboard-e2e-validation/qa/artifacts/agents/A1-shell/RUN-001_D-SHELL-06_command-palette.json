@@ -1,0 +1,17 @@
+{
+  "scenarioId": "D-SHELL-06",
+  "collectedAt": "2026-05-14T08:18:42.000Z",
+  "action": "Clicked topbar 指令面板 control from Overview.",
+  "before": {
+    "hash": "#overview",
+    "breadcrumb": "workspace / ◇ 總覽"
+  },
+  "after": {
+    "hash": "#playground",
+    "breadcrumb": "workspace / ▷ Playground",
+    "visibleH1": ["Playground"],
+    "resourceCountDelta": 0
+  },
+  "networkEvidence": "No network request was required for the client-side page switch.",
+  "status": "pass"
+}

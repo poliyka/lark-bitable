@@ -1,0 +1,32 @@
+{
+  "scenarioId": "D-SHELL-02",
+  "collectedAt": "2026-05-14T08:16:10.000Z",
+  "origin": "http://127.0.0.1:48741",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "observations": {
+    "brand": true,
+    "navigationLabels": [
+      { "label": "總覽", "present": true },
+      { "label": "設定", "present": true },
+      { "label": "Lark 登入", "present": true },
+      { "label": "稽核紀錄", "present": true },
+      { "label": "Playground", "present": true },
+      { "label": "研究報告", "present": true },
+      { "label": "來源資料表", "present": true }
+    ],
+    "bindingCard": {
+      "statusReady": true,
+      "host": "127.0.0.1",
+      "port": "48741",
+      "localOnlyLabel": true,
+      "noDashboardLoginLabel": true
+    },
+    "visibleDashboardLoginInputs": 0,
+    "visibleDashboardLoginDialogs": 0
+  },
+  "evidence": ["RUN-001_D-SHELL-02_desktop.png", "RUN-001_A1_api-status.json"],
+  "status": "pass"
+}

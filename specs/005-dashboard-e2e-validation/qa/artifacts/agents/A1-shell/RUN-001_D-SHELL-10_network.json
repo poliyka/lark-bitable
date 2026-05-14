@@ -1,0 +1,30 @@
+{
+  "scenarioId": "D-SHELL-10",
+  "collectedAt": "2026-05-14T08:21:05.000Z",
+  "networkSummary": {
+    "toolSummary": "mcp__chrome_devtools_isolated__.list_network_requests reported 66 document/fetch/xhr requests at collection time, all with HTTP 200.",
+    "performanceResourceTotal": 68,
+    "byPath": {
+      "/assets/styles.css": 1,
+      "/assets/app.js": 1,
+      "/api/status": 18,
+      "/favicon.ico": 1,
+      "/api/audit?limit=5": 15,
+      "/api/config": 19,
+      "/api/audit": 2,
+      "/api/audit/15f2807c-2fce-49e2-b591-3e606a5fac03": 2,
+      "/api/research": 4,
+      "/api/table/records?limit=20": 2,
+      "/api/table/schema": 2,
+      "/api/playground/run": 1
+    },
+    "idleWindow": {
+      "durationMs": 2500,
+      "requestCountBefore": 68,
+      "requestCountAfter": 68,
+      "delta": 0
+    }
+  },
+  "observation": "Requests were tied to page load, navigation, refresh, and explicit valid action. No uncontrolled request loop was observed.",
+  "status": "pass"
+}

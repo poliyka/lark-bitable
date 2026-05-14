@@ -1,0 +1,93 @@
+{
+  "evidenceMethod": "mcp__chrome_devtools_isolated__.list_network_requests and get_network_request(reqid=9)",
+  "origin": "http://127.0.0.1:48761",
+  "summary": {
+    "totalRequestsObservedAtCapture": 86,
+    "non2xx": [
+      {
+        "method": "GET",
+        "path": "/favicon.ico",
+        "status": 404,
+        "productImpactForA3": "none observed"
+      }
+    ],
+    "authPollRequestsObserved": 60,
+    "authPollPath": "/api/auth/login/[REDACTED_FLOW_ID]",
+    "note": "Polling was expected after starting a manual waiting login flow and continued during observation until the dashboard poll loop elapsed."
+  },
+  "keyRequests": [
+    {
+      "method": "GET",
+      "path": "/",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/assets/styles.css",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/assets/app.js",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/status",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/config",
+      "status": 200,
+      "requestBody": {
+        "larkAppId": "cli_a3_auth_placeholder_app",
+        "larkAppSecret": "[REDACTED]",
+        "scopes": ["bitable:app:readonly"]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login/start",
+      "status": 200,
+      "requestBody": {
+        "openBrowser": false,
+        "scopes": ["bitable:app:readonly", "contact:user.base:readonly"]
+      },
+      "responseSummary": {
+        "status": "waiting",
+        "authorizationUrlHost": "accounts.larksuite.com",
+        "stateValueStoredInEvidence": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/login/[REDACTED_FLOW_ID]",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/login/[REDACTED_TEST_FLOW_ID]",
+      "status": 200,
+      "responseSummary": {
+        "status": "failed",
+        "remediation": "Start a new Lark login flow."
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/audit?limit=5",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    }
+  ]
+}

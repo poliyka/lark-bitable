@@ -1,0 +1,26 @@
+{
+  "evidenceMethod": "mcp__chrome_devtools_isolated__.list_console_messages",
+  "consoleEvents": [
+    {
+      "type": "issue",
+      "text": "No label associated with a form field",
+      "count": 18
+    },
+    {
+      "type": "issue",
+      "text": "A form field element should have an id or name attribute",
+      "count": 1
+    },
+    {
+      "type": "verbose",
+      "text": "Input elements should have autocomplete attributes suggested current-password",
+      "source": "recommendation"
+    },
+    {
+      "type": "error",
+      "text": "GET /favicon.ico returned 404",
+      "source": "network",
+      "productImpactForA3": "none observed"
+    }
+  ]
+}

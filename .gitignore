@@ -16,6 +16,8 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+.worktrees/
+specs/005-dashboard-e2e-validation/qa/artifacts/agents/*/edge-profile/
 reports/
 .lark-bitable/
 auth.json

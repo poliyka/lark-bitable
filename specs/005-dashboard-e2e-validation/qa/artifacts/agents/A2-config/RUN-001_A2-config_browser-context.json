@@ -1,0 +1,20 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "url": "http://127.0.0.1:48751/#config",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+  "language": "zh-TW",
+  "viewport": {
+    "width": 1440,
+    "height": 831,
+    "devicePixelRatio": 1
+  },
+  "storage": {
+    "localStorageKeys": ["lark-bitable.dashboard.lang"],
+    "sessionStorageKeys": []
+  },
+  "actualOriginFromStartupJson": "http://127.0.0.1:48751"
+}

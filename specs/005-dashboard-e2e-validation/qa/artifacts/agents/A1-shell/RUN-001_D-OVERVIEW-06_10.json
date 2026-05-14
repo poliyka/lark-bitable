@@ -1,0 +1,88 @@
+{
+  "scenarioIds": [
+    "D-OVERVIEW-06",
+    "D-OVERVIEW-07",
+    "D-OVERVIEW-08",
+    "D-OVERVIEW-09",
+    "D-OVERVIEW-10"
+  ],
+  "collectedAt": "2026-05-14T08:20:15.000Z",
+  "observations": {
+    "D-OVERVIEW-06": {
+      "fieldMappingsHeadingVisible": true,
+      "fixButtonVisible": true,
+      "mappings": [
+        { "label": "Status", "field": "statusField", "state": "missing" },
+        { "label": "Priority", "field": "priorityField", "state": "missing" },
+        { "label": "Title", "field": "titleField", "state": "missing" },
+        { "label": "Owner", "field": "ownerField", "state": "missing" }
+      ],
+      "status": "pass"
+    },
+    "D-OVERVIEW-07": {
+      "action": "Clicked visible Overview FIELD MAPPINGS fix button using mcp__chrome_devtools_isolated__.click.",
+      "buttonHtml": "<button class=\"btn btn-ghost btn-xs\" data-page-jump=\"config\">fix</button>",
+      "buttonDisabled": false,
+      "beforeHash": "#overview",
+      "afterHash": "#overview",
+      "expectedHash": "#config",
+      "actual": "The button received focus but did not navigate to Configuration.",
+      "status": "fail"
+    },
+    "D-OVERVIEW-08": {
+      "recentActivityHeadingVisible": true,
+      "viewAllButtonVisible": true,
+      "rowsObserved": [
+        "2026/5/14 下午4:20:00 partial valid 0ms",
+        "2026/5/14 下午4:14:36 ok dashboard 0ms",
+        "2026/5/14 下午3:58:37 partial valid 0ms",
+        "2026/5/14 下午3:57:18 partial valid 0ms",
+        "2026/5/14 下午3:51:07 ok dashboard 0ms"
+      ],
+      "status": "pass"
+    },
+    "D-OVERVIEW-09": {
+      "action": "Clicked visible Overview valid action.",
+      "beforeHash": "#overview",
+      "afterHash": "#playground",
+      "afterBreadcrumb": "workspace / ▷ Playground",
+      "network": {
+        "request": "POST /api/playground/run",
+        "status": 200,
+        "bodySummary": {
+          "command": "valid",
+          "confirmWrite": false,
+          "parameters": {
+            "workflow": "dashboard"
+          }
+        }
+      },
+      "responseStatus": "partial",
+      "status": "pass"
+    },
+    "D-OVERVIEW-10": {
+      "action": "Clicked visible 複製 next and command copy controls with clipboard stub installed.",
+      "copiedValues": [
+        "Run lark-bitable lark --login",
+        "Run lark-bitable lark --login"
+      ],
+      "undefinedCopied": false,
+      "status": "pass"
+    }
+  },
+  "defects": [
+    {
+      "id": "A1-DEFECT-001",
+      "scenarioId": "D-OVERVIEW-07",
+      "title": "Overview field mapping fix button does not navigate to Configuration",
+      "severity": "major",
+      "expected": "Clicking the FIELD MAPPINGS fix action navigates intentionally to Configuration.",
+      "actual": "Clicking the visible enabled button leaves the dashboard at #overview and only focuses the button.",
+      "evidence": [
+        "RUN-001_D-OVERVIEW-06_10.json",
+        "RUN-001_D-SHELL-09_internal-clicks.json"
+      ]
+    }
+  ],
+  "status": "fail"
+}

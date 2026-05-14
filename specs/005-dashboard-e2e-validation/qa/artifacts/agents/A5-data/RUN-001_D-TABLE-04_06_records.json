@@ -1,0 +1,53 @@
+{
+  "capturedAt": "2026-05-14T08:21:07.890Z",
+  "origin": "http://127.0.0.1:48781",
+  "scenarios": ["D-TABLE-04", "D-TABLE-05", "D-TABLE-06"],
+  "status": "blocked",
+  "blockers": [
+    "test-lark-auth-session",
+    "test-lark-bitable-source-url",
+    "test-lark-records-with-complex-cells"
+  ],
+  "browserObservations": {
+    "recordsPaneRendered": true,
+    "recordsCount": 0,
+    "recordsSource": "missing",
+    "recordsBody": "no records",
+    "searchControlVisible": true,
+    "applyControlVisible": true
+  },
+  "apiCorrelation": {
+    "status": "partial",
+    "dataSource": "missing",
+    "issues": [
+      {
+        "code": "[REDACTED]",
+        "message": "No active Lark Bitable source is configured.",
+        "remediation": "Save a source URL on the dashboard config page."
+      },
+      {
+        "code": "[REDACTED]",
+        "message": "Lark auth is missing.",
+        "remediation": "Complete Lark login from the dashboard auth page."
+      }
+    ],
+    "data": {
+      "issues": [
+        {
+          "code": "[REDACTED]",
+          "message": "No active Lark Bitable source is configured.",
+          "remediation": "Save a source URL on the dashboard config page."
+        },
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing.",
+          "remediation": "Complete Lark login from the dashboard auth page."
+        }
+      ],
+      "records": [],
+      "status": "blocked"
+    }
+  },
+  "impact": "Record IDs, field columns, search/apply consistency over records, and array/object/null/long-cell readability require live test Lark records and cannot be honestly verified from the missing-source state.",
+  "redactionStatus": "no-sensitive-data-observed"
+}

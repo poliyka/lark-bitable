@@ -168,6 +168,7 @@ export async function listResearchReports(
   input: ResearchReportListInput = {},
 ): Promise<{
   nextCursor: string | null;
+  researchDir: string;
   reports: Array<{
     canonicalPath: string;
     createdAt: string;
@@ -178,6 +179,13 @@ export async function listResearchReports(
     selectedRecordId?: string | null;
   }>;
   skippedFiles: SkippedResearchFile[];
+  unavailableReports: Array<{
+    canonicalPath: string;
+    name: string;
+    reason: string;
+    reportId: string;
+    status: "unavailable";
+  }>;
 }> {
   const researchDir = input.researchDir ?? defaultResearchDir();
   const skippedFiles: SkippedResearchFile[] = [];
@@ -222,6 +230,7 @@ export async function listResearchReports(
   return {
     nextCursor:
       offset + limit < filtered.length ? String(offset + limit) : null,
+    researchDir,
     reports: page.map((report) => ({
       canonicalPath: report.canonicalPath,
       createdAt: report.createdAt,
@@ -232,6 +241,15 @@ export async function listResearchReports(
       selectedRecordId: report.selectedRecordId,
     })),
     skippedFiles,
+    unavailableReports: skippedFiles
+      .filter((file) => file.path.endsWith(".json"))
+      .map((file) => ({
+        canonicalPath: file.path,
+        name: basename(file.path),
+        reason: file.reason,
+        reportId: basename(file.path, ".json"),
+        status: "unavailable" as const,
+      })),
   };
 }
 

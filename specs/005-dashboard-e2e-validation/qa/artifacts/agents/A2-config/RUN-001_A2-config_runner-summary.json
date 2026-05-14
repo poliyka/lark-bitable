@@ -1,0 +1,54 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "tasks": [
+    "T034",
+    "T035",
+    "T036",
+    "T037",
+    "T038",
+    "T039",
+    "T040",
+    "T041",
+    "T042",
+    "T043",
+    "T044",
+    "T045",
+    "T046",
+    "T047",
+    "T048",
+    "T049",
+    "T050",
+    "T051",
+    "T052",
+    "T053"
+  ],
+  "scenarioCounts": {
+    "pass": 11,
+    "fail": 3,
+    "blocked": 1,
+    "total": 15
+  },
+  "productDefects": [
+    "A2-CONFIG-DEFECT-001",
+    "A2-CONFIG-DEFECT-002",
+    "A2-CONFIG-DEFECT-003"
+  ],
+  "blockers": [
+    {
+      "id": "A2-CONFIG-BLOCKER-001",
+      "dependency": "Lark auth/test account",
+      "affectedScenario": "D-CONFIG-10"
+    }
+  ],
+  "processesToStop": [
+    {
+      "command": "pnpm dev dashboard",
+      "origin": "http://127.0.0.1:48751",
+      "sessionId": 89311
+    }
+  ]
+}

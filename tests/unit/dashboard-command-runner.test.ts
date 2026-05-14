@@ -46,6 +46,28 @@ describe("dashboard command runner", () => {
     expect(argv).not.toContain("--confirm");
   });
 
+  it("maps dashboard schema sampleLimit to the CLI --sample-limit flag", () => {
+    expect(
+      buildCommandArgv({
+        command: "schema",
+        parameters: { sampleLimit: 7 },
+      }),
+    ).toEqual(["--sample-limit", "7"]);
+  });
+
+  it("does not emit unsupported research flags from dashboard-only parameters", () => {
+    expect(
+      buildCommandArgv({
+        command: "research",
+        parameters: {
+          name: "ignored",
+          out: "report.json",
+          recordId: "recA",
+        },
+      }),
+    ).toEqual(["--out", "report.json"]);
+  });
+
   it("passes write record ids as flags instead of positional arguments", () => {
     expect(
       buildCommandArgv({

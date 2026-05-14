@@ -1,0 +1,15 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-15",
+  "status": "pass",
+  "savedValues": {
+    "actionableStatus": "待處理-A2-Saved",
+    "defaultOwner": "A2 Owner Saved"
+  },
+  "responseStatus": 200,
+  "visibleOutputMatchesSavedValues": true
+}

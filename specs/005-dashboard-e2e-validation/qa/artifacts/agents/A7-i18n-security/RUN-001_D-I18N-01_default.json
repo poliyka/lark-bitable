@@ -1,0 +1,28 @@
+{
+  "scenarioId": "D-I18N-01",
+  "status": "pass",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Cleared browser localStorage and sessionStorage in the isolated browser context.",
+    "Reloaded the dashboard at #overview.",
+    "Observed document language, language toggle state, and browser storage."
+  ],
+  "observations": {
+    "navigatorLanguage": "zh-TW",
+    "navigatorLanguages": ["zh-TW", "en", "en-GB", "en-US"],
+    "localStorageAfterInit": {
+      "lark-bitable.dashboard.lang": "zh-TW"
+    },
+    "sessionStorageAfterInit": {},
+    "documentLang": "zh-TW",
+    "activeLanguageButtons": [
+      { "lang": "zh-TW", "ariaPressed": "true" },
+      { "lang": "en", "ariaPressed": "false" }
+    ],
+    "activePage": "overview",
+    "heading": "總覽",
+    "hash": "#overview"
+  },
+  "result": "Default language resolved from browser preference and was cached in browser localStorage."
+}

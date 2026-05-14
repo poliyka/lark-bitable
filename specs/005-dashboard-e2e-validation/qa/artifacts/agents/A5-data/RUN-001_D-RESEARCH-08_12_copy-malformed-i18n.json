@@ -1,0 +1,153 @@
+{
+  "capturedAt": "2026-05-14T08:21:07.890Z",
+  "origin": "http://127.0.0.1:48781",
+  "scenarios": [
+    "D-RESEARCH-08",
+    "D-RESEARCH-09",
+    "D-RESEARCH-10",
+    "D-RESEARCH-11",
+    "D-RESEARCH-12"
+  ],
+  "browserObservations": {
+    "clipboardStub": "navigator.clipboard.writeText replaced in isolated browser context with window.__a5ClipboardWrites collector before copy actions.",
+    "clipboardWritesObserved": [
+      "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/source-copy-boundary-20260514T080500000Z.json",
+      "Rendered report content beginning with # source-copy-boundary and containing Copy Boundary Beacon / rec_A5_COPY_002.",
+      "~/.lark-bitable/research"
+    ],
+    "copyPath": {
+      "expected": "Selected report canonicalPath copied and not undefined.",
+      "actual": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/source-copy-boundary-20260514T080500000Z.json",
+      "containsUndefinedLiteral": false,
+      "status": "pass"
+    },
+    "copyContent": {
+      "expected": "Readable rendered report content copied.",
+      "actualSummary": "Copied rendered reader text contains # source-copy-boundary, rec_A5_COPY_002, and Copy Boundary Beacon.",
+      "status": "pass"
+    },
+    "copyDir": {
+      "expected": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research",
+      "actual": "~/.lark-bitable/research",
+      "status": "fail",
+      "defect": "Copy Dir ignores the configured A5 --research-dir and copies a hard-coded default path."
+    },
+    "languageSwitch": {
+      "action": "Clicked EN while Research page was visible.",
+      "documentLang": "en",
+      "storageKey": "lark-bitable.dashboard.lang",
+      "storageValue": "en",
+      "sourceContentPreserved": ["Copy Boundary Beacon", "rec_A5_COPY_002"],
+      "status": "pass",
+      "screenshot": "RUN-001_D-RESEARCH-08_12_i18n-copy.png"
+    },
+    "malformedHandling": {
+      "expected": "Malformed report unavailable/skipped without hiding valid reports.",
+      "actual": "2 valid reports and 1 skipped malformed file in API; visible list showed valid reports during browser load.",
+      "status": "pass"
+    }
+  },
+  "apiCorrelation": {
+    "researchList": {
+      "status": "ok",
+      "dataSource": "file-backed",
+      "issues": [],
+      "data": {
+        "nextCursor": null,
+        "reports": [
+          {
+            "canonicalPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/source-copy-boundary-20260514T080500000Z.json",
+            "createdAt": "2026-05-14T08:05:00.000Z",
+            "evidenceCount": 2,
+            "name": "source-copy-boundary",
+            "outputLinkStatus": "none",
+            "reportId": "source-copy-boundary-20260514T080500000Z",
+            "selectedRecordId": "rec_A5_COPY_002"
+          },
+          {
+            "canonicalPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/dashboard-layout-regression-20260514T080000000Z.json",
+            "createdAt": "2026-05-14T08:00:00.000Z",
+            "evidenceCount": 1,
+            "name": "dashboard-layout-regression",
+            "outputLinkStatus": "none",
+            "reportId": "dashboard-layout-regression-20260514T080000000Z",
+            "selectedRecordId": "rec_A5_LAYOUT_001"
+          }
+        ],
+        "skippedFiles": [
+          {
+            "path": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/malformed-report.json",
+            "reason": "invalid research report: Expected double-quoted property name in JSON at position 94 (line 5 column 1)"
+          }
+        ]
+      }
+    },
+    "selectedDetail": {
+      "status": "ok",
+      "dataSource": "file-backed",
+      "issues": [],
+      "data": {
+        "report": {
+          "bugSummary": "Research copy actions should copy selected report data without undefined values.",
+          "observedFacts": [
+            "Record rec_A5_COPY_002 includes the term Copy Boundary Beacon.",
+            "The report has two evidence entries for count rendering."
+          ],
+          "assumptions": [
+            "Clipboard writes are observable through browser automation.",
+            "The research directory path is exposed only through the dashboard copy-dir action."
+          ],
+          "analysis": [
+            "Copy path should use canonicalPath from the selected report.",
+            "Copy content should use the rendered readable report body."
+          ],
+          "likelyCauses": [
+            "Missing selected detail state can cause copy path to write undefined.",
+            "Copy content can fail if the reader body is not populated before clicking."
+          ],
+          "recommendedFixes": [
+            "Load detail state before enabling copy controls.",
+            "Keep copy buttons attached to the currently selected report detail."
+          ],
+          "risks": [
+            "Copy Boundary Beacon source marker",
+            "Clipboard action regression"
+          ],
+          "nextActions": [
+            "Search for Copy Boundary Beacon.",
+            "Reload reports and ensure the filter state remains intentional."
+          ],
+          "evidence": [
+            {
+              "id": "ev-copy-1",
+              "type": "command-output",
+              "reference": "A5 research seed copy path",
+              "excerpt": "Copy path scenario seed.",
+              "collectedAt": "2026-05-14T08:05:01.000Z",
+              "status": "verified"
+            },
+            {
+              "id": "ev-copy-2",
+              "type": "repository-file",
+              "reference": "A5 research seed copy content",
+              "excerpt": "Copy content scenario seed.",
+              "collectedAt": "2026-05-14T08:05:02.000Z",
+              "status": "verified"
+            }
+          ],
+          "schemaVersion": 1,
+          "name": "source-copy-boundary",
+          "createdAt": "2026-05-14T08:05:00.000Z",
+          "canonicalPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/source-copy-boundary-20260514T080500000Z.json",
+          "outputLinkPath": null,
+          "outputLinkStatus": "none",
+          "selectionMode": "Developer",
+          "selectedRecordId": "rec_A5_COPY_002",
+          "ownerCriteria": null,
+          "markdown": "# Selected Bug Research Report\n\nCopy Boundary Beacon must remain untranslated and copyable."
+        }
+      }
+    }
+  },
+  "redactionStatus": "no-sensitive-data-observed"
+}

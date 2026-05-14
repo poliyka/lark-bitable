@@ -1,0 +1,6 @@
+
+> lark-bitable@1.1.1 format:check /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!

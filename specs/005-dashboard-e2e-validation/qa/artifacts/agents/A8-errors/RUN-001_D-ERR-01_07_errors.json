@@ -1,0 +1,238 @@
+{
+  "runId": "RUN-001",
+  "lane": "A8-errors",
+  "origin": "http://127.0.0.1:48811",
+  "collectedAt": "2026-05-14T08:47:42.222Z",
+  "browserTool": "mcp__chrome_devtools_isolated__",
+  "summary": {
+    "pass": 0,
+    "fail": 5,
+    "blocked": 2,
+    "notRun": 0
+  },
+  "startup": {
+    "requestedPort": 48811,
+    "actualPort": 48811,
+    "localOnly": true,
+    "dashboardLoginRequired": false,
+    "statusEndpoint": {
+      "httpStatus": 200,
+      "bodyStatus": "ok",
+      "readinessStatus": "partial",
+      "partialIssues": [
+        "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.",
+        "No active Lark Bitable source is configured. The dashboard can start, but table-backed pages are blocked until configuration is saved."
+      ],
+      "remediationSteps": [
+        "Run lark-bitable lark --login",
+        "Run lark-bitable configure <url>"
+      ]
+    }
+  },
+  "scenarios": [
+    {
+      "id": "D-ERR-01",
+      "status": "blocked",
+      "expected": "Status load failure renders page error rather than blank page.",
+      "observed": "The normal /api/status endpoint loaded successfully with HTTP 200. No dashboard-supported UI flag, query parameter, command option, or lane-state operation was found to force /api/status failure without source-code edits or unsupported browser fetch monkeypatching.",
+      "blocker": "No supported dashboard fault-injection mechanism for status load failure.",
+      "evidence": [
+        "RUN-001_A8_startup.json",
+        "screenshots/RUN-001_A8_initial-overview.png",
+        "snapshots/RUN-001_A8_initial-overview_snapshot.txt"
+      ]
+    },
+    {
+      "id": "D-ERR-02",
+      "status": "fail",
+      "expected": "Config validation failure renders recoverable error and keeps input values.",
+      "observed": "Submitting an invalid Lark Bitable URL produced a visible error envelope with remediation text, but the sourceUrl field was cleared after submit while other edited fields remained populated.",
+      "defect": {
+        "id": "A8-DEF-001",
+        "title": "Invalid config save clears source URL instead of preserving all input values",
+        "expected": "All user-entered config values, including the invalid source URL, remain visible after validation failure.",
+        "actual": "The source URL input became empty after the POST /api/config failure; the scenario requires input preservation.",
+        "reproduction": [
+          "Open Configuration.",
+          "Enter sourceUrl=not-a-lark-url and fill other visible fields.",
+          "Click Save configuration.",
+          "Observe the error output and the source URL textbox."
+        ]
+      },
+      "evidence": [
+        "screenshots/RUN-001_D-ERR-02_config-validation-error.png",
+        "snapshots/RUN-001_D-ERR-02_config-validation-error_snapshot.txt"
+      ],
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/config",
+          "httpStatus": 500,
+          "bodyStatus": "error",
+          "message": "Invalid Lark Bitable URL: The provided value is not a valid URL.",
+          "remediation": "Retry the request. If it repeats, inspect the dashboard server console and audit logs."
+        }
+      ]
+    },
+    {
+      "id": "D-ERR-03",
+      "status": "fail",
+      "expected": "Audit detail load failure keeps list visible.",
+      "observed": "A valid A8-local audit row was loaded, then the A8-local audit file was moved before reselecting the row. The detail request returned HTTP 500, but the visible list changed to 'no audit entries', stale detail content remained, and no page-level recoverable error/remediation appeared.",
+      "defect": {
+        "id": "A8-DEF-002",
+        "title": "Audit detail failure does not preserve the loaded list or render a recoverable detail error",
+        "expected": "The existing audit list remains visible and the detail pane surfaces a recoverable error when detail loading fails.",
+        "actual": "The list was replaced by an empty state and stale detail content remained without remediation.",
+        "reproduction": [
+          "Seed A8-local audit.json with one valid entry.",
+          "Open Audit Logs and confirm the row loads.",
+          "Move audit.json out of the active audit path.",
+          "Click the previously visible audit row."
+        ]
+      },
+      "evidence": [
+        ".lark-bitable/dashboard-e2e/RUN-001/state/A8-errors/audit.json.removed-for-D-ERR-03",
+        "screenshots/RUN-001_D-ERR-03_audit-detail-file-removed.png",
+        "snapshots/RUN-001_D-ERR-03_audit-detail-file-removed_snapshot.txt"
+      ],
+      "network": [
+        {
+          "method": "GET",
+          "path": "/api/audit/a8-detail-removable-001",
+          "httpStatus": 500
+        }
+      ]
+    },
+    {
+      "id": "D-ERR-04",
+      "status": "fail",
+      "expected": "Playground failure remains inspectable across response tabs.",
+      "observed": "Running Playground get without a record id produced a visible error status. Structured and Human tabs retained the error envelope and remediation text, but the Audit Entry tab rendered only '{}', so the failure was not inspectable across all response tabs.",
+      "defect": {
+        "id": "A8-DEF-003",
+        "title": "Playground error response loses issue details on the Audit Entry tab",
+        "expected": "Structured, Human, and Audit Entry tabs all keep enough failure detail to inspect status, issues, evidence, and remediation.",
+        "actual": "Audit Entry tab rendered '{}'.",
+        "reproduction": [
+          "Open Playground.",
+          "Select get.",
+          "Leave record id empty.",
+          "Click Run.",
+          "Switch from Structured JSON/Human to Audit Entry."
+        ]
+      },
+      "evidence": [
+        "screenshots/RUN-001_D-ERR-04_playground-error-audit-empty.png",
+        "snapshots/RUN-001_D-ERR-04_playground-error_snapshot.txt"
+      ],
+      "network": [
+        {
+          "method": "POST",
+          "path": "/api/playground/run",
+          "httpStatus": 500,
+          "bodyStatus": "error",
+          "message": "Lark auth is missing or not ready.",
+          "remediation": "Retry the request. If it repeats, inspect the dashboard server console and audit logs."
+        }
+      ]
+    },
+    {
+      "id": "D-ERR-05",
+      "status": "fail",
+      "expected": "Research detail failure keeps report list visible.",
+      "observed": "A valid A8-local research report loaded in the list and reader, then the A8-local report file was moved before reselecting the list item. The detail request returned HTTP 500, but the visible list changed to 'no research reports', the reader reset to a generic empty report, and no recoverable error/remediation appeared.",
+      "defect": {
+        "id": "A8-DEF-004",
+        "title": "Research detail failure does not preserve report list or show a recoverable detail error",
+        "expected": "The existing report list remains visible and the detail pane surfaces a recoverable error when detail loading fails.",
+        "actual": "The list was replaced by an empty state and the reader reset to a generic empty report without remediation.",
+        "reproduction": [
+          "Seed A8-local research directory with one valid report.",
+          "Open Research Reports and confirm the report loads.",
+          "Move the report JSON out of the active research directory.",
+          "Click the previously visible report row."
+        ]
+      },
+      "evidence": [
+        ".lark-bitable/dashboard-e2e/RUN-001/state/A8-errors/research/a8-removable-report.json.removed-for-D-ERR-05",
+        "screenshots/RUN-001_D-ERR-05_research-detail-file-removed.png",
+        "snapshots/RUN-001_D-ERR-05_research-detail-file-removed_snapshot.txt"
+      ],
+      "network": [
+        {
+          "method": "GET",
+          "path": "/api/research/a8-removable-report",
+          "httpStatus": 500
+        }
+      ]
+    },
+    {
+      "id": "D-ERR-06",
+      "status": "blocked",
+      "expected": "Partial table failure renders available pane data and failed pane state.",
+      "observed": "With no live Lark auth/source in the A8 lane, both table records and schema APIs returned partial/missing blocked envelopes. The UI showed missing/no records/no schema fields. No supported dashboard mechanism was found to make only one table pane fail while the other pane had available live data without live credentials, source changes, or unsupported request monkeypatching.",
+      "blocker": "Live Lark source/auth or supported table endpoint fault injection is unavailable in A8.",
+      "evidence": [
+        "screenshots/RUN-001_D-ERR-06_table-blocked-schema.png",
+        "snapshots/RUN-001_D-ERR-06_table-blocked_snapshot.txt"
+      ],
+      "network": [
+        {
+          "method": "GET",
+          "path": "/api/table/records?limit=20",
+          "httpStatus": 200,
+          "bodyStatus": "partial",
+          "dataSource": "missing",
+          "issues": [
+            "No active Lark Bitable source is configured.",
+            "Lark auth is missing."
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api/table/schema",
+          "httpStatus": 200,
+          "bodyStatus": "partial",
+          "dataSource": "missing",
+          "issues": [
+            "No active Lark Bitable source is configured.",
+            "Lark auth is missing."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D-ERR-07",
+      "status": "fail",
+      "expected": "Error states include remediation or next-step language.",
+      "observed": "Config and Playground error envelopes included remediation text. Audit detail and Research detail failure states did not show visible remediation or next-step text; they either retained stale detail content or reset to empty content.",
+      "defect": {
+        "id": "A8-DEF-005",
+        "title": "Some error states lack visible remediation or next-step language",
+        "expected": "Every rendered error state includes visible remediation or next-step language.",
+        "actual": "Audit and Research detail failure states did not present remediation after HTTP 500 detail requests."
+      },
+      "evidence": [
+        "screenshots/RUN-001_D-ERR-02_config-validation-error.png",
+        "screenshots/RUN-001_D-ERR-03_audit-detail-file-removed.png",
+        "screenshots/RUN-001_D-ERR-04_playground-error-audit-empty.png",
+        "screenshots/RUN-001_D-ERR-05_research-detail-file-removed.png"
+      ]
+    }
+  ],
+  "consoleSummary": {
+    "messages": []
+  },
+  "networkSummary": {
+    "notableRequests": [
+      "GET /api/status 200",
+      "POST /api/config 500",
+      "GET /api/audit/a8-detail-removable-001 500",
+      "POST /api/playground/run 500",
+      "GET /api/research/a8-removable-report 500",
+      "GET /api/table/records?limit=20 200 partial",
+      "GET /api/table/schema 200 partial"
+    ]
+  }
+}

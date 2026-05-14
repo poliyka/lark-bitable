@@ -1,0 +1,16 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "status": "complete-with-expected-error-noise",
+  "consoleMessages": [
+    {
+      "level": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "count": 4,
+      "attribution": "Intentional invalid source/callback validation probes produced 500 responses."
+    }
+  ]
+}

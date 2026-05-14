@@ -1,0 +1,12 @@
+{
+  "scenarioId": "D-SHELL-03",
+  "collectedAt": "2026-05-14T08:16:10.000Z",
+  "observations": {
+    "breadcrumb": "workspace / ◇ 總覽",
+    "refreshControlVisible": true,
+    "commandPaletteControlVisible": true,
+    "languageControls": ["繁中", "EN"]
+  },
+  "evidence": ["RUN-001_D-SHELL-03_snapshot.txt"],
+  "status": "pass"
+}

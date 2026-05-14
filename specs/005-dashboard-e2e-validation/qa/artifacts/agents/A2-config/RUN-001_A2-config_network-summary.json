@@ -1,0 +1,50 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "requestsObserved": 49,
+  "relevantRequests": [
+    {
+      "method": "GET",
+      "path": "/",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/config",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/config",
+      "status": 200,
+      "purpose": "valid save"
+    },
+    {
+      "method": "POST",
+      "path": "/api/config",
+      "status": 500,
+      "purpose": "invalid source URL probe"
+    },
+    {
+      "method": "POST",
+      "path": "/api/config",
+      "status": 500,
+      "purpose": "invalid callback port probe"
+    },
+    {
+      "method": "GET",
+      "path": "/api/table/schema",
+      "status": 200,
+      "purpose": "field discovery blocked response"
+    }
+  ],
+  "redactionStatus": "payloads summarized and secrets redacted"
+}

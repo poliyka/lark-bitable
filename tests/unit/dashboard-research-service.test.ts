@@ -29,8 +29,13 @@ describe("dashboard research service", () => {
       researchDir: paths.researchDir,
     });
 
+    expect(list.researchDir).toBe(paths.researchDir);
     expect(list.reports[0]?.canonicalPath).toBe(written.canonicalPath);
     expect(list.skippedFiles[0]?.reason).toContain("invalid");
+    expect(list.unavailableReports[0]).toMatchObject({
+      name: "broken.json",
+      status: "unavailable",
+    });
     expect(detail.report.observedFacts[0]).toContain("[E1]");
   });
 

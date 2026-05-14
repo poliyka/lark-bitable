@@ -1,0 +1,26 @@
+{
+  "source": "mcp__chrome_devtools_isolated__.list_console_messages",
+  "messages": [
+    {
+      "type": "issue",
+      "text": "No label associated with a form field",
+      "count": 96
+    },
+    {
+      "type": "issue",
+      "text": "A form field element should have an id or name attribute",
+      "count": 1
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (favicon)",
+      "count": 1
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "count": 4
+    }
+  ],
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

@@ -1,0 +1,41 @@
+{
+  "capturedAt": "2026-05-14T07:49:07.420Z",
+  "tool": "chrome-devtools-mcp",
+  "requests": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:48731/",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:48731/assets/styles.css",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:48731/assets/app.js",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:48731/api/status",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:48731/favicon.ico",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:48731/api/audit?limit=5",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:48731/api/config",
+      "status": 200
+    }
+  ]
+}

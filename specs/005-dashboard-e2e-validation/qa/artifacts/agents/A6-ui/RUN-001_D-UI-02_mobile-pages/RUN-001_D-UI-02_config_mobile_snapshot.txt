@@ -1,0 +1,154 @@
+uid=16_0 RootWebArea "lark-bitable · dashboard" url="http://127.0.0.1:48791/#config"
+  uid=16_1 complementary
+    uid=16_2 StaticText "lark-bitable"
+    uid=16_3 LineBreak "
+"
+    uid=16_4 StaticText "dashboard"
+    uid=16_5 StaticText "v1.0"
+    uid=16_6 StaticText "WORKSPACE"
+    uid=16_7 button "◇ 總覽 ⌘1"
+    uid=16_8 button "∷ 設定 ⌘2" focusable focused
+    uid=16_9 button "⎋ Lark 登入 ⌘3"
+    uid=16_10 button "≡ 稽核紀錄 ⌘4"
+    uid=16_11 StaticText "TOOLS"
+    uid=16_12 button "▷ Playground ⌘5"
+    uid=16_13 button "◧ 研究報告 ⌘6"
+    uid=16_14 button "▦ 來源資料表 ⌘7"
+  uid=16_15 main
+    uid=16_16 StaticText "workspace / "
+    uid=19_0 StaticText "∷ 設定"
+    uid=16_18 button "⟳ 重新整理"
+    uid=16_19 button "⌘ 指令面板"
+    uid=16_20 button "繁中" pressed
+    uid=16_21 button "EN"
+    uid=19_1 heading "設定" level="1"
+    uid=19_2 StaticText "Base URL、Lark app、欄位對應、workflow mode 與 actionable status。儲存後立即重新評估 readiness。"
+    uid=19_3 button "重設"
+    uid=19_4 button "儲存設定"
+    uid=19_5 heading "SOURCE · BASE / BITABLE" level="3"
+    uid=19_6 StaticText "file-backed"
+    uid=19_7 StaticText "Lark Base / Bitable URL"
+    uid=19_8 textbox "https://example.larksuite.com/base/..."
+    uid=19_9 StaticText "來源名稱"
+    uid=19_10 textbox "Project Bugs"
+    uid=19_11 StaticText "Workflow Mode"
+    uid=19_12 combobox expandable haspopup="menu" value="Developer"
+      uid=19_13 option "Developer" selectable selected value="Developer"
+      uid=19_14 option "QA" selectable value="QA"
+    uid=19_15 heading "LARK APP CREDENTIALS" level="3"
+    uid=19_16 StaticText "missing"
+    uid=19_17 StaticText "App ID"
+    uid=19_18 textbox
+    uid=19_19 StaticText "App Secret"
+    uid=19_20 textbox "留空表示沿用既有值"
+    uid=19_21 StaticText "OAuth Redirect URI"
+    uid=19_22 textbox "http://127.0.0.1:14543/callback"
+    uid=19_23 StaticText "Callback Port"
+    uid=19_24 textbox "14543" value="14543"
+    uid=19_25 StaticText "Lark Domain"
+    uid=19_26 combobox expandable haspopup="menu" value="larksuite.com"
+      uid=19_27 option "larksuite.com" selectable selected value="larksuite.com"
+      uid=19_28 option "feishu.cn" selectable value="feishu.cn"
+    uid=19_29 StaticText "Scopes"
+    uid=19_30 textbox "bitable:app:readonly bitable:app" value="bitable:app:readonly"
+    uid=19_31 heading "FIELD MAPPINGS" level="3"
+    uid=19_32 button "⟳ 從 Base 重新探索"
+    uid=19_33 StaticText "Status Field"
+    uid=19_34 combobox autocomplete="list" haspopup="listbox"
+    uid=19_35 StaticText "Actionable Status"
+    uid=19_36 textbox value="待處理"
+    uid=19_37 StaticText "Priority Field"
+    uid=19_38 combobox autocomplete="list" haspopup="listbox"
+    uid=19_39 StaticText "Title Field"
+    uid=19_40 combobox autocomplete="list" haspopup="listbox"
+    uid=19_41 StaticText "Owner Field"
+    uid=19_42 combobox autocomplete="list" haspopup="listbox"
+    uid=19_43 StaticText "Default Owner"
+    uid=19_44 textbox
+    uid=19_45 StaticText "輸出"
+    uid=19_46 StaticText "{
+  "status": "ok",
+  "dataSource": "file-backed",
+  "issues": [],
+  "data": {
+    "draft": {
+      "sourceUrl": "",
+      "mode": "Developer",
+      "larkAppSecretState": "missing",
+      "larkDomain": "larksuite.com",
+      "callbackPort": 14543,
+      "scopes": [
+        "bitable:app:readonly"
+      ],
+      "actionableStatus": "待處理",
+      "validation": {
+        "workflow": "dashboard",
+        "status": "partial",
+        "checkedPrerequisites": [
+          "install",
+          "dashboard-server",
+          "config",
+          "auth",
+          "audit",
+          "research"
+        ],
+        "blockingIssues": [],
+        "partialIssues": [
+          {
+            "code": "[REDACTED]",
+            "message": "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.",
+            "remediation": "Run lark-bitable lark --login"
+          },
+          {
+            "code": "[REDACTED]",
+            "message": "No active Lark Bitable source is configured. The dashboard can start, but table-backed pages are blocked until configuration is saved.",
+            "remediation": "Run lark-bitable configure <url>"
+          }
+        ],
+        "remediationSteps": [
+          "Run lark-bitable lark --login",
+          "Run lark-bitable configure <url>"
+        ],
+        "nextSafeCommand": "Run lark-bitable lark --login",
+        "evidence": [],
+        "activeMode": "Developer",
+        "modeSource": "defaulted",
+        "checkedAt": "2026-05-14T08:17:38.651Z"
+      }
+    },
+    "readiness": {
+      "workflow": "dashboard",
+      "status": "partial",
+      "checkedPrerequisites": [
+        "install",
+        "dashboard-server",
+        "config",
+        "auth",
+        "audit",
+        "research"
+      ],
+      "blockingIssues": [],
+      "partialIssues": [
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.",
+          "remediation": "Run lark-bitable lark --login"
+        },
+        {
+          "code": "[REDACTED]",
+          "message": "No active Lark Bitable source is configured. The dashboard can start, but table-backed pages are blocked until configuration is saved.",
+          "remediation": "Run lark-bitable configure <url>"
+        }
+      ],
+      "remediationSteps": [
+        "Run lark-bitable lark --login",
+        "Run lark-bitable configure <url>"
+      ],
+      "nextSafeCommand": "Run lark-bitable lark --login",
+      "evidence": [],
+      "activeMode": "Developer",
+      "modeSource": "defaulted",
+      "checkedAt": "2026-05-14T08:17:38.651Z"
+    }
+  }
+}"

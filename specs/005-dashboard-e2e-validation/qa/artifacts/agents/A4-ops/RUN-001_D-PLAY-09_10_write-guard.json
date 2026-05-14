@@ -1,0 +1,26 @@
+{
+  "scenarioIds": ["D-PLAY-09", "D-PLAY-10"],
+  "status": "fail",
+  "observations": {
+    "writeWithoutConfirmation": {
+      "preview": "lark-bitable write --record-id recA4Write --field Status --json",
+      "runStatus": "error",
+      "issue": "Missing required flag op",
+      "expected": "preview-first safe write operation with required write arguments represented correctly",
+      "result": "fail"
+    },
+    "writeWithConfirmation": {
+      "previewAfterConfirmObserved": "lark-bitable write --confirm --json",
+      "runStatus": "error",
+      "issue": "Missing required flag op",
+      "expected": "dangerous confirmation should preserve op/record/field parameters and clearly require explicit confirmation evidence",
+      "result": "fail"
+    },
+    "staleParameterLoss": {
+      "note": "After re-rendering/selecting write, previously entered recordId/field values were lost from preview when confirm was toggled in the observed run.",
+      "result": "fail"
+    }
+  },
+  "defects": ["A4-PLAY-WRITE-CONTRACT"],
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

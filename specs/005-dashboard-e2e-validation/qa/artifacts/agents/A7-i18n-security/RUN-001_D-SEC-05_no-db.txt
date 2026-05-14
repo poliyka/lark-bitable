@@ -1,0 +1,20 @@
+Scenario: D-SEC-05
+Status: pass
+Tooling: shell filesystem scan for A7 lane state only
+
+State root:
+.lark-bitable/dashboard-e2e/RUN-001/state/A7-i18n-security
+
+Files present after A7 validation:
+.lark-bitable/dashboard-e2e/RUN-001/state/A7-i18n-security/audit.json
+.lark-bitable/dashboard-e2e/RUN-001/state/A7-i18n-security/config/config.json
+.lark-bitable/dashboard-e2e/RUN-001/state/A7-i18n-security/research/2026-05-14T083500.000Z-a7-source-boundary.json
+
+Scan command:
+find .lark-bitable/dashboard-e2e/RUN-001/state/A7-i18n-security -maxdepth 8 -type f \( -iname '*sqlite*' -o -iname '*.sqlite' -o -iname '*.sqlite3' -o -iname '*.db' -o -iname '*session*' -o -iname '*schema*' \) -print | sort
+
+Scan output:
+(empty)
+
+Result:
+No dashboard DB, session, sqlite, or schema persistence files were created under the A7 isolated dashboard state path.

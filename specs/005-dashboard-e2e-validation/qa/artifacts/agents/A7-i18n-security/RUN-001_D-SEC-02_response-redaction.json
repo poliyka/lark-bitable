@@ -1,0 +1,54 @@
+{
+  "scenarioId": "D-SEC-02",
+  "status": "pass",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Observed rendered Configuration output and Audit detail JSON.",
+    "Fetched dashboard API responses from the browser context.",
+    "Opened DevTools network details for GET /api/config."
+  ],
+  "observations": {
+    "renderedDetailsContainRawSeedSecret": false,
+    "networkResponsesChecked": [
+      {
+        "path": "/api/status",
+        "status": 200,
+        "containsRawSeedSecret": false,
+        "containsRedacted": true
+      },
+      {
+        "path": "/api/config",
+        "status": 200,
+        "containsRawSeedSecret": false,
+        "containsRedacted": true
+      },
+      {
+        "path": "/api/audit?limit=10",
+        "status": 200,
+        "containsRawSeedSecret": false,
+        "containsRedacted": true
+      },
+      {
+        "path": "/api/table/schema",
+        "status": 200,
+        "containsRawSeedSecret": false,
+        "containsRedacted": true
+      },
+      {
+        "path": "/api/table/records?limit=20",
+        "status": 200,
+        "containsRawSeedSecret": false,
+        "containsRedacted": true
+      }
+    ],
+    "devtoolsNetworkDetail": {
+      "request": "GET /api/config",
+      "status": 200,
+      "responseContainsAppSecretState": "stored-redacted",
+      "responseContainsRawSecret": false,
+      "responseContainsIssueCodeRedaction": true
+    }
+  },
+  "result": "Rendered details and checked response bodies exposed redacted state/markers, not raw secret values."
+}

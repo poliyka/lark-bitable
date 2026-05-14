@@ -1,0 +1,53 @@
+{
+  "scenario": "D-AUTH-09",
+  "status": "pass",
+  "evidenceMethod": "mcp__chrome_devtools_isolated__ logout button click, Current Auth DOM observation, Overview navigation, and /api/status fetch",
+  "logout": {
+    "result": {
+      "status": "ok",
+      "dataSource": "file-backed",
+      "issues": [],
+      "data": {
+        "auth": {
+          "status": "missing",
+          "storagePath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/auth.json",
+          "scopes": [],
+          "issues": [
+            {
+              "code": "[REDACTED]",
+              "message": "Lark auth is missing.",
+              "remediation": "Start Lark login from the dashboard."
+            }
+          ]
+        }
+      }
+    },
+    "currentAuthPill": "missing",
+    "currentAuthRows": [
+      {
+        "key": "account",
+        "value": ""
+      },
+      {
+        "key": "domain",
+        "value": ""
+      },
+      {
+        "key": "scopes",
+        "value": ""
+      },
+      {
+        "key": "expires",
+        "value": ""
+      },
+      {
+        "key": "storage",
+        "value": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/auth.json"
+      }
+    ],
+    "overviewAuthPill": "auth · missing",
+    "overviewReadinessStatus": "partial",
+    "overviewNextSafeCommand": "Run lark-bitable lark --login"
+  },
+  "note": "A pending manual login flow remains visually marked waiting until its polling window ends; auth and Overview state returned to missing as required."
+}

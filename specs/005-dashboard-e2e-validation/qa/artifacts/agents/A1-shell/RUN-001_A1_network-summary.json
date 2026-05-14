@@ -1,0 +1,46 @@
+{
+  "runId": "RUN-001",
+  "lane": "A1-shell",
+  "collectedAt": "2026-05-14T08:21:05.000Z",
+  "tool": "mcp__chrome_devtools_isolated__.list_network_requests",
+  "origin": "http://127.0.0.1:48741",
+  "documentFetchXhrRequests": {
+    "totalAtToolCollection": 66,
+    "non200": [],
+    "methodsAndPaths": [
+      "GET /",
+      "GET /api/status",
+      "GET /api/audit?limit=5",
+      "GET /api/config",
+      "GET /api/audit",
+      "GET /api/audit/:id",
+      "GET /api/research",
+      "GET /api/table/records?limit=20",
+      "GET /api/table/schema",
+      "POST /api/playground/run"
+    ]
+  },
+  "playgroundRun": {
+    "request": {
+      "method": "POST",
+      "path": "/api/playground/run",
+      "body": {
+        "command": "valid",
+        "confirmWrite": false,
+        "parameters": {
+          "workflow": "dashboard"
+        }
+      }
+    },
+    "responseStatus": 200,
+    "responseBodySummary": {
+      "status": "partial",
+      "issues": [
+        "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.",
+        "No active Lark Bitable source is configured. The dashboard can start, but table-backed pages are blocked until configuration is saved."
+      ],
+      "nextSafeActions": ["Run lark-bitable lark --login"]
+    }
+  },
+  "status": "pass"
+}

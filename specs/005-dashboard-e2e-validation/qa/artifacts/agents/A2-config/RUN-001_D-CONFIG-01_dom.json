@@ -1,0 +1,23 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-01",
+  "status": "pass",
+  "activeRoute": {
+    "hash": "#config",
+    "activePage": "config-page",
+    "breadcrumb": "∷ 設定"
+  },
+  "sectionsObserved": [
+    "SOURCE · BASE / BITABLE",
+    "LARK APP CREDENTIALS",
+    "FIELD MAPPINGS",
+    "輸出"
+  ],
+  "controlsObserved": ["重設", "儲存設定", "從 Base 重新探索"],
+  "screenshot": "RUN-001_D-CONFIG-01_desktop.png",
+  "accessibilitySnapshot": "RUN-001_D-CONFIG-01_snapshot.txt"
+}

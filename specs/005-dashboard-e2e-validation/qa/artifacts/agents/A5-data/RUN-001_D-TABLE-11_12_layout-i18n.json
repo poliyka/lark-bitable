@@ -1,0 +1,85 @@
+{
+  "capturedAt": "2026-05-14T08:21:07.890Z",
+  "origin": "http://127.0.0.1:48781",
+  "scenarios": ["D-TABLE-11", "D-TABLE-12"],
+  "status": "blocked",
+  "blockers": [
+    "test-lark-auth-session",
+    "test-lark-bitable-source-url",
+    "test-lark-records-with-wide-long-values",
+    "test-lark-source-values-for-language-boundary"
+  ],
+  "browserObservations": {
+    "sourceTableLanguage": "en",
+    "sourceValuesVisible": false,
+    "reason": "No live records or schema fields are available in A5 state, so wide/long inspectability and source-value no-translation cannot be validated."
+  },
+  "apiCorrelation": {
+    "records": {
+      "status": "partial",
+      "dataSource": "missing",
+      "issues": [
+        {
+          "code": "[REDACTED]",
+          "message": "No active Lark Bitable source is configured.",
+          "remediation": "Save a source URL on the dashboard config page."
+        },
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing.",
+          "remediation": "Complete Lark login from the dashboard auth page."
+        }
+      ],
+      "data": {
+        "issues": [
+          {
+            "code": "[REDACTED]",
+            "message": "No active Lark Bitable source is configured.",
+            "remediation": "Save a source URL on the dashboard config page."
+          },
+          {
+            "code": "[REDACTED]",
+            "message": "Lark auth is missing.",
+            "remediation": "Complete Lark login from the dashboard auth page."
+          }
+        ],
+        "records": [],
+        "status": "blocked"
+      }
+    },
+    "schema": {
+      "status": "partial",
+      "dataSource": "missing",
+      "issues": [
+        {
+          "code": "[REDACTED]",
+          "message": "No active Lark Bitable source is configured.",
+          "remediation": "Save a source URL on the dashboard config page."
+        },
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing.",
+          "remediation": "Complete Lark login from the dashboard auth page."
+        }
+      ],
+      "data": {
+        "fields": [],
+        "issues": [
+          {
+            "code": "[REDACTED]",
+            "message": "No active Lark Bitable source is configured.",
+            "remediation": "Save a source URL on the dashboard config page."
+          },
+          {
+            "code": "[REDACTED]",
+            "message": "Lark auth is missing.",
+            "remediation": "Complete Lark login from the dashboard auth page."
+          }
+        ],
+        "mappings": {},
+        "status": "blocked"
+      }
+    }
+  },
+  "redactionStatus": "no-sensitive-data-observed"
+}

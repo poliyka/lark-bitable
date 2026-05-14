@@ -1,0 +1,26 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-07",
+  "field": "statusField",
+  "status": "pass",
+  "before": {
+    "hash": "#config",
+    "activePage": "config-page",
+    "breadcrumb": "∷ 設定",
+    "scrollY": 520
+  },
+  "after": {
+    "hash": "#config",
+    "activePage": "config-page",
+    "breadcrumb": "∷ 設定",
+    "scrollY": 520
+  },
+  "didScrollToTop": false,
+  "scrollDelta": 0,
+  "routeStable": true,
+  "action": "Focused and changed statusField while scrolled below the top of the Configuration page."
+}

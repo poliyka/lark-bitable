@@ -1,0 +1,832 @@
+uid=1_0 RootWebArea "lark-bitable · dashboard" url="http://127.0.0.1:48751/#config"
+  uid=3_0 ignored
+    uid=3_1 generic
+      uid=3_2 ignored
+        uid=1_1 complementary
+          uid=3_3 ignored
+            uid=3_4 ignored
+            uid=3_5 generic
+              uid=1_2 StaticText "lark-bitable"
+                uid=3_6 InlineTextBox "lark-bitable"
+              uid=1_3 LineBreak "
+"
+                uid=3_6 InlineTextBox "
+"
+              uid=1_4 StaticText "dashboard"
+                uid=3_6 InlineTextBox "dashboard"
+            uid=3_7 generic
+              uid=1_5 StaticText "v1.0"
+                uid=3_6 InlineTextBox "v1.0"
+          uid=3_8 ignored
+            uid=3_9 generic
+              uid=1_6 StaticText "WORKSPACE"
+                uid=3_6 InlineTextBox "WORKSPACE"
+            uid=3_10 ignored
+              uid=1_7 button "◇ 總覽 ⌘1"
+                uid=3_11 ignored
+                  uid=3_12 StaticText "◇"
+                    uid=3_6 InlineTextBox "◇"
+                uid=3_13 ignored
+                  uid=3_14 StaticText "總覽"
+                    uid=3_6 InlineTextBox "總覽"
+                uid=3_15 ignored
+                  uid=3_16 StaticText "⌘1"
+                    uid=3_6 InlineTextBox "⌘1"
+              uid=1_8 button "∷ 設定 ⌘2" focusable focused
+                uid=3_17 ignored
+                  uid=3_18 StaticText "∷"
+                    uid=3_6 InlineTextBox "∷"
+                uid=3_19 ignored
+                  uid=3_20 StaticText "設定"
+                    uid=3_6 InlineTextBox "設定"
+                uid=3_21 ignored
+                  uid=3_22 StaticText "⌘2"
+                    uid=3_6 InlineTextBox "⌘2"
+              uid=1_9 button "⎋ Lark 登入 ⌘3"
+                uid=3_23 ignored
+                  uid=3_24 StaticText "⎋"
+                    uid=3_6 InlineTextBox "⎋"
+                uid=3_25 ignored
+                  uid=3_26 StaticText "Lark 登入"
+                    uid=3_6 InlineTextBox "Lark 登入"
+                uid=3_27 ignored
+                  uid=3_28 StaticText "⌘3"
+                    uid=3_6 InlineTextBox "⌘3"
+              uid=1_10 button "≡ 稽核紀錄 ⌘4"
+                uid=3_29 ignored
+                  uid=3_30 StaticText "≡"
+                    uid=3_6 InlineTextBox "≡"
+                uid=3_31 ignored
+                  uid=3_32 StaticText "稽核紀錄"
+                    uid=3_6 InlineTextBox "稽核紀錄"
+                uid=3_33 ignored
+                  uid=3_34 StaticText "⌘4"
+                    uid=3_6 InlineTextBox "⌘4"
+          uid=3_35 ignored
+            uid=3_36 generic
+              uid=1_11 StaticText "TOOLS"
+                uid=3_6 InlineTextBox "TOOLS"
+            uid=3_37 ignored
+              uid=1_12 button "▷ Playground ⌘5"
+                uid=3_38 ignored
+                  uid=3_39 StaticText "▷"
+                    uid=3_6 InlineTextBox "▷"
+                uid=3_40 ignored
+                  uid=3_41 StaticText "Playground"
+                    uid=3_6 InlineTextBox "Playground"
+                uid=3_42 ignored
+                  uid=3_43 StaticText "⌘5"
+                    uid=3_6 InlineTextBox "⌘5"
+              uid=1_13 button "◧ 研究報告 ⌘6"
+                uid=3_44 ignored
+                  uid=3_45 StaticText "◧"
+                    uid=3_6 InlineTextBox "◧"
+                uid=3_46 ignored
+                  uid=3_47 StaticText "研究報告"
+                    uid=3_6 InlineTextBox "研究報告"
+                uid=3_48 ignored
+                  uid=3_49 StaticText "⌘6"
+                    uid=3_6 InlineTextBox "⌘6"
+              uid=1_14 button "▦ 來源資料表 ⌘7"
+                uid=3_50 ignored
+                  uid=3_51 StaticText "▦"
+                    uid=3_6 InlineTextBox "▦"
+                uid=3_52 ignored
+                  uid=3_53 StaticText "來源資料表"
+                    uid=3_6 InlineTextBox "來源資料表"
+                uid=3_54 ignored
+                  uid=3_55 StaticText "⌘7"
+                    uid=3_6 InlineTextBox "⌘7"
+          uid=3_56 ignored
+            uid=3_57 ignored
+              uid=3_58 ignored
+                uid=3_59 ignored
+                  uid=1_15 StaticText "status"
+                    uid=3_6 InlineTextBox "status"
+                uid=3_60 ignored
+                  uid=3_61 generic
+                  uid=3_62 generic
+                    uid=1_16 StaticText "ready"
+                      uid=3_6 InlineTextBox "ready"
+              uid=3_63 ignored
+                uid=3_64 ignored
+                  uid=1_17 StaticText "host"
+                    uid=3_6 InlineTextBox "host"
+                uid=3_65 generic
+                  uid=1_18 StaticText "127.0.0.1"
+                    uid=3_6 InlineTextBox "127.0.0.1"
+              uid=3_66 ignored
+                uid=3_67 ignored
+                  uid=1_19 StaticText "port"
+                    uid=3_6 InlineTextBox "port"
+                uid=3_68 generic
+                  uid=1_20 StaticText "48751"
+                    uid=3_6 InlineTextBox "48751"
+              uid=3_69 ignored
+                uid=3_70 ignored
+                  uid=1_21 StaticText "mode"
+                    uid=3_6 InlineTextBox "mode"
+                uid=3_71 ignored
+                  uid=1_22 StaticText "local only"
+                    uid=3_6 InlineTextBox "local only"
+              uid=3_72 ignored
+                uid=3_73 ignored
+                  uid=1_23 StaticText "login"
+                    uid=3_6 InlineTextBox "login"
+                uid=3_74 ignored
+                  uid=1_24 StaticText "no dashboard login"
+                    uid=3_6 InlineTextBox "no dashboard login"
+        uid=1_25 main
+          uid=3_75 generic
+            uid=3_76 generic
+              uid=1_26 StaticText "workspace / "
+                uid=3_6 InlineTextBox "workspace / "
+              uid=3_77 generic
+                uid=2_0 StaticText "∷ 設定"
+                  uid=3_6 InlineTextBox "∷ 設定"
+            uid=3_78 ignored
+            uid=1_28 button "⟳ 重新整理"
+              uid=3_79 StaticText "⟳"
+                uid=3_6 InlineTextBox "⟳"
+              uid=3_80 ignored
+                uid=3_81 StaticText "重新整理"
+                  uid=3_6 InlineTextBox "重新整理"
+            uid=1_29 button "⌘ 指令面板"
+              uid=3_82 StaticText "⌘"
+                uid=3_6 InlineTextBox "⌘"
+              uid=3_83 ignored
+                uid=3_84 StaticText "指令面板"
+                  uid=3_6 InlineTextBox "指令面板"
+            uid=3_85 group "Language"
+              uid=1_30 button "繁中" pressed
+                uid=3_86 StaticText "繁中"
+                  uid=3_6 InlineTextBox "繁中"
+              uid=1_31 button "EN"
+                uid=3_87 StaticText "EN"
+                  uid=3_6 InlineTextBox "EN"
+          uid=3_88 ignored
+            uid=3_89 ignored
+              uid=3_90 ignored
+                uid=3_91 ignored
+                uid=3_92 ignored
+                uid=3_93 ignored
+                uid=3_94 ignored
+              uid=3_95 ignored
+                uid=3_96 ignored
+                uid=3_97 ignored
+                uid=3_98 ignored
+                uid=3_99 ignored
+          uid=3_100 generic
+            uid=3_101 ignored
+              uid=3_102 ignored
+                uid=2_1 heading "設定" level="1"
+                  uid=3_103 StaticText "設定"
+                    uid=3_6 InlineTextBox "設定"
+                uid=3_104 paragraph
+                  uid=2_2 StaticText "Base URL、Lark app、欄位對應、workflow mode 與 actionable status。儲存後立即重新評估 readiness。"
+                    uid=3_6 InlineTextBox "Base URL、Lark app、欄位對應、workflow mode 與 actionable status。儲存後立即重新評估 "
+                    uid=3_6 InlineTextBox "readiness。"
+              uid=3_105 ignored
+                uid=2_3 button "重設"
+                  uid=3_106 StaticText "重設"
+                    uid=3_6 InlineTextBox "重設"
+                uid=2_4 button "儲存設定"
+                  uid=3_107 StaticText "儲存設定"
+                    uid=3_6 InlineTextBox "儲存設定"
+            uid=3_108 generic
+              uid=3_109 generic
+                uid=3_110 ignored
+                  uid=2_5 heading "SOURCE · BASE / BITABLE" level="3"
+                    uid=3_111 StaticText "SOURCE · BASE / BITABLE"
+                      uid=3_6 InlineTextBox "SOURCE · BASE / BITABLE"
+                  uid=3_112 ignored
+                    uid=2_6 StaticText "file-backed"
+                      uid=3_6 InlineTextBox "file-backed"
+                uid=3_113 ignored
+                  uid=3_114 ignored
+                    uid=3_115 ignored
+                      uid=3_116 LabelText
+                        uid=2_7 StaticText "Lark Base / Bitable URL"
+                          uid=3_6 InlineTextBox "Lark Base / Bitable URL"
+                      uid=2_8 textbox "https://example.larksuite.com/base/..." value="https://example.larksuite.com/base/appA2Config?table=tblA2Config&view=vewA2"
+                        uid=3_117 ignored
+                        uid=3_118 generic
+                          uid=3_119 StaticText "https://example.larksuite.com/base/appA2Config?table=tblA2Config&view=vewA2"
+                            uid=3_6 InlineTextBox "https://example.larksuite.com/base/appA2Config?table=tblA2Config&view=vewA2"
+                    uid=3_120 ignored
+                      uid=3_121 LabelText
+                        uid=2_9 StaticText "來源名稱"
+                          uid=3_6 InlineTextBox "來源名稱"
+                      uid=2_10 textbox "Project Bugs" value="A2 Config Source"
+                        uid=3_122 ignored
+                        uid=3_123 generic
+                          uid=3_124 StaticText "A2 Config Source"
+                            uid=3_6 InlineTextBox "A2 Config Source"
+                    uid=3_125 ignored
+                      uid=3_126 LabelText
+                        uid=2_11 StaticText "Workflow Mode"
+                          uid=3_6 InlineTextBox "Workflow Mode"
+                      uid=2_12 combobox expandable haspopup="menu" value="Developer"
+                        uid=3_127 MenuListPopup
+                          uid=2_13 option "Developer" selectable selected value="Developer"
+                          uid=2_14 option "QA" selectable value="QA"
+              uid=3_128 generic
+                uid=3_129 ignored
+                  uid=2_15 heading "LARK APP CREDENTIALS" level="3"
+                    uid=3_130 StaticText "LARK APP CREDENTIALS"
+                      uid=3_6 InlineTextBox "LARK APP CREDENTIALS"
+                  uid=3_131 generic
+                    uid=2_16 StaticText "stored-redacted"
+                      uid=3_6 InlineTextBox "stored-redacted"
+                uid=3_132 ignored
+                  uid=3_133 ignored
+                    uid=3_134 ignored
+                      uid=3_135 LabelText
+                        uid=2_17 StaticText "App ID"
+                          uid=3_6 InlineTextBox "App ID"
+                      uid=2_18 textbox value="cli_a2_config_app"
+                        uid=3_136 generic
+                          uid=3_137 StaticText "cli_a2_config_app"
+                            uid=3_6 InlineTextBox "cli_a2_config_app"
+                    uid=3_138 ignored
+                      uid=3_139 LabelText
+                        uid=2_19 StaticText "App Secret"
+                          uid=3_6 InlineTextBox "App Secret"
+                      uid=2_20 textbox "留空表示沿用既有值"
+                        uid=3_140 ignored
+                        uid=3_141 ignored
+                          uid=3_142 ignored
+                            uid=3_143 generic
+                    uid=3_144 ignored
+                      uid=3_145 LabelText
+                        uid=2_21 StaticText "OAuth Redirect URI"
+                          uid=3_6 InlineTextBox "OAuth Redirect URI"
+                      uid=2_22 textbox "http://127.0.0.1:14543/callback" value="http://127.0.0.1:14543/callback"
+                        uid=3_146 ignored
+                        uid=3_147 generic
+                          uid=3_148 StaticText "http://127.0.0.1:14543/callback"
+                            uid=3_6 InlineTextBox "http://127.0.0.1:14543/callback"
+                    uid=3_149 ignored
+                      uid=3_150 LabelText
+                        uid=2_23 StaticText "Callback Port"
+                          uid=3_6 InlineTextBox "Callback Port"
+                      uid=2_24 textbox "14543" value="14543"
+                        uid=3_151 ignored
+                        uid=3_152 generic
+                          uid=3_153 StaticText "14543"
+                            uid=3_6 InlineTextBox "14543"
+                    uid=3_154 ignored
+                      uid=3_155 LabelText
+                        uid=2_25 StaticText "Lark Domain"
+                          uid=3_6 InlineTextBox "Lark Domain"
+                      uid=2_26 combobox expandable haspopup="menu" value="larksuite.com"
+                        uid=3_156 MenuListPopup
+                          uid=2_27 option "larksuite.com" selectable selected value="larksuite.com"
+                          uid=2_28 option "feishu.cn" selectable value="feishu.cn"
+                    uid=3_157 ignored
+                      uid=3_158 LabelText
+                        uid=2_29 StaticText "Scopes"
+                          uid=3_6 InlineTextBox "Scopes"
+                      uid=2_30 textbox "bitable:app:readonly bitable:app" value="bitable:app:readonly bitable:record:read base:field:read"
+                        uid=3_159 ignored
+                        uid=3_160 generic
+                          uid=3_161 StaticText "bitable:app:readonly bitable:record:read base:field:read"
+                            uid=3_6 InlineTextBox "bitable:app:readonly bitable:record:read base:field:read"
+              uid=3_162 generic
+                uid=3_163 ignored
+                  uid=2_31 heading "FIELD MAPPINGS" level="3"
+                    uid=3_164 StaticText "FIELD MAPPINGS"
+                      uid=3_6 InlineTextBox "FIELD MAPPINGS"
+                  uid=2_32 button "⟳ 從 Base 重新探索"
+                    uid=3_165 StaticText "⟳ 從 Base 重新探索"
+                      uid=3_6 InlineTextBox "⟳ 從 Base 重新探索"
+                uid=3_166 ignored
+                  uid=3_167 ignored
+                    uid=3_168 ignored
+                      uid=3_169 LabelText
+                        uid=2_33 StaticText "Status Field"
+                          uid=3_6 InlineTextBox "Status Field"
+                      uid=2_34 combobox autocomplete="list" haspopup="listbox" value="Status A2"
+                        uid=3_170 generic
+                          uid=3_171 StaticText "Status A2"
+                            uid=3_6 InlineTextBox "Status A2"
+                    uid=3_172 ignored
+                      uid=3_173 LabelText
+                        uid=2_35 StaticText "Actionable Status"
+                          uid=3_6 InlineTextBox "Actionable Status"
+                      uid=2_36 textbox value="待處理-A2"
+                        uid=3_174 generic
+                          uid=3_175 StaticText "待處理-A2"
+                            uid=3_6 InlineTextBox "待處理-A2"
+                    uid=3_176 ignored
+                      uid=3_177 LabelText
+                        uid=2_37 StaticText "Priority Field"
+                          uid=3_6 InlineTextBox "Priority Field"
+                      uid=2_38 combobox autocomplete="list" haspopup="listbox" value="Priority A2"
+                        uid=3_178 generic
+                          uid=3_179 StaticText "Priority A2"
+                            uid=3_6 InlineTextBox "Priority A2"
+                    uid=3_180 ignored
+                      uid=3_181 LabelText
+                        uid=2_39 StaticText "Title Field"
+                          uid=3_6 InlineTextBox "Title Field"
+                      uid=2_40 combobox autocomplete="list" haspopup="listbox" value="Title A2"
+                        uid=3_182 generic
+                          uid=3_183 StaticText "Title A2"
+                            uid=3_6 InlineTextBox "Title A2"
+                    uid=3_184 ignored
+                      uid=3_185 LabelText
+                        uid=2_41 StaticText "Owner Field"
+                          uid=3_6 InlineTextBox "Owner Field"
+                      uid=2_42 combobox autocomplete="list" haspopup="listbox" value="Owner A2"
+                        uid=3_186 generic
+                          uid=3_187 StaticText "Owner A2"
+                            uid=3_6 InlineTextBox "Owner A2"
+                    uid=3_188 ignored
+                      uid=3_189 LabelText
+                        uid=2_43 StaticText "Default Owner"
+                          uid=3_6 InlineTextBox "Default Owner"
+                      uid=2_44 textbox value="A2 Owner Final"
+                        uid=3_190 generic
+                          uid=3_191 StaticText "A2 Owner Final"
+                            uid=3_6 InlineTextBox "A2 Owner Final"
+            uid=3_192 ignored
+              uid=3_193 ignored
+                uid=3_194 ignored
+                  uid=2_45 StaticText "輸出"
+                    uid=3_6 InlineTextBox "輸出"
+              uid=3_195 generic
+                uid=2_46 StaticText "{
+  "status": "ok",
+  "dataSource": "file-backed",
+  "issues": [],
+  "data": {
+    "draft": {
+      "sourceUrl": "https://example.larksuite.com/base/appA2Config?table=tblA2Config&view=vewA2",
+      "sourceName": "A2 Config Source",
+      "mode": "Developer",
+      "larkAppId": "cli_a2_config_app",
+      "larkAppSecretState": "stored-redacted",
+      "larkDomain": "larksuite.com",
+      "redirectUri": "http://127.0.0.1:14543/callback",
+      "callbackPort": 14543,
+      "scopes": [
+        "bitable:app:readonly",
+        "bitable:record:read",
+        "base:field:read"
+      ],
+      "statusField": "Status A2",
+      "priorityField": "Priority A2",
+      "titleField": "Title A2",
+      "ownerField": "Owner A2",
+      "actionableStatus": "待處理-A2",
+      "defaultOwner": "A2 Owner Final",
+      "validation": {
+        "workflow": "dashboard",
+        "status": "partial",
+        "checkedPrerequisites": [
+          "install",
+          "dashboard-server",
+          "config",
+          "auth",
+          "audit",
+          "research"
+        ],
+        "blockingIssues": [],
+        "partialIssues": [
+          {
+            "code": "[REDACTED]",
+            "message": "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.",
+            "remediation": "Run lark-bitable lark --login"
+          }
+        ],
+        "remediationSteps": [
+          "Run lark-bitable lark --login"
+        ],
+        "nextSafeCommand": "Run lark-bitable lark --login",
+        "evidence": [],
+        "activeMode": "Developer",
+        "modeSource": "explicit",
+        "checkedAt": "2026-05-14T08:14:41.498Z"
+      }
+    },
+    "readiness": {
+      "workflow": "dashboard",
+      "status": "partial",
+      "checkedPrerequisites": [
+        "install",
+        "dashboard-server",
+        "config",
+        "auth",
+        "audit",
+        "research"
+      ],
+      "blockingIssues": [],
+      "partialIssues": [
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.",
+          "remediation": "Run lark-bitable lark --login"
+        }
+      ],
+      "remediationSteps": [
+        "Run lark-bitable lark --login"
+      ],
+      "nextSafeCommand": "Run lark-bitable lark --login",
+      "evidence": [],
+      "activeMode": "Developer",
+      "modeSource": "explicit",
+      "checkedAt": "2026-05-14T08:14:41.498Z"
+    }
+  }
+}"
+                  uid=3_6 InlineTextBox "{"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "  "
+                  uid=3_6 InlineTextBox ""status": "ok","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "  "
+                  uid=3_6 InlineTextBox ""dataSource": "file-backed","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "  "
+                  uid=3_6 InlineTextBox ""issues": [],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "  "
+                  uid=3_6 InlineTextBox ""data": {"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "    "
+                  uid=3_6 InlineTextBox ""draft": {"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""sourceUrl": "https://example.larksuite.com/base/appA2Config?table=tblA2Config&view=vewA2","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""sourceName": "A2 Config Source","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""mode": "Developer","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""larkAppId": "cli_a2_config_app","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""larkAppSecretState": "stored-redacted","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""larkDomain": "larksuite.com","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""redirectUri": "http://127.0.0.1:14543/callback","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""callbackPort": 14543,"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""scopes": ["
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""bitable:app:readonly","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""bitable:record:read","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""base:field:read""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox "],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""statusField": "Status A2","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""priorityField": "Priority A2","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""titleField": "Title A2","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""ownerField": "Owner A2","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""actionableStatus": "待處理-A2","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""defaultOwner": "A2 Owner Final","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""validation": {"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""workflow": "dashboard","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""status": "partial","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""checkedPrerequisites": ["
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""install","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""dashboard-server","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""config","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""auth","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""audit","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""research""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox "],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""blockingIssues": [],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""partialIssues": ["
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox "{"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "            "
+                  uid=3_6 InlineTextBox ""code": "[REDACTED]","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "            "
+                  uid=3_6 InlineTextBox ""message": "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "            "
+                  uid=3_6 InlineTextBox ""remediation": "Run lark-bitable lark --login""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox "}"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox "],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""remediationSteps": ["
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""Run lark-bitable lark --login""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox "],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""nextSafeCommand": "Run lark-bitable lark --login","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""evidence": [],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""activeMode": "Developer","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""modeSource": "explicit","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""checkedAt": "2026-05-14T08:14:41.498Z""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox "}"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "    "
+                  uid=3_6 InlineTextBox "},"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "    "
+                  uid=3_6 InlineTextBox ""readiness": {"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""workflow": "dashboard","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""status": "partial","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""checkedPrerequisites": ["
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""install","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""dashboard-server","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""config","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""auth","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""audit","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""research""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox "],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""blockingIssues": [],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""partialIssues": ["
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox "{"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""code": "[REDACTED]","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""message": "Lark auth is missing or not ready. Lark-backed dashboard pages are blocked until login completes.","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "          "
+                  uid=3_6 InlineTextBox ""remediation": "Run lark-bitable lark --login""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox "}"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox "],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""remediationSteps": ["
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "        "
+                  uid=3_6 InlineTextBox ""Run lark-bitable lark --login""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox "],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""nextSafeCommand": "Run lark-bitable lark --login","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""evidence": [],"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""activeMode": "Developer","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""modeSource": "explicit","
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "      "
+                  uid=3_6 InlineTextBox ""checkedAt": "2026-05-14T08:14:41.498Z""
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "    "
+                  uid=3_6 InlineTextBox "}"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "  "
+                  uid=3_6 InlineTextBox "}"
+                  uid=3_6 InlineTextBox "
+"
+                  uid=3_6 InlineTextBox "}"
+          uid=3_196 ignored
+            uid=3_197 ignored
+          uid=3_198 ignored
+          uid=3_199 ignored
+            uid=3_200 ignored
+          uid=3_201 ignored
+          uid=3_202 ignored
+          uid=3_203 ignored
+          uid=3_204 ignored
+            uid=3_205 ignored
+            uid=3_206 ignored
+            uid=3_207 ignored
+            uid=3_208 ignored
+            uid=3_209 ignored
+            uid=3_210 ignored
+          uid=3_211 ignored
+            uid=3_212 ignored
+            uid=3_213 ignored
+            uid=3_214 ignored
+            uid=3_215 ignored
+          uid=3_216 ignored
+            uid=3_217 ignored
+            uid=3_218 ignored
+            uid=3_219 ignored
+          uid=3_220 ignored
+          uid=3_221 ignored
+          uid=3_222 ignored
+            uid=3_223 ignored
+            uid=3_224 ignored
+          uid=3_225 ignored
+            uid=3_226 ignored
+            uid=3_227 ignored
+          uid=3_228 ignored
+          uid=3_229 ignored
+          uid=3_230 ignored
+            uid=3_231 ignored
+              uid=3_232 ignored
+              uid=3_233 ignored
+              uid=3_234 ignored
+              uid=3_235 ignored
+              uid=3_236 ignored
+            uid=3_237 ignored
+          uid=3_238 ignored
+            uid=3_239 ignored
+          uid=3_240 ignored
+            uid=3_241 ignored
+            uid=3_242 ignored
+            uid=3_243 ignored
+          uid=3_244 ignored
+            uid=3_245 ignored
+              uid=3_246 ignored
+                uid=3_247 ignored
+          uid=3_248 ignored
+          uid=3_249 ignored
+          uid=3_250 ignored
+          uid=3_251 ignored
+          uid=3_252 ignored
+            uid=3_253 ignored

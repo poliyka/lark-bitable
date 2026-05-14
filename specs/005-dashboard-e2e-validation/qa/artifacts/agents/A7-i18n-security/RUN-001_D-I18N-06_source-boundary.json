@@ -1,0 +1,38 @@
+{
+  "scenarioId": "D-I18N-06",
+  "status": "blocked",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Seeded A7-local source config and research report values under the allowed A7 state path.",
+    "Switched English and Traditional Chinese language states.",
+    "Observed Overview, Research Reports, and Source Table values.",
+    "Checked live Source Table availability."
+  ],
+  "observations": {
+    "localSourceConfigBoundary": {
+      "overviewEnglishContainsSourceName": true,
+      "overviewChineseContainsSourceName": true,
+      "overviewEnglishContainsFieldName": true,
+      "overviewChineseContainsFieldName": true,
+      "verbatimValues": ["A7 Source 原文 English", "狀態 Original Status"]
+    },
+    "localResearchBoundary": {
+      "researchEnglishContainsVerbatim": true,
+      "researchChineseContainsVerbatim": true,
+      "verbatimValues": [
+        "A7 原文 Observed Fact stays verbatim",
+        "English source phrase remains English"
+      ]
+    },
+    "sourceTableBoundary": {
+      "sourceBannerValueRemainedVerbatim": "A7 Source 原文 English",
+      "recordsStatus": "missing",
+      "recordsCount": 0,
+      "schemaCount": 0,
+      "blockedDependency": "live Lark auth session and test Bitable records unavailable in A7 isolated state"
+    }
+  },
+  "partialResult": "Local source config and research report values were not translated by language switching.",
+  "blockedImpact": "Live Source Table record/schema value translation boundary could not be verified without live Lark auth and test Bitable data."
+}

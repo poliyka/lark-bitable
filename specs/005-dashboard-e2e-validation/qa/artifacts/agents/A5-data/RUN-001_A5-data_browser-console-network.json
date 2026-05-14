@@ -1,0 +1,26 @@
+{
+  "capturedAt": "2026-05-14T08:21:48.497Z",
+  "origin": "http://127.0.0.1:48781",
+  "browserTool": "mcp__chrome_devtools_isolated__",
+  "consoleSummary": {
+    "finalConsoleMessages": "No console messages returned by final isolated MCP list_console_messages call.",
+    "note": "An earlier initial read showed Chromium page issues and favicon 404 during first load; no app exception was observed during scenario actions."
+  },
+  "networkSummary": {
+    "observedRequests": [
+      "GET /#research 200",
+      "GET /assets/styles.css 200",
+      "GET /assets/app.js 200",
+      "GET /api/research 200",
+      "GET /api/research?text=Copy%20Boundary%20Beacon 200",
+      "GET /api/research/source-copy-boundary-20260514T080500000Z 200",
+      "GET /api/research/dashboard-layout-regression-20260514T080000000Z 200",
+      "GET /api/table/records?limit=20 200",
+      "GET /api/table/schema 200",
+      "GET /api/status 200",
+      "GET /favicon.ico 404"
+    ],
+    "uncontrolledRequestLoopObserved": false
+  },
+  "redactionStatus": "no-sensitive-data-observed"
+}

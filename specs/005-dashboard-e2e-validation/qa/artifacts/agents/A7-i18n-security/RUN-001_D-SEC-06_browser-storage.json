@@ -1,0 +1,19 @@
+{
+  "scenarioId": "D-SEC-06",
+  "status": "pass",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Dumped browser localStorage and sessionStorage from the isolated browser context after all A7 interactions.",
+    "Scanned storage JSON for token, secret, authorization, and auth-code key fragments."
+  ],
+  "observations": {
+    "localStorage": {
+      "lark-bitable.dashboard.lang": "zh-TW"
+    },
+    "sessionStorage": {},
+    "containsTokenSecretAuthCodePattern": false,
+    "matchedFragments": []
+  },
+  "result": "Browser storage contained only the language preference and no tokens, secrets, authorization headers, or auth codes."
+}

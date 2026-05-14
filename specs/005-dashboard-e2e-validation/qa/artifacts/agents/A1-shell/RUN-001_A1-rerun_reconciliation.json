@@ -1,0 +1,148 @@
+{
+  "runId": "RUN-001",
+  "lane": "A1-shell",
+  "collectedAt": "2026-05-14T08:35:13.618Z",
+  "tooling": {
+    "browser": "mcp__chrome_devtools_isolated__",
+    "origin": "http://127.0.0.1:48741",
+    "requestedPort": 48741,
+    "actualPort": 48741
+  },
+  "startupRerun": {
+    "startedAt": "2026-05-14T08:32:30.807Z",
+    "dashboardLoginRequired": false,
+    "localOnly": true,
+    "apiStatusEvidence": "RUN-001_A1_api-status-rerun.json"
+  },
+  "browserVisibleObservations": {
+    "noDashboardLoginGate": {
+      "visibleForms": [],
+      "visibleDialogs": [],
+      "noDashboardLoginLabelVisible": true,
+      "localOnlyVisible": true,
+      "note": "A hidden Configuration App Secret password input exists in the DOM, but no dashboard login form, modal, or gate was visible on the shell/Overview path.",
+      "status": "pass"
+    },
+    "shellCopyActions": {
+      "observations": [
+        {
+          "label": "複製 next",
+          "beforeHash": "#overview",
+          "afterHash": "#overview",
+          "copiedValue": "Run lark-bitable lark --login",
+          "status": "pass"
+        },
+        {
+          "label": "複製",
+          "beforeHash": "#overview",
+          "afterHash": "#overview",
+          "copiedValue": "Run lark-bitable lark --login",
+          "status": "pass"
+        }
+      ],
+      "status": "pass"
+    },
+    "overviewFixAction": {
+      "clicked": true,
+      "before": {
+        "url": "http://127.0.0.1:48741/#overview",
+        "hash": "#overview",
+        "h1": ["總覽"]
+      },
+      "after": {
+        "url": "http://127.0.0.1:48741/#overview",
+        "hash": "#overview",
+        "h1": ["總覽"]
+      },
+      "expectedHash": "#config",
+      "status": "fail"
+    },
+    "overviewValidAction": {
+      "clicked": true,
+      "beforeHash": "#overview",
+      "afterHash": "#playground",
+      "postedRequest": "POST /api/playground/run",
+      "requestBody": {
+        "command": "valid",
+        "confirmWrite": false,
+        "parameters": {
+          "workflow": "dashboard"
+        }
+      },
+      "responseStatus": 200,
+      "responseSummary": {
+        "status": "partial",
+        "nextSafeActions": ["Run lark-bitable lark --login"]
+      },
+      "status": "pass"
+    },
+    "idleNetworkLoopCheck": {
+      "durationMs": 2500,
+      "requestCountBefore": 75,
+      "requestCountAfter": 75,
+      "delta": 0,
+      "status": "pass"
+    }
+  },
+  "consoleAndNetworkSummary": {
+    "consoleIssues": [
+      {
+        "level": "issue",
+        "message": "No label associated with a form field",
+        "count": 18,
+        "status": "non-blocking-observation"
+      },
+      {
+        "level": "issue",
+        "message": "A form field element should have an id or name attribute",
+        "count": 1,
+        "status": "non-blocking-observation"
+      }
+    ],
+    "documentFetchXhrRequestsObserved": 52,
+    "non200Responses": [],
+    "explicitPlaygroundRun": {
+      "method": "POST",
+      "path": "/api/playground/run",
+      "status": 200
+    }
+  },
+  "scenarioReconciliation": {
+    "D-SHELL-01": "pass",
+    "D-SHELL-02": "pass",
+    "D-SHELL-03": "pass",
+    "D-SHELL-04": "pass",
+    "D-SHELL-05": "pass",
+    "D-SHELL-06": "pass",
+    "D-SHELL-07": "pass",
+    "D-SHELL-08": "pass",
+    "D-SHELL-09": "pass",
+    "D-SHELL-10": "pass",
+    "D-OVERVIEW-01": "pass",
+    "D-OVERVIEW-02": "pass",
+    "D-OVERVIEW-03": "pass",
+    "D-OVERVIEW-04": "pass",
+    "D-OVERVIEW-05": "pass",
+    "D-OVERVIEW-06": "pass",
+    "D-OVERVIEW-07": "fail",
+    "D-OVERVIEW-08": "pass",
+    "D-OVERVIEW-09": "pass",
+    "D-OVERVIEW-10": "pass"
+  },
+  "defects": [
+    {
+      "id": "A1-DEFECT-001",
+      "scenarioId": "D-OVERVIEW-07",
+      "severity": "major",
+      "title": "Overview field mapping fix button does not navigate to Configuration",
+      "expected": "Clicking the field mapping fix action navigates intentionally to Configuration.",
+      "actual": "Clicking the visible enabled fix button leaves the dashboard at #overview.",
+      "evidence": [
+        "RUN-001_D-OVERVIEW-06_10.json",
+        "RUN-001_D-SHELL-09_internal-clicks.json",
+        "RUN-001_A1-rerun_reconciliation.json"
+      ]
+    }
+  ],
+  "blockedChecks": []
+}

@@ -1,0 +1,60 @@
+{
+  "scenarioId": "D-I18N-03",
+  "status": "pass",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Clicked the 繁中 language toggle.",
+    "Visited all seven primary pages through the sidebar.",
+    "Captured document language, storage language, active page, crumb, and page heading."
+  ],
+  "observations": {
+    "localStorageDuringTraditionalChineseChecks": {
+      "lark-bitable.dashboard.lang": "zh-TW"
+    },
+    "pages": {
+      "overview": {
+        "documentLang": "zh-TW",
+        "heading": "總覽",
+        "hash": "#overview"
+      },
+      "config": {
+        "documentLang": "zh-TW",
+        "heading": "設定",
+        "hash": "#config"
+      },
+      "auth": {
+        "documentLang": "zh-TW",
+        "heading": "Lark 登入",
+        "hash": "#auth"
+      },
+      "audit": {
+        "documentLang": "zh-TW",
+        "heading": "稽核紀錄",
+        "hash": "#audit"
+      },
+      "playground": {
+        "documentLang": "zh-TW",
+        "heading": "Playground",
+        "hash": "#playground"
+      },
+      "research": {
+        "documentLang": "zh-TW",
+        "heading": "研究報告",
+        "hash": "#research"
+      },
+      "table": {
+        "documentLang": "zh-TW",
+        "heading": "來源資料表",
+        "hash": "#table"
+      }
+    },
+    "dashboardOwnedTextUpdated": true,
+    "sourceValuesRemainedVerbatim": [
+      "A7 Source 原文 English",
+      "狀態 Original Status",
+      "rec-A7-原文-DoNotTranslate"
+    ]
+  },
+  "result": "All primary page headings and global dashboard-owned controls switched to Traditional Chinese."
+}

@@ -1,0 +1,31 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-08",
+  "status": "pass",
+  "checkedFields": [
+    "sourceUrl",
+    "sourceName",
+    "larkAppId",
+    "larkAppSecret",
+    "redirectUri",
+    "callbackPort",
+    "scopes",
+    "statusField",
+    "actionableStatus",
+    "priorityField",
+    "titleField",
+    "ownerField",
+    "defaultOwner"
+  ],
+  "routeStableForAllFocusEvents": true,
+  "routeEvidence": {
+    "hash": "#config",
+    "activePage": "config-page",
+    "breadcrumb": "∷ 設定"
+  },
+  "note": "Focusing priorityField scrolled the page to keep the focused control visible, but did not change hash, active page, or breadcrumb."
+}

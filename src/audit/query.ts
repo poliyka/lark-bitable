@@ -216,6 +216,7 @@ function redactAuditValue(value: unknown, key?: string): unknown {
     return value.map((item) => redactAuditValue(item));
   }
   if (typeof value === "object") {
+    if (isIssueLike(value)) return redactAuditIssue(value);
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(
         ([entryKey, entryValue]) => [
@@ -226,4 +227,42 @@ function redactAuditValue(value: unknown, key?: string): unknown {
     );
   }
   return typeof value;
+}
+
+function isIssueLike(value: unknown): value is {
+  code: string;
+  message: string;
+  remediation?: string;
+} {
+  if (!value || typeof value !== "object") return false;
+  return (
+    typeof (value as { code?: unknown }).code === "string" &&
+    typeof (value as { message?: unknown }).message === "string" &&
+    ("remediation" in value
+      ? typeof (value as { remediation?: unknown }).remediation === "string"
+      : true)
+  );
+}
+
+function redactAuditIssue(issue: {
+  code: string;
+  message: string;
+  remediation?: string;
+}) {
+  return {
+    code: redactAuditString(issue.code),
+    message: redactAuditString(issue.message),
+    ...(issue.remediation
+      ? { remediation: redactAuditString(issue.remediation) }
+      : {}),
+  };
+}
+
+function redactAuditString(value: string): string {
+  return redactSecrets(value)
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, `Bearer ${REDACTED}`)
+    .replace(
+      /(access[_-]?token|accessToken|app[_-]?secret|appSecret|authorization|client[_-]?token|clientToken|code|refresh[_-]?token|refreshToken|secret|tenant[_-]?access[_-]?token|tenant_access_token|token)\s*[:=]\s*["']?[^"',\s}]+/gi,
+      "$1=[REDACTED]",
+    );
 }

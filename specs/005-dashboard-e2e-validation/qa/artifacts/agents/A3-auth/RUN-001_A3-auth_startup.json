@@ -1,0 +1,30 @@
+{
+  "runId": "RUN-001",
+  "lane": "A3-auth",
+  "origin": "http://127.0.0.1:48761",
+  "requestedPort": 48761,
+  "dashboardStartupStatus": "ok",
+  "binding": {
+    "host": "127.0.0.1",
+    "origin": "http://127.0.0.1:48761",
+    "port": 48761,
+    "requestedPort": 48761,
+    "status": "ready",
+    "startedAt": "2026-05-14T08:15:06.796Z"
+  },
+  "dashboardLoginRequired": false,
+  "localOnly": true,
+  "statePaths": {
+    "configCwd": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/config",
+    "authPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/auth.json",
+    "auditPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/audit.json",
+    "researchDir": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/research"
+  },
+  "browserEvidenceMethod": "mcp__chrome_devtools_isolated__",
+  "browserContext": "RUN-001-A3-auth",
+  "browser": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+    "language": "zh-TW",
+    "platform": "MacIntel"
+  }
+}

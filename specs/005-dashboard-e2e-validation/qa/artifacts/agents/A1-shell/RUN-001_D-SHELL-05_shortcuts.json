@@ -1,0 +1,57 @@
+{
+  "scenarioId": "D-SHELL-05",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "method": "Meta+1 through Meta+7 via mcp__chrome_devtools_isolated__.press_key",
+  "observations": [
+    {
+      "shortcut": "Meta+1",
+      "hash": "#overview",
+      "breadcrumb": "workspace / ◇ 總覽",
+      "visibleH1": ["總覽"],
+      "pass": true
+    },
+    {
+      "shortcut": "Meta+2",
+      "hash": "#config",
+      "breadcrumb": "workspace / ∷ 設定",
+      "visibleH1": ["設定"],
+      "pass": true
+    },
+    {
+      "shortcut": "Meta+3",
+      "hash": "#auth",
+      "breadcrumb": "workspace / ⎋ Lark 登入",
+      "visibleH1": ["Lark 登入"],
+      "pass": true
+    },
+    {
+      "shortcut": "Meta+4",
+      "hash": "#audit",
+      "breadcrumb": "workspace / ≡ 稽核紀錄",
+      "visibleH1": ["稽核紀錄"],
+      "pass": true
+    },
+    {
+      "shortcut": "Meta+5",
+      "hash": "#playground",
+      "breadcrumb": "workspace / ▷ Playground",
+      "visibleH1": ["Playground"],
+      "pass": true
+    },
+    {
+      "shortcut": "Meta+6",
+      "hash": "#research",
+      "breadcrumb": "workspace / ◧ 研究報告",
+      "visibleH1": ["研究報告"],
+      "pass": true
+    },
+    {
+      "shortcut": "Meta+7",
+      "hash": "#table",
+      "breadcrumb": "workspace / ▦ 來源資料表",
+      "visibleH1": ["來源資料表"],
+      "pass": true
+    }
+  ],
+  "status": "pass"
+}

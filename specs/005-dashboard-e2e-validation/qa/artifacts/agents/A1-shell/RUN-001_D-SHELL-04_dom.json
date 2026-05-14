@@ -1,0 +1,58 @@
+{
+  "scenarioId": "D-SHELL-04",
+  "collectedAt": "2026-05-14T08:16:55.534Z",
+  "origin": "http://127.0.0.1:48741",
+  "method": "Browser DOM button clicks via mcp__chrome_devtools_isolated__.evaluate_script",
+  "observations": [
+    {
+      "label": "總覽",
+      "hashAfter": "#overview",
+      "breadcrumbAfter": "workspace / ◇ 總覽",
+      "clicked": true,
+      "pass": true
+    },
+    {
+      "label": "設定",
+      "hashAfter": "#config",
+      "breadcrumbAfter": "workspace / ∷ 設定",
+      "clicked": true,
+      "pass": true
+    },
+    {
+      "label": "Lark 登入",
+      "hashAfter": "#auth",
+      "breadcrumbAfter": "workspace / ⎋ Lark 登入",
+      "clicked": true,
+      "pass": true
+    },
+    {
+      "label": "稽核紀錄",
+      "hashAfter": "#audit",
+      "breadcrumbAfter": "workspace / ≡ 稽核紀錄",
+      "clicked": true,
+      "pass": true
+    },
+    {
+      "label": "Playground",
+      "hashAfter": "#playground",
+      "breadcrumbAfter": "workspace / ▷ Playground",
+      "clicked": true,
+      "pass": true
+    },
+    {
+      "label": "研究報告",
+      "hashAfter": "#research",
+      "breadcrumbAfter": "workspace / ◧ 研究報告",
+      "clicked": true,
+      "pass": true
+    },
+    {
+      "label": "來源資料表",
+      "hashAfter": "#table",
+      "breadcrumbAfter": "workspace / ▦ 來源資料表",
+      "clicked": true,
+      "pass": true
+    }
+  ],
+  "status": "pass"
+}

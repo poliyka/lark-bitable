@@ -1,0 +1,6 @@
+
+> lark-bitable@1.1.1 build /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run
+> rm -rf dist && tsc -p tsconfig.json
+
+
+exit_code=0

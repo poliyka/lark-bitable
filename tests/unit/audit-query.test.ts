@@ -70,4 +70,42 @@ describe("audit query", () => {
     expect(JSON.stringify(detail)).not.toContain("oauth-code");
     expect(JSON.stringify(detail)).not.toContain("secret-token");
   });
+
+  it("filters by issue code and finished-at boundary after redaction", async () => {
+    const paths = await createDashboardTestPaths("audit-query-");
+    await mkdir(dirname(paths.auditPath), { recursive: true });
+    const before = buildAuditEntry({
+      argv: ["valid", "--json"],
+      finishedAt: new Date("2026-05-14T00:59:59.000Z"),
+      output: {
+        command: "valid",
+        issues: [{ code: "missing-source", message: "before" }],
+        status: "partial",
+      },
+      startedAt: new Date("2026-05-14T00:59:58.000Z"),
+    });
+    const after = buildAuditEntry({
+      argv: ["valid", "--json"],
+      finishedAt: new Date("2026-05-14T01:00:01.000Z"),
+      output: {
+        command: "valid",
+        issues: [{ code: "missing-auth", message: "after" }],
+        status: "partial",
+      },
+      startedAt: new Date("2026-05-14T01:00:00.000Z"),
+    });
+    await writeFile(
+      paths.auditPath,
+      `${JSON.stringify(before)}\n${JSON.stringify(after)}\n`,
+    );
+
+    const result = await queryAuditEntries({
+      auditPath: paths.auditPath,
+      from: "2026-05-14T01:00:00.000Z",
+      issueCode: "missing-auth",
+    });
+
+    expect(result.entries.map((entry) => entry.id)).toEqual([after.id]);
+    expect(result.entries[0]?.issues[0]?.code).toBe("missing-auth");
+  });
 });

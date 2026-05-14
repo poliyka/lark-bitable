@@ -1,4 +1,7 @@
 import type { Issue } from "../config/schema.js";
+import { isCliError } from "../cli/errors.js";
+import type { CommandOutput } from "../cli/output.js";
+import { formatHuman } from "../cli/output.js";
 import { redactDashboardPayload } from "./api.js";
 import {
   runDashboardCommand,
@@ -41,6 +44,44 @@ export async function runPlaygroundWorkflow(
     };
   }
 
-  const result = await runDashboardCommand(input);
-  return redactDashboardPayload(result);
+  try {
+    const result = await runDashboardCommand(input);
+    return redactDashboardPayload(result);
+  } catch (error) {
+    const issue = commandFailureIssue(error);
+    const structuredOutput: CommandOutput = {
+      command: input.command,
+      evidence: [],
+      issues: [issue],
+      status: isCliError(error) ? error.status : "error",
+    };
+    return redactDashboardPayload({
+      command: input.command,
+      evidence: [],
+      humanOutput: formatHuman(structuredOutput),
+      issues: [issue],
+      nextSafeActions: [
+        issue.remediation ??
+          "Review the command parameters in Playground, then run a preview again.",
+      ],
+      status: structuredOutput.status,
+      structuredOutput,
+    });
+  }
+}
+
+function commandFailureIssue(error: unknown): Issue {
+  if (isCliError(error)) {
+    return {
+      code: error.code,
+      message: error.message,
+      ...(error.remediation ? { remediation: error.remediation } : {}),
+    };
+  }
+  return {
+    code: "playground-command-failed",
+    message: error instanceof Error ? error.message : String(error),
+    remediation:
+      "Review the command parameters in Playground, then run a preview again.",
+  };
 }

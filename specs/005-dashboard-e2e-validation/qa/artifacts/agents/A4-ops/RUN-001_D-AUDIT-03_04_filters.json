@@ -1,0 +1,58 @@
+{
+  "scenarioIds": ["D-AUDIT-03", "D-AUDIT-04"],
+  "status": "mixed",
+  "source": "browser-visible form interactions plus /api/audit correlation in isolated DevTools page",
+  "observations": {
+    "commandWrite": {
+      "query": "command=write",
+      "countText": "1 entries",
+      "returnedIds": ["a4-audit-newest-error"],
+      "result": "pass"
+    },
+    "statusPartial": {
+      "query": "status=partial",
+      "countText": "1 entries",
+      "returnedIds": ["a4-audit-middle-partial"],
+      "result": "pass"
+    },
+    "modeQa": {
+      "query": "mode=QA",
+      "countText": "1 entries",
+      "returnedIds": ["a4-audit-middle-partial"],
+      "result": "pass"
+    },
+    "textSchema": {
+      "query": "text=schema",
+      "countText": "1 entries",
+      "returnedIds": ["a4-audit-older-ok"],
+      "result": "pass"
+    },
+    "hasEvidence": {
+      "query": "hasEvidence=true",
+      "countText": "4 entries",
+      "result": "pass"
+    },
+    "hasError": {
+      "query": "hasError=true",
+      "countText": "1 entries",
+      "returnedIds": ["a4-audit-newest-error"],
+      "result": "pass"
+    },
+    "issueCode": {
+      "query": "issueCode=a4-write-blocked",
+      "countText": "0 entries",
+      "expected": "a4-audit-newest-error should match seeded issue code",
+      "result": "fail"
+    },
+    "fromIsoField": {
+      "inputAttempted": "2026-05-14T07:05:00.000Z",
+      "query": "",
+      "countText": "5 entries",
+      "expected": "from ISO time should be reflected as from=<ISO> and filter older entries",
+      "result": "fail",
+      "note": "The visible placeholder says from ISO time but the input has no name attribute, so FormData omits it."
+    }
+  },
+  "defects": ["A4-AUDIT-FILTER-ISSUECODE", "A4-AUDIT-FILTER-FROM"],
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

@@ -75,6 +75,7 @@ function redactValue(value: unknown, key?: string): unknown {
     return value.map((item) => redactValue(item));
   }
   if (typeof value === "object") {
+    if (isIssueLike(value)) return redactIssueValue(value);
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(
         ([entryKey, entryValue]) => [
@@ -85,6 +86,27 @@ function redactValue(value: unknown, key?: string): unknown {
     );
   }
   return typeof value;
+}
+
+function isIssueLike(value: unknown): value is Issue {
+  if (!value || typeof value !== "object") return false;
+  return (
+    typeof (value as { code?: unknown }).code === "string" &&
+    typeof (value as { message?: unknown }).message === "string" &&
+    ("remediation" in value
+      ? typeof (value as { remediation?: unknown }).remediation === "string"
+      : true)
+  );
+}
+
+function redactIssueValue(issue: Issue): Issue {
+  return {
+    code: redactString(issue.code),
+    message: redactString(issue.message),
+    ...(issue.remediation
+      ? { remediation: redactString(issue.remediation) }
+      : {}),
+  };
 }
 
 function redactString(value: string): string {

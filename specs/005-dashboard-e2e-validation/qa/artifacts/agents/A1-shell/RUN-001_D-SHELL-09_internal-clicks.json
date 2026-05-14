@@ -1,0 +1,33 @@
+{
+  "scenarioId": "D-SHELL-09",
+  "collectedAt": "2026-05-14T08:20:00.000Z",
+  "observations": {
+    "copyNextInternalClick": {
+      "clicked": true,
+      "before": {
+        "hash": "#overview",
+        "url": "http://127.0.0.1:48741/#overview"
+      },
+      "after": {
+        "hash": "#overview",
+        "url": "http://127.0.0.1:48741/#overview"
+      },
+      "pass": true
+    },
+    "validActionIntentionalNavigation": {
+      "clicked": true,
+      "beforeHash": "#overview",
+      "afterHash": "#playground",
+      "afterBreadcrumb": "workspace / ▷ Playground",
+      "note": "Intentional Overview action navigation; covered by D-OVERVIEW-09."
+    },
+    "fixActionUnexpectedNoNavigation": {
+      "clicked": true,
+      "beforeHash": "#overview",
+      "afterHash": "#overview",
+      "buttonHtml": "<button class=\"btn btn-ghost btn-xs\" data-page-jump=\"config\">fix</button>",
+      "note": "This is tracked as D-OVERVIEW-07 failure, not as an unintended navigation."
+    }
+  },
+  "status": "pass"
+}

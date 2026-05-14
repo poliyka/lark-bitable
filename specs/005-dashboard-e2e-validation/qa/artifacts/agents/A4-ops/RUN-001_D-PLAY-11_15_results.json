@@ -1,0 +1,43 @@
+{
+  "scenarioIds": [
+    "D-PLAY-11",
+    "D-PLAY-12",
+    "D-PLAY-13",
+    "D-PLAY-14",
+    "D-PLAY-15"
+  ],
+  "status": "mixed",
+  "observations": {
+    "responseTabs": {
+      "structured": "error JSON visible",
+      "human": "same error JSON visible instead of humanOutput for failed envelope",
+      "audit": "{} for failed envelope with no auditEntryId",
+      "representSameRun": true,
+      "result": "pass"
+    },
+    "runHistory": {
+      "beforeClearRows": 5,
+      "afterClear": "no runs yet",
+      "result": "pass"
+    },
+    "copyCli": {
+      "copied": ["lark-bitable write --json", "lark-bitable write --json"],
+      "allMatchVisiblePreview": true,
+      "result": "pass"
+    },
+    "failureHandling": {
+      "failedRunsInspectable": true,
+      "statusIssuesVisible": true,
+      "evidenceVisibleWhenPresent": false,
+      "note": "Failed playground responses preserve status/issues; next safe actions are not visible for failed envelope from route-level 500.",
+      "result": "mixed"
+    },
+    "auditTraceability": {
+      "validRunAuditEntriesFound": 1,
+      "path": "/api/audit?command=valid&limit=20",
+      "result": "pass"
+    }
+  },
+  "defects": ["A4-PLAY-FAILED-NEXT-ACTIONS"],
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

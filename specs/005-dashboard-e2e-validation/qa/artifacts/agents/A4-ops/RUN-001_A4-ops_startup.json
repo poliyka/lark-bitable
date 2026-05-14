@@ -1,0 +1,13 @@
+{
+  "origin": "http://127.0.0.1:48771",
+  "requestedPort": 48771,
+  "actualPort": 48771,
+  "dashboardCommand": "pnpm dev dashboard --no-open --json --port 48771 --host 127.0.0.1 --config-cwd <A4-state>/config --auth-path <A4-state>/auth.json --audit-path <A4-state>/audit.json --research-dir <A4-state>/research",
+  "configCwd": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A4-ops/config",
+  "authPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A4-ops/auth.json",
+  "auditPath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A4-ops/audit.json",
+  "researchDir": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A4-ops/research",
+  "browserValidation": "mcp__chrome_devtools_isolated__ isolatedContext=RUN-001-A4-ops",
+  "startedAtObserved": "2026-05-14T08:36:12.580Z",
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

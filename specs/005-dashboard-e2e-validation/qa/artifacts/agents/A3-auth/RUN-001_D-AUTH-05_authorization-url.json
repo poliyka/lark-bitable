@@ -1,0 +1,25 @@
+{
+  "scenario": "D-AUTH-05",
+  "status": "pass",
+  "evidenceMethod": "mcp__chrome_devtools_isolated__ visible login flow and window.open interception",
+  "visibleAuthorizationUrlWasExposed": true,
+  "externalNavigationPerformed": false,
+  "interceptedWindowOpen": [
+    {
+      "url": "https://accounts.larksuite.com/open-apis/authen/v1/authorize?client_id=cli_a3_auth_placeholder_app&redirect_uri=https%3A%2F%2Fexample.com%2Flark-auth-callback&response_type=code&scope=bitable%3Aapp%3Areadonly+contact%3Auser.base%3Areadonly&state=[REDACTED_STATE]",
+      "target": "_blank",
+      "features": "noopener"
+    }
+  ],
+  "parsed": {
+    "protocol": "https:",
+    "host": "accounts.larksuite.com",
+    "path": "/open-apis/authen/v1/authorize",
+    "clientIdPresent": true,
+    "redirectUriPresent": true,
+    "responseType": "code",
+    "scope": "bitable:app:readonly contact:user.base:readonly",
+    "statePresent": true,
+    "stateValueStoredInEvidence": false
+  }
+}

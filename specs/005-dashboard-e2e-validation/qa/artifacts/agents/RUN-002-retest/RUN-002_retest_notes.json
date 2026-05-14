@@ -1,0 +1,48 @@
+{
+  "runId": "RUN-002",
+  "dashboardOrigin": "http://127.0.0.1:56882",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "retestedScenarios": [
+    {
+      "scenario": "A6-DEF-003 / D-UI-02",
+      "status": "pass",
+      "expected": "Initial shell binding card shows the active dashboard binding, not stale placeholder defaults.",
+      "observed": {
+        "bindingStatus": "ready",
+        "bindingHost": "127.0.0.1",
+        "bindingPort": 56882,
+        "url": "http://127.0.0.1:56882/#overview"
+      },
+      "evidenceMethod": "isolated browser accessibility snapshot and network log",
+      "note": "The first rendered shell already showed ready/56882 before any later page mutation."
+    },
+    {
+      "scenario": "A2-CONFIG-DEFECT-003 / D-CONFIG-12",
+      "status": "pass",
+      "expected": "Blocked schema discovery visibly surfaces blocked issues and remediation in Configuration UI.",
+      "observed": {
+        "hash": "#config",
+        "schemaDiscoveryVisible": true,
+        "issues": ["missing-source", "missing-auth"],
+        "remediation": [
+          "Save a source URL on the dashboard config page.",
+          "Complete Lark login from the dashboard auth page."
+        ],
+        "outputStatus": "partial",
+        "dataStatus": "blocked"
+      },
+      "evidenceMethod": "isolated browser accessibility snapshot, full-page screenshot, and network observation",
+      "note": "Configuration no longer stays on stale config draft after blocked discovery; remediation is visible near field mappings and in output."
+    }
+  ],
+  "console": "clean",
+  "networkSummary": [
+    "GET / 200",
+    "GET /assets/styles.css 200",
+    "GET /assets/app.js 200",
+    "GET /api/status 200 (twice during load)",
+    "GET /api/audit?limit=5 200",
+    "GET /api/config 200",
+    "GET /api/table/schema 200"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "scenario": "D-AUTH-08",
+  "status": "pass",
+  "evidenceMethod": "mcp__chrome_devtools_isolated__ dashboard-page fetch to failed flow endpoint and auth state re-check",
+  "observed": {
+    "failedFlowResult": {
+      "status": "ok",
+      "dataSource": "live",
+      "issues": [],
+      "data": {
+        "callbackMode": "manual",
+        "flowId": "[REDACTED_TEST_FLOW_ID]",
+        "issues": [
+          {
+            "code": "[REDACTED]",
+            "message": "Login flow was not found.",
+            "remediation": "Start a new Lark login flow."
+          }
+        ],
+        "status": "failed"
+      }
+    },
+    "authAfterFailedFlow": {
+      "status": "missing",
+      "storagePath": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A3-auth/auth.json",
+      "scopes": [],
+      "issues": [
+        {
+          "code": "[REDACTED]",
+          "message": "Lark auth is missing.",
+          "remediation": "Start Lark login from the dashboard."
+        }
+      ]
+    },
+    "currentAuthPillAfterFailedFlow": "missing",
+    "currentAuthCorrupted": false
+  }
+}

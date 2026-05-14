@@ -1,0 +1,110 @@
+uid=1_0 RootWebArea "lark-bitable · dashboard" url="http://127.0.0.1:48811/#audit"
+  uid=1_1 complementary
+    uid=1_2 StaticText "lark-bitable"
+    uid=1_3 LineBreak "
+"
+    uid=1_4 StaticText "dashboard"
+    uid=1_5 StaticText "v1.0"
+    uid=1_6 StaticText "WORKSPACE"
+    uid=1_7 button "◇ 總覽 ⌘1"
+    uid=1_8 button "∷ 設定 ⌘2"
+    uid=1_9 button "⎋ Lark 登入 ⌘3"
+    uid=1_10 button "≡ 稽核紀錄 ⌘4" focusable focused
+    uid=1_11 StaticText "TOOLS"
+    uid=1_12 button "▷ Playground ⌘5"
+    uid=1_13 button "◧ 研究報告 ⌘6"
+    uid=1_14 button "▦ 來源資料表 ⌘7"
+    uid=1_15 StaticText "status"
+    uid=4_0 StaticText "ready"
+    uid=1_17 StaticText "host"
+    uid=4_1 StaticText "127.0.0.1"
+    uid=1_19 StaticText "port"
+    uid=4_2 StaticText "48811"
+    uid=1_21 StaticText "mode"
+    uid=1_22 StaticText "local only"
+    uid=1_23 StaticText "login"
+    uid=1_24 StaticText "no dashboard login"
+  uid=1_25 main
+    uid=1_26 StaticText "workspace / "
+    uid=7_0 StaticText "≡ 稽核紀錄"
+    uid=1_28 button "⟳ 重新整理"
+    uid=1_29 button "⌘ 指令面板"
+    uid=1_30 button "繁中" pressed
+    uid=1_31 button "EN"
+    uid=6_1 heading "稽核紀錄" level="1"
+    uid=6_2 StaticText "~/.lark-bitable/logs/audit.json 與 rotated audit-YYYY-MM-DD.json · 顯示前已 redact secrets。"
+    uid=6_3 button "匯出 JSON"
+    uid=6_4 textbox "搜尋 command, issue code, evidence ..."
+    uid=6_5 combobox expandable haspopup="menu" value="command: all"
+      uid=6_6 option "command: all" selectable selected value="command: all"
+      uid=6_7 option "research" selectable value="research"
+      uid=6_8 option "triage" selectable value="triage"
+      uid=6_9 option "write" selectable value="write"
+      uid=6_10 option "schema" selectable value="schema"
+      uid=6_11 option "valid" selectable value="valid"
+    uid=6_12 combobox expandable haspopup="menu" value="status: all"
+      uid=6_13 option "status: all" selectable selected value="status: all"
+      uid=6_14 option "ok" selectable value="ok"
+      uid=6_15 option "partial" selectable value="partial"
+      uid=6_16 option "error" selectable value="error"
+    uid=6_17 combobox expandable haspopup="menu" value="mode: all"
+      uid=6_18 option "mode: all" selectable selected value="mode: all"
+      uid=6_19 option "Developer" selectable value="Developer"
+      uid=6_20 option "QA" selectable value="QA"
+    uid=6_21 textbox "from ISO time"
+    uid=6_22 button "套用"
+    uid=6_23 checkbox "has-evidence"
+    uid=6_24 checkbox "has-error"
+    uid=6_25 textbox "issue code"
+    uid=7_1 StaticText "0 entries"
+    uid=6_27 heading "ENTRIES" level="3"
+    uid=7_2 StaticText "0"
+    uid=6_29 StaticText "TIME"
+    uid=6_30 StaticText "COMMAND"
+    uid=6_31 StaticText "STATUS"
+    uid=6_32 StaticText "MODE"
+    uid=6_33 StaticText "DURATION"
+    uid=7_3 StaticText "no audit entries"
+    uid=6_39 heading "DETAIL · A8-DETAIL-RE" level="3"
+    uid=6_40 StaticText "command"
+    uid=6_41 StaticText "argv"
+    uid=6_42 StaticText "[]"
+    uid=6_43 StaticText "started"
+    uid=6_44 StaticText "finished"
+    uid=6_45 StaticText "duration"
+    uid=6_46 StaticText "—"
+    uid=6_47 StaticText "mode"
+    uid=6_48 StaticText "no evidence"
+    uid=6_49 StaticText "{
+  "entry": {
+    "id": "a8-detail-removable-001",
+    "startedAt": "2026-05-14T08:36:25.117Z",
+    "finishedAt": "2026-05-14T08:36:25.117Z",
+    "durationMs": 12,
+    "command": "valid",
+    "argv": [
+      "valid",
+      "--workflow",
+      "dashboard",
+      "--json"
+    ],
+    "status": "ok",
+    "exitCode": "[REDACTED]",
+    "source": null,
+    "auth": null,
+    "mode": {
+      "active": "Developer",
+      "source": "defaulted"
+    },
+    "issues": [],
+    "evidenceSummary": [],
+    "dataSnapshot": {
+      "seededFor": "D-ERR-03"
+    },
+    "retentionApplied": {
+      "retentionDays": 14,
+      "prunedEntries": 0
+    }
+  },
+  "skippedFiles": []
+}"

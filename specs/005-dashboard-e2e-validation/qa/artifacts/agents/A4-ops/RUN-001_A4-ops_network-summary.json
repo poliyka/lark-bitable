@@ -1,0 +1,14 @@
+{
+  "source": "mcp__chrome_devtools_isolated__.list_network_requests",
+  "totalRequestsObserved": 57,
+  "notableRequests": [
+    "GET /api/audit?limit=20 -> 200",
+    "GET /api/audit?command=write -> 200",
+    "GET /api/audit/a4-audit-newest-error -> 200",
+    "GET /api/audit?issueCode=a4-write-blocked -> 200 with zero entries",
+    "POST /api/playground/run valid -> 200 partial",
+    "POST /api/playground/run schema/search/write/write-confirm -> 500 route errors",
+    "GET /api/audit?command=valid&limit=20 -> 200"
+  ],
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

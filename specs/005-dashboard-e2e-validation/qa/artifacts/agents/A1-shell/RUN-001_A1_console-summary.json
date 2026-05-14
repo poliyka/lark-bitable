@@ -1,0 +1,9 @@
+{
+  "runId": "RUN-001",
+  "lane": "A1-shell",
+  "collectedAt": "2026-05-14T08:21:00.000Z",
+  "tool": "mcp__chrome_devtools_isolated__.list_console_messages",
+  "messages": [],
+  "summary": "No console messages found during A1 isolated browser validation.",
+  "status": "pass"
+}

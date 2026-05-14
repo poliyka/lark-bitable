@@ -1,0 +1,27 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-11",
+  "status": "pass",
+  "savedMappings": {
+    "statusField": "Status A2 Saved",
+    "priorityField": "Priority A2 Saved",
+    "titleField": "Title A2 Saved",
+    "ownerField": "Owner A2 Saved"
+  },
+  "overviewEvidence": {
+    "route": {
+      "hash": "#overview",
+      "activePage": "overview-page",
+      "breadcrumb": "◇ 總覽"
+    },
+    "containsStatus": true,
+    "containsPriority": true,
+    "containsTitle": true,
+    "containsOwner": true,
+    "excerpt": "FIELD MAPPINGS ... statusField · Status A2 Saved ... priorityField · Priority A2 Saved ... titleField · Title A2 Saved ... ownerField · Owner A2 Saved"
+  }
+}

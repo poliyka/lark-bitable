@@ -1,0 +1,97 @@
+{
+  "status": "ok",
+  "dataSource": "file-backed",
+  "issues": [],
+  "data": {
+    "entries": [
+      {
+        "command": "write",
+        "durationMs": 900,
+        "evidenceSummary": [
+          {
+            "id": "ev-write-preview",
+            "type": "command-output",
+            "reference": "preview-first write guard observed",
+            "collectedAt": "2026-05-14T07:09:00.500Z",
+            "status": "failed"
+          }
+        ],
+        "finishedAt": "2026-05-14T07:09:00.900Z",
+        "id": "a4-audit-newest-error",
+        "issues": [
+          {
+            "code": "[REDACTED]",
+            "message": "Write fixture blocked before mutation.",
+            "remediation": "Preview write before explicit confirmation."
+          }
+        ],
+        "mode": { "active": "Developer", "source": "explicit" },
+        "startedAt": "2026-05-14T07:09:00.000Z",
+        "status": "error"
+      },
+      {
+        "command": "search",
+        "durationMs": 2500,
+        "evidenceSummary": [],
+        "finishedAt": "2026-05-14T07:04:02.500Z",
+        "id": "a4-audit-middle-partial",
+        "issues": [
+          {
+            "code": "[REDACTED]",
+            "message": "Partial fixture issue for filter validation.",
+            "remediation": "Use test credentials to remove live dependency."
+          }
+        ],
+        "mode": { "active": "QA", "source": "explicit" },
+        "startedAt": "2026-05-14T07:04:00.000Z",
+        "status": "partial"
+      },
+      {
+        "command": "schema",
+        "durationMs": 1200,
+        "evidenceSummary": [
+          {
+            "id": "ev-schema",
+            "type": "runtime-observation",
+            "reference": "schema fields rendered",
+            "collectedAt": "2026-05-14T07:01:01.000Z",
+            "status": "verified"
+          }
+        ],
+        "finishedAt": "2026-05-14T07:01:01.200Z",
+        "id": "a4-audit-older-ok",
+        "issues": [],
+        "mode": { "active": "Developer", "source": "explicit" },
+        "startedAt": "2026-05-14T07:01:00.000Z",
+        "status": "ok"
+      },
+      {
+        "command": "valid",
+        "durationMs": 700,
+        "evidenceSummary": [
+          {
+            "id": "ev-valid",
+            "type": "command-output",
+            "reference": "rotated audit valid entry",
+            "collectedAt": "2026-05-13T23:01:00.500Z",
+            "status": "verified"
+          }
+        ],
+        "finishedAt": "2026-05-13T23:01:00.700Z",
+        "id": "a4-audit-rotated-ok",
+        "issues": [],
+        "mode": { "active": "Developer", "source": "defaulted" },
+        "startedAt": "2026-05-13T23:01:00.000Z",
+        "status": "ok"
+      }
+    ],
+    "nextCursor": null,
+    "skippedFiles": [
+      {
+        "line": 2,
+        "path": "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A4-ops/audit-2026-05-13.json",
+        "reason": "invalid audit entry: Expected ',' or '}' after property value in JSON at position 26 (line 1 column 27)"
+      }
+    ]
+  }
+}

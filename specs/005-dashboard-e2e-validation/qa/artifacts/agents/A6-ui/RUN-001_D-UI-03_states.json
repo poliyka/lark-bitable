@@ -1,0 +1,49 @@
+{
+  "scenarioId": "D-UI-03",
+  "status": "fail",
+  "dashboardOrigin": "http://127.0.0.1:48791",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "observations": {
+    "activeState": {
+      "element": "Source Table sidebar navigation item",
+      "selector": ".nav button[aria-current=\"true\"]",
+      "visible": true,
+      "observedStyles": {
+        "backgroundColor": "rgb(20, 24, 29)",
+        "boxShadow": "oklch(0.82 0.17 145) 2px 0px 0px 0px inset"
+      },
+      "result": "pass"
+    },
+    "selectedState": {
+      "element": "Source Table Records tab",
+      "selector": "#table-page button[aria-pressed=\"true\"]",
+      "visible": true,
+      "observedStyles": {
+        "backgroundColor": "rgb(20, 24, 29)",
+        "boxShadow": "rgb(38, 44, 52) 0px 0px 0px 1px inset"
+      },
+      "result": "pass"
+    },
+    "hoverState": {
+      "element": "Source Table Schema tab",
+      "evidence": "RUN-001_D-UI-03_state-screenshots/RUN-001_D-UI-03_table-tab-hover-focus.png",
+      "result": "pass"
+    },
+    "focusState": {
+      "element": "Topbar command palette and Source Table refresh button reached by Tab",
+      "visible": false,
+      "observedStyles": {
+        "outlineStyle": "none",
+        "outlineWidth": "3px",
+        "boxShadow": "none",
+        "borderColor": "rgb(38, 44, 52)"
+      },
+      "result": "fail"
+    }
+  },
+  "defectIds": ["A6-DEF-001"],
+  "evidence": [
+    "RUN-001_D-UI-03_state-screenshots/RUN-001_D-UI-03_table-tab-hover-focus.png",
+    "RUN-001_D-UI-07_keyboard-screenshots/RUN-001_D-UI-07_topbar-focus.png"
+  ]
+}

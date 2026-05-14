@@ -1,0 +1,19 @@
+RUN-001 A5 Research seed and startup evidence
+Captured: 2026-05-14T08:21:07.890Z
+Dashboard origin: http://127.0.0.1:48781
+Requested port: 48781
+Config cwd: /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/config
+Auth path: /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/auth.json
+Audit path: /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/audit.json
+Research dir: /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research
+
+Seeded local research files in A5 lane research dir only:
+- /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/dashboard-layout-regression-20260514T080000000Z.json (2429 bytes)
+- /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/malformed-report.json (94 bytes)
+- /Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A5-data/research/source-copy-boundary-20260514T080500000Z.json (2337 bytes)
+
+Seed intent:
+- two valid canonical JSON reports exercise report list/detail/search/copy/i18n paths
+- one malformed JSON report exercises skipped/unavailable handling without hiding valid reports
+
+API /api/research result: 2 valid reports, 1 skipped files

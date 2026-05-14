@@ -1,0 +1,26 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-12",
+  "status": "fail",
+  "expected": "Blocked field discovery reports the blocked/missing dependency state honestly in the Configuration UI.",
+  "action": "Clicked “從 Base 重新探索” with no Lark auth available.",
+  "networkObserved": {
+    "method": "GET",
+    "path": "/api/table/schema",
+    "status": 200,
+    "responseStatus": "partial",
+    "dataStatus": "blocked",
+    "message": "Lark auth is missing.",
+    "remediation": "Complete Lark login from the dashboard auth page."
+  },
+  "visibleOutputAfterAction": {
+    "outputStatus": "ok",
+    "outputSource": "config draft",
+    "visibleFieldDiscoveryBlockedMessage": false
+  },
+  "defect": "The field discovery endpoint reports a blocked state, but the Configuration page output remains the config draft and does not visibly surface the blocked field-discovery result/remediation."
+}

@@ -1,0 +1,60 @@
+{
+  "scenarioId": "D-I18N-02",
+  "status": "pass",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Clicked the EN language toggle.",
+    "Visited all seven primary pages through the sidebar.",
+    "Captured document language, storage language, active page, crumb, and page heading."
+  ],
+  "observations": {
+    "localStorageDuringEnglishChecks": {
+      "lark-bitable.dashboard.lang": "en"
+    },
+    "pages": {
+      "overview": {
+        "documentLang": "en",
+        "heading": "Overview",
+        "hash": "#overview"
+      },
+      "config": {
+        "documentLang": "en",
+        "heading": "Configuration",
+        "hash": "#config"
+      },
+      "auth": {
+        "documentLang": "en",
+        "heading": "Lark Login",
+        "hash": "#auth"
+      },
+      "audit": {
+        "documentLang": "en",
+        "heading": "Audit Logs",
+        "hash": "#audit"
+      },
+      "playground": {
+        "documentLang": "en",
+        "heading": "Playground",
+        "hash": "#playground"
+      },
+      "research": {
+        "documentLang": "en",
+        "heading": "Research Reports",
+        "hash": "#research"
+      },
+      "table": {
+        "documentLang": "en",
+        "heading": "Source Table",
+        "hash": "#table"
+      }
+    },
+    "dashboardOwnedTextUpdated": true,
+    "sourceValuesRemainedVerbatim": [
+      "A7 Source 原文 English",
+      "狀態 Original Status",
+      "rec-A7-原文-DoNotTranslate"
+    ]
+  },
+  "result": "All primary page headings and global dashboard-owned controls switched to English."
+}

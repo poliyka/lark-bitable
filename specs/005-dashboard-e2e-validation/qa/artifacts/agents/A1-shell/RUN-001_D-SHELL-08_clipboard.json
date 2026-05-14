@@ -1,0 +1,23 @@
+{
+  "scenarioId": "D-SHELL-08",
+  "collectedAt": "2026-05-14T08:19:30.000Z",
+  "method": "Installed navigator.clipboard.writeText stub in the isolated browser page and clicked visible copy controls.",
+  "stubInstalled": true,
+  "observations": [
+    {
+      "buttonText": "複製 next",
+      "copiedDelta": 1,
+      "copiedValue": "Run lark-bitable lark --login",
+      "hashAfter": "#overview",
+      "pass": true
+    },
+    {
+      "buttonText": "複製",
+      "copiedDelta": 1,
+      "copiedValue": "Run lark-bitable lark --login",
+      "hashAfter": "#overview",
+      "pass": true
+    }
+  ],
+  "status": "pass"
+}

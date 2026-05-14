@@ -1,0 +1,30 @@
+{
+  "scenarioId": "D-SEC-04",
+  "status": "pass",
+  "origin": "http://127.0.0.1:48801",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "actions": [
+    "Observed browser location origin.",
+    "Queried /api/status from browser context.",
+    "Checked sidebar binding card."
+  ],
+  "observations": {
+    "locationOrigin": "http://127.0.0.1:48801",
+    "binding": {
+      "host": "127.0.0.1",
+      "origin": "http://127.0.0.1:48801",
+      "port": 48801,
+      "requestedPort": 48801,
+      "status": "ready"
+    },
+    "dashboardLoginRequired": false,
+    "localOnly": true,
+    "bindingCardText": {
+      "host": "127.0.0.1",
+      "port": "48801",
+      "mode": "local only",
+      "login": "no dashboard login"
+    }
+  },
+  "result": "Dashboard binding remained local-only on the requested loopback host and port."
+}

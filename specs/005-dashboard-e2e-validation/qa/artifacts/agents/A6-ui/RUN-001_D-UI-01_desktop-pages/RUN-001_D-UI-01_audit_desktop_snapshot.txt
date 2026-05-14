@@ -1,0 +1,147 @@
+uid=1_0 RootWebArea "lark-bitable · dashboard" url="http://127.0.0.1:48791/#audit"
+  uid=1_1 complementary
+    uid=1_2 StaticText "lark-bitable"
+    uid=1_3 LineBreak "
+"
+    uid=1_4 StaticText "dashboard"
+    uid=1_5 StaticText "v1.0"
+    uid=1_6 StaticText "WORKSPACE"
+    uid=1_7 button "◇ 總覽 ⌘1"
+    uid=1_8 button "∷ 設定 ⌘2"
+    uid=1_9 button "⎋ Lark 登入 ⌘3"
+    uid=1_10 button "≡ 稽核紀錄 ⌘4" focusable focused
+    uid=1_11 StaticText "TOOLS"
+    uid=1_12 button "▷ Playground ⌘5"
+    uid=1_13 button "◧ 研究報告 ⌘6"
+    uid=1_14 button "▦ 來源資料表 ⌘7"
+    uid=1_15 StaticText "status"
+    uid=1_16 StaticText "ready"
+    uid=1_17 StaticText "host"
+    uid=1_18 StaticText "127.0.0.1"
+    uid=1_19 StaticText "port"
+    uid=1_20 StaticText "48791"
+    uid=1_21 StaticText "mode"
+    uid=1_22 StaticText "local only"
+    uid=1_23 StaticText "login"
+    uid=1_24 StaticText "no dashboard login"
+  uid=1_25 main
+    uid=1_26 StaticText "workspace / "
+    uid=8_0 StaticText "≡ 稽核紀錄"
+    uid=1_28 button "⟳ 重新整理"
+    uid=1_29 button "⌘ 指令面板"
+    uid=1_30 button "繁中" pressed
+    uid=1_31 button "EN"
+    uid=8_1 heading "稽核紀錄" level="1"
+    uid=8_2 StaticText "~/.lark-bitable/logs/audit.json 與 rotated audit-YYYY-MM-DD.json · 顯示前已 redact secrets。"
+    uid=8_3 button "匯出 JSON"
+    uid=8_4 textbox "搜尋 command, issue code, evidence ..."
+    uid=8_5 combobox expandable haspopup="menu" value="command: all"
+      uid=8_6 option "command: all" selectable selected value="command: all"
+      uid=8_7 option "research" selectable value="research"
+      uid=8_8 option "triage" selectable value="triage"
+      uid=8_9 option "write" selectable value="write"
+      uid=8_10 option "schema" selectable value="schema"
+      uid=8_11 option "valid" selectable value="valid"
+    uid=8_12 combobox expandable haspopup="menu" value="status: all"
+      uid=8_13 option "status: all" selectable selected value="status: all"
+      uid=8_14 option "ok" selectable value="ok"
+      uid=8_15 option "partial" selectable value="partial"
+      uid=8_16 option "error" selectable value="error"
+    uid=8_17 combobox expandable haspopup="menu" value="mode: all"
+      uid=8_18 option "mode: all" selectable selected value="mode: all"
+      uid=8_19 option "Developer" selectable value="Developer"
+      uid=8_20 option "QA" selectable value="QA"
+    uid=8_21 textbox "from ISO time"
+    uid=8_22 button "套用"
+    uid=8_23 checkbox "has-evidence"
+    uid=8_24 checkbox "has-error"
+    uid=8_25 textbox "issue code"
+    uid=8_26 StaticText "2 entries"
+    uid=8_27 heading "ENTRIES" level="3"
+    uid=8_28 StaticText "2"
+    uid=8_29 StaticText "TIME"
+    uid=8_30 StaticText "COMMAND"
+    uid=8_31 StaticText "STATUS"
+    uid=8_32 StaticText "MODE"
+    uid=8_33 StaticText "DURATION"
+    uid=8_34 StaticText "2026/5/14 下午4:14:46"
+    uid=8_35 StaticText "dashboard"
+    uid=8_36 StaticText "ok"
+    uid=8_37 StaticText "0ms"
+    uid=8_38 StaticText "2026/5/14 下午3:52:08"
+    uid=8_39 StaticText "dashboard"
+    uid=8_40 StaticText "ok"
+    uid=8_41 StaticText "0ms"
+    uid=8_42 heading "DETAIL · 81ECF21A-A07" level="3"
+    uid=8_43 StaticText "command"
+    uid=8_44 StaticText "argv"
+    uid=8_45 StaticText "[]"
+    uid=8_46 StaticText "started"
+    uid=8_47 StaticText "finished"
+    uid=8_48 StaticText "duration"
+    uid=8_49 StaticText "—"
+    uid=8_50 StaticText "mode"
+    uid=8_51 StaticText "no evidence"
+    uid=8_52 StaticText "{
+  "entry": {
+    "id": "81ecf21a-a077-4b6b-bd2b-ba830dfd5311",
+    "startedAt": "2026-05-14T08:14:46.893Z",
+    "finishedAt": "2026-05-14T08:14:46.893Z",
+    "durationMs": 0,
+    "command": "dashboard",
+    "argv": [
+      "--no-open",
+      "--json",
+      "--port",
+      "48791",
+      "--host",
+      "127.0.0.1",
+      "--config-cwd",
+      "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A6-ui/config",
+      "--auth-path",
+      "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A6-ui/auth.json",
+      "--audit-path",
+      "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A6-ui/audit.json",
+      "--research-dir",
+      "/Users/openclaw/im-app/lark-bitable/.worktrees/005-dashboard-e2e-validation-run/.lark-bitable/dashboard-e2e/RUN-001/state/A6-ui/research"
+    ],
+    "status": "ok",
+    "exitCode": "[REDACTED]",
+    "source": null,
+    "auth": null,
+    "mode": null,
+    "ownerCriteria": null,
+    "queryLimit": null,
+    "issues": [],
+    "evidenceSummary": [
+      {
+        "id": "E1",
+        "type": "runtime-observation",
+        "reference": "dashboard",
+        "collectedAt": "2026-05-14T08:14:46.892Z",
+        "status": "verified"
+      }
+    ],
+    "dataSnapshot": {
+      "binding": {
+        "host": "127.0.0.1",
+        "origin": "http://127.0.0.1:48791",
+        "port": 48791,
+        "requestedPort": 48791,
+        "startedAt": "2026-05-14T08:14:46.888Z",
+        "status": "ready"
+      },
+      "dashboardLoginRequired": false,
+      "localOnly": true,
+      "nextSafeActions": [
+        "Open http://127.0.0.1:48791"
+      ],
+      "opened": false
+    },
+    "retentionApplied": {
+      "retentionDays": 14,
+      "prunedEntries": 0
+    }
+  },
+  "skippedFiles": []
+}"

@@ -1,0 +1,46 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-09",
+  "status": "fail",
+  "expected": "All mapping controls are dropdowns or equivalent selectable controls populated from discovered fields.",
+  "controls": [
+    {
+      "name": "statusField",
+      "tag": "INPUT",
+      "type": "text",
+      "list": "schema-fields",
+      "datalistOptions": []
+    },
+    {
+      "name": "priorityField",
+      "tag": "INPUT",
+      "type": "text",
+      "list": "schema-fields",
+      "datalistOptions": []
+    },
+    {
+      "name": "titleField",
+      "tag": "INPUT",
+      "type": "text",
+      "list": "schema-fields",
+      "datalistOptions": []
+    },
+    {
+      "name": "ownerField",
+      "tag": "INPUT",
+      "type": "text",
+      "list": "schema-fields",
+      "datalistOptions": []
+    }
+  ],
+  "observedSharedDatalist": {
+    "id": "schema-fields",
+    "optionCount": 0,
+    "options": []
+  },
+  "defect": "Controls expose combobox/list semantics, but the shared datalist is empty; users cannot select discovered field options."
+}

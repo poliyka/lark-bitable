@@ -1,0 +1,22 @@
+{
+  "scenarioId": "D-UI-06",
+  "status": "pass",
+  "dashboardOrigin": "http://127.0.0.1:48791",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "observations": {
+    "loadingRefresh": {
+      "method": "Network throttled to Slow 3G with isolated MCP emulate, then Configuration refresh was clicked and a viewport screenshot was captured.",
+      "evidence": "RUN-001_D-UI-06_loading-refresh.png",
+      "result": "pass",
+      "note": "No broken raw browser layout or unstyled blank screen appeared during the refresh capture. The loading transition was too short to persist as text in the snapshot."
+    },
+    "emptyResearch": {
+      "evidence": "RUN-001_D-UI-01_desktop-pages/RUN-001_D-UI-01_research_desktop.png",
+      "result": "pass"
+    },
+    "emptySourceTable": {
+      "evidence": "RUN-001_D-UI-01_desktop-pages/RUN-001_D-UI-01_table_desktop.png",
+      "result": "pass"
+    }
+  }
+}

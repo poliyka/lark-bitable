@@ -1,0 +1,48 @@
+{
+  "scenarioId": "D-UI-07",
+  "status": "fail",
+  "dashboardOrigin": "http://127.0.0.1:48791",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "observations": {
+    "tabReachability": {
+      "result": "pass",
+      "details": [
+        "Tab reached the topbar command palette button.",
+        "Additional Tab presses reached Source Table page controls, including the refresh button."
+      ]
+    },
+    "focusVisibility": {
+      "result": "fail",
+      "focusedElements": [
+        {
+          "element": "topbar command palette",
+          "tag": "BUTTON",
+          "id": "command-palette",
+          "computedFocusStyles": {
+            "outlineStyle": "none",
+            "outlineWidth": "3px",
+            "outlineColor": "rgb(182, 189, 196)",
+            "boxShadow": "none",
+            "borderColor": "rgb(38, 44, 52)"
+          }
+        },
+        {
+          "element": "Source Table refresh button",
+          "tag": "BUTTON",
+          "id": "table-refresh",
+          "computedFocusStyles": {
+            "outlineStyle": "none",
+            "outlineWidth": "3px",
+            "outlineColor": "rgb(182, 189, 196)",
+            "boxShadow": "none",
+            "borderColor": "rgb(38, 44, 52)"
+          }
+        }
+      ]
+    }
+  },
+  "defectIds": ["A6-DEF-001"],
+  "evidence": [
+    "RUN-001_D-UI-07_keyboard-screenshots/RUN-001_D-UI-07_topbar-focus.png"
+  ]
+}

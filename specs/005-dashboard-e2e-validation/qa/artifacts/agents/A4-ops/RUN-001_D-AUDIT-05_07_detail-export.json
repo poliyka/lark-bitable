@@ -1,0 +1,28 @@
+{
+  "scenarioIds": ["D-AUDIT-05", "D-AUDIT-06", "D-AUDIT-07"],
+  "status": "mixed",
+  "observations": {
+    "rowSelection": {
+      "clickedVisibleCell": "write row command cell",
+      "network": "GET /api/audit/a4-audit-newest-error returned 200",
+      "selectedRowAfterClick": "first dashboard row remained selected",
+      "detailTitleAfterClick": "Detail · 4a2c7ac4-1d4",
+      "result": "fail"
+    },
+    "detailSanitization": {
+      "secretLeakVisible": false,
+      "detailIncludesCommandArgvTimingModeJson": true,
+      "note": "Detail rendering for initially selected row includes sanitized argv/timing/mode/JSON; clicked-row detail does not replace the displayed detail.",
+      "result": "mixed"
+    },
+    "exportCopy": {
+      "copiedCount": 1,
+      "includesVisibleIds": true,
+      "leakedSecret": false,
+      "result": "pass"
+    }
+  },
+  "evidenceFiles": ["RUN-001_D-AUDIT-05_07_detail-export.png"],
+  "defects": ["A4-AUDIT-ROW-SELECTION"],
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

@@ -1,0 +1,22 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-10",
+  "status": "blocked",
+  "blocker": "Missing Lark auth/test account for live Base schema discovery.",
+  "action": "Clicked “從 Base 重新探索”.",
+  "network": {
+    "method": "GET",
+    "path": "/api/table/schema",
+    "status": 200,
+    "responseStatus": "partial",
+    "dataStatus": "blocked",
+    "issue": "Lark auth is missing.",
+    "fieldsReturned": 0
+  },
+  "mappingControlsUpdated": false,
+  "impact": "Unable to verify successful live field sync updating all mapping controls in this A2 run."
+}

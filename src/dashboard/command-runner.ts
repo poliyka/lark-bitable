@@ -57,6 +57,7 @@ export function buildCommandArgv(
 
   for (const [key, value] of Object.entries(parameters)) {
     if (value === undefined || value === null || value === false) continue;
+    if (!isSupportedDashboardParameter(command, key)) continue;
     if (key === "confirm") {
       if (command === "write" && input.confirmWrite && value === true) {
         argv.push("--confirm");
@@ -181,4 +182,30 @@ async function withTimeout<T>(
 
 function kebabCase(value: string): string {
   return value.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
+}
+
+function isSupportedDashboardParameter(
+  command: PlaygroundCommand,
+  key: string,
+): boolean {
+  const supported: Record<PlaygroundCommand, Set<string>> = {
+    filter: new Set(["contains", "equals", "field", "limit", "owner"]),
+    get: new Set(["recordId"]),
+    list: new Set(["limit"]),
+    research: new Set(["evidence", "out"]),
+    schema: new Set(["sampleLimit"]),
+    search: new Set(["limit", "text"]),
+    triage: new Set(["limit", "owner"]),
+    valid: new Set(["workflow"]),
+    verify: new Set(["checks", "recordId"]),
+    write: new Set([
+      "clientToken",
+      "confirm",
+      "field",
+      "fieldsJson",
+      "op",
+      "recordId",
+    ]),
+  };
+  return supported[command].has(key);
 }

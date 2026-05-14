@@ -1,0 +1,42 @@
+{
+  "scenarioIds": ["D-AUDIT-08", "D-AUDIT-09", "D-AUDIT-10"],
+  "status": "mixed",
+  "observations": {
+    "emptyState": {
+      "filter": "text=no-such-a4-audit-entry",
+      "countText": "0 entries",
+      "rowText": "no audit entries",
+      "result": "pass"
+    },
+    "malformedRotatedSkipped": {
+      "apiSkippedFilesCount": 1,
+      "skippedReasonIncludesInvalidAuditEntry": true,
+      "renderedInDetailJson": true,
+      "result": "pass"
+    },
+    "redaction": {
+      "visibleBodySecretScan": false,
+      "exportSecretScan": false,
+      "apiIssueCodesRedacted": true,
+      "seededSecretLabels": [
+        "fixture plain-text token",
+        "fixture access token",
+        "fixture app secret",
+        "fixture refresh token",
+        "fixture bearer header"
+      ],
+      "result": "pass"
+    },
+    "emptyDetailStale": {
+      "detailTitleAfterEmptyFilter": "Detail · <previous id>",
+      "expected": "empty or cleared detail when list has no entries",
+      "result": "fail"
+    }
+  },
+  "evidenceFiles": [
+    "RUN-001_D-AUDIT-08_empty.png",
+    "RUN-001_D-AUDIT-08_empty_snapshot.txt"
+  ],
+  "defects": ["A4-AUDIT-EMPTY-STALE-DETAIL"],
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

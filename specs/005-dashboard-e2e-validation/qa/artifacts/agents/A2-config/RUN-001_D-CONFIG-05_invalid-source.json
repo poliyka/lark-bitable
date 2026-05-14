@@ -1,0 +1,29 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-05",
+  "status": "fail",
+  "expected": "Invalid source URL renders a recoverable error and preserves typed sourceUrl/sourceName inputs.",
+  "action": "Filled sourceUrl with not-a-valid-lark-url and sourceName with A2 Invalid Source Preserve, then clicked Save.",
+  "observed": {
+    "network": {
+      "method": "POST",
+      "path": "/api/config",
+      "status": 500,
+      "responseMessage": "Invalid Lark Bitable URL: The provided value is not a valid URL."
+    },
+    "routeAfterError": {
+      "hash": "#config",
+      "activePage": "config-page",
+      "breadcrumb": "∷ 設定"
+    },
+    "visibleSourceUrlAfterError": "https://example.larksuite.com/base/appA2ConfigRun?table=tblA2Run&view=vewA2Run",
+    "visibleSourceNameAfterError": "A2 Config Source Final",
+    "outputStatus": "error"
+  },
+  "defect": "The error is recoverable, but the form does not preserve the invalid sourceUrl/sourceName values; it reverts to the server draft after the failed save.",
+  "redactionStatus": "redacted"
+}

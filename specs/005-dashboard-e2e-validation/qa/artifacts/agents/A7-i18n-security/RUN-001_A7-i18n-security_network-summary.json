@@ -1,0 +1,20 @@
+{
+  "tool": "mcp__chrome_devtools_isolated__",
+  "origin": "http://127.0.0.1:48801",
+  "requestsObserved": 31,
+  "non200Requests": [],
+  "importantRequests": [
+    "GET /",
+    "GET /assets/styles.css",
+    "GET /assets/app.js",
+    "GET /api/status",
+    "GET /api/config",
+    "POST /api/config",
+    "GET /api/audit?limit=10",
+    "GET /api/research",
+    "GET /api/research/2026-05-14T083500.000Z-a7-source-boundary",
+    "GET /api/table/schema",
+    "GET /api/table/records?limit=20"
+  ],
+  "notes": "All listed preserved document/script/stylesheet/fetch requests returned 200 in the isolated DevTools network listing."
+}

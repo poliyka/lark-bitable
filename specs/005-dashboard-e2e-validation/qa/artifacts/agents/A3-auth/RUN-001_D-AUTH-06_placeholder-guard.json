@@ -1,0 +1,10 @@
+{
+  "scenario": "D-AUTH-06",
+  "status": "pass",
+  "evidenceMethod": "mcp__chrome_devtools_isolated__ click with window.open interception before login start",
+  "placeholderGuard": {
+    "beforeText": "authorization URL will appear here",
+    "opened": [],
+    "openedPlaceholder": false
+  }
+}

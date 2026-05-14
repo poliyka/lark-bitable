@@ -1,0 +1,54 @@
+{
+  "scenarioIds": [
+    "D-OVERVIEW-01",
+    "D-OVERVIEW-02",
+    "D-OVERVIEW-03",
+    "D-OVERVIEW-04",
+    "D-OVERVIEW-05"
+  ],
+  "collectedAt": "2026-05-14T08:16:10.000Z",
+  "evidence": [
+    "RUN-001_D-OVERVIEW-01_05_desktop.png",
+    "RUN-001_A1_api-status.json"
+  ],
+  "observations": {
+    "readiness": {
+      "heading": "前置條件狀態",
+      "summary": "dataSource: live · blocking 0 / partial 2",
+      "nextSafeActionVisible": "Run lark-bitable lark --login",
+      "status": "pass"
+    },
+    "statusDataCorrelation": {
+      "apiStatus": "ok",
+      "dashboardLoginRequired": false,
+      "localOnly": true,
+      "readinessStatus": "partial",
+      "blockingIssues": 0,
+      "partialIssues": 2,
+      "nextSafeCommand": "Run lark-bitable lark --login",
+      "status": "pass"
+    },
+    "sourceCard": {
+      "heading": "SOURCE · BASE",
+      "missingStateVisible": true,
+      "fieldsVisible": ["name", "appToken", "tableId", "viewId"],
+      "status": "pass"
+    },
+    "authCard": {
+      "heading": "AUTH · LARK OAUTH",
+      "missingStateVisible": true,
+      "fieldsVisible": ["account", "domain", "scopes", "expires"],
+      "tokenLeakVisible": false,
+      "status": "pass"
+    },
+    "workflowCard": {
+      "heading": "WORKFLOW · MODE",
+      "activeMode": "Developer",
+      "source": "defaulted",
+      "localOnly": "true",
+      "webLogin": "not required",
+      "status": "pass"
+    }
+  },
+  "status": "pass"
+}

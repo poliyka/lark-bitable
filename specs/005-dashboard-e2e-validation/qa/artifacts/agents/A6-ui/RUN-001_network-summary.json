@@ -1,0 +1,29 @@
+{
+  "runId": "RUN-001",
+  "agent": "A6-ui",
+  "dashboardOrigin": "http://127.0.0.1:48791",
+  "tool": "mcp__chrome_devtools_isolated__",
+  "summary": {
+    "totalRequestsListed": 31,
+    "statusCounts": {
+      "200": 30,
+      "500": 1
+    },
+    "unexpectedFailures": 0
+  },
+  "requests": [
+    "GET /#table 200",
+    "GET /assets/styles.css 200",
+    "GET /assets/app.js 200",
+    "GET /api/table/records?limit=20 200",
+    "GET /api/table/schema 200",
+    "GET /api/status 200",
+    "GET /api/audit?limit=5 200",
+    "GET /api/config 200",
+    "GET /api/research 200",
+    "POST /api/config 500"
+  ],
+  "notes": [
+    "The POST /api/config 500 was intentionally induced by saving an invalid source URL to validate the styled recoverable error state."
+  ]
+}

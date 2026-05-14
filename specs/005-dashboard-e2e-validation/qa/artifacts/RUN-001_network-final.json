@@ -1,0 +1,63 @@
+{
+  "runId": "RUN-001",
+  "collectedAt": "2026-05-14T09:05:00.000Z",
+  "source": "A0 merge of lane network summary artifacts",
+  "browserToolPolicy": "mcp__chrome_devtools_isolated__ for browser-visible validation after restart note",
+  "laneSummaries": [
+    {
+      "lane": "A1-shell",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A1-shell/RUN-001_A1_network-summary.json",
+      "summary": "Shell navigation and Overview valid action used bounded local requests and no uncontrolled request loop."
+    },
+    {
+      "lane": "A2-config",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A2-config/RUN-001_A2-config_network-summary.json",
+      "summary": "Config save/reset/schema calls captured; invalid source and callback-port requests intentionally produced validation errors."
+    },
+    {
+      "lane": "A3-auth",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A3-auth/RUN-001_A3-auth_network-summary.json",
+      "summary": "Login-start, failed-flow, logout, and status calls captured with flow/state values redacted."
+    },
+    {
+      "lane": "A4-ops",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A4-ops/RUN-001_A4-ops_network-summary.json",
+      "summary": "Audit and Playground validation requests captured; schema/write/search failures classify command contract defects."
+    },
+    {
+      "lane": "A5-data",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A5-data/RUN-001_A5-data_browser-console-network.json",
+      "summary": "Research and Source Table requests captured; live table data requests are blocked by missing Lark auth/source."
+    },
+    {
+      "lane": "A6-ui",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A6-ui/RUN-001_network-summary.json",
+      "summary": "UI visual-state network summary captured, including expected recoverable config error probe."
+    },
+    {
+      "lane": "A7-i18n-security",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A7-i18n-security/RUN-001_A7-i18n-security_network-summary.json",
+      "summary": "A7 important requests returned 200 and response redaction checks passed for visible/API details."
+    },
+    {
+      "lane": "A8-errors",
+      "artifact": "specs/005-dashboard-e2e-validation/qa/artifacts/agents/A8-errors/RUN-001_D-ERR-01_07_errors.json",
+      "summary": "A8 notable requests include expected injected 500s for config/audit/playground/research and 200 partial table responses."
+    }
+  ],
+  "finalClassification": {
+    "unexpectedNetworkLoops": 0,
+    "expectedErrorResponses": [
+      "POST /api/config 500 during invalid config validation",
+      "POST /api/playground/run 500 during missing-auth/invalid-command probes",
+      "GET /api/audit/<id> 500 after A8 removed file-backed audit fixture",
+      "GET /api/research/<id> 500 after A8 removed file-backed research fixture"
+    ],
+    "blockedLiveDependencies": [
+      "Live Lark auth session",
+      "Live Lark test app and app secret",
+      "Live Lark test Bitable source URL",
+      "Live records/schema data for Source Table scenarios"
+    ]
+  }
+}

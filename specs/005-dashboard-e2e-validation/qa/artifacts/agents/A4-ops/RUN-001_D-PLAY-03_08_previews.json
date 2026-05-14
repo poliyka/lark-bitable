@@ -1,0 +1,68 @@
+{
+  "scenarioIds": [
+    "D-PLAY-03",
+    "D-PLAY-04",
+    "D-PLAY-05",
+    "D-PLAY-06",
+    "D-PLAY-07",
+    "D-PLAY-08"
+  ],
+  "status": "mixed",
+  "commandListObserved": [
+    "valid",
+    "schema",
+    "list",
+    "get",
+    "filter",
+    "search",
+    "triage",
+    "research",
+    "verify",
+    "write"
+  ],
+  "observations": {
+    "valid": {
+      "preview": "lark-bitable valid --workflow dashboard --json",
+      "runStatus": "partial",
+      "payloadAccepted": true,
+      "result": "pass"
+    },
+    "schema": {
+      "preview": "lark-bitable schema --limit 3 --json",
+      "runStatus": "error",
+      "issue": "Nonexistent flag: --limit",
+      "expectedFlag": "--sample-limit",
+      "result": "fail"
+    },
+    "list": {
+      "preview": "lark-bitable list --limit 4 --json",
+      "result": "pass"
+    },
+    "get": {
+      "preview": "lark-bitable get recA4Get --json",
+      "result": "pass"
+    },
+    "verify": {
+      "preview": "lark-bitable verify recA4Verify --checks unit --json",
+      "result": "pass"
+    },
+    "filter": {
+      "preview": "lark-bitable filter --field Status --contains 處理 --owner A4 --limit 2 --json",
+      "result": "pass"
+    },
+    "searchEmpty": {
+      "preview": "lark-bitable search --limit 10 --json",
+      "runStatus": "error",
+      "issue": "Search query must not be empty.",
+      "pageBroken": false,
+      "result": "pass"
+    },
+    "research": {
+      "preview": "lark-bitable research --out a4-report.json --json",
+      "formAlsoExposesUnsupported": ["--name", "--record-id"],
+      "result": "fail"
+    }
+  },
+  "defects": ["A4-PLAY-SCHEMA-LIMIT", "A4-PLAY-RESEARCH-UNSUPPORTED-PARAMS"],
+  "recordedAt": "2026-05-14T08:44:28.018Z"
+}

@@ -1,0 +1,14 @@
+{
+  "runId": "RUN-001",
+  "lane": "A2-config",
+  "dashboardOrigin": "http://127.0.0.1:48751",
+  "collectedAt": "2026-05-14T08:18:10.000Z",
+  "browserPolicy": "mcp__chrome_devtools_isolated__ only",
+  "scenario": "D-CONFIG-04",
+  "status": "pass",
+  "secretSubmitted": "[REDACTED]",
+  "visibleOutputContainsSubmittedSecret": false,
+  "visibleSecretState": "stored-redacted",
+  "passwordFieldEvidence": "Accessibility snapshot shows password field as bullets after save; output contains larkAppSecretState only.",
+  "redactionStatus": "redacted"
+}
