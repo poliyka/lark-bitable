@@ -150,6 +150,7 @@ async function routeDashboardRequest(
   if (url.pathname === "/api/auth/login/start" && request.method === "POST") {
     const body = (await readJson(request).catch(() => ({}))) as {
       openBrowser?: boolean;
+      scopes?: string[];
       timeoutMs?: number;
     };
     const service = createDashboardAuthService({
@@ -162,6 +163,9 @@ async function routeDashboardRequest(
         await service.startLogin({
           callbackMode: "local",
           openBrowser: body.openBrowser,
+          scopes: Array.isArray(body.scopes)
+            ? body.scopes.map((scope) => String(scope))
+            : undefined,
           timeoutMs: body.timeoutMs,
         }),
       ),

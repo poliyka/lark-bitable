@@ -74,6 +74,44 @@ describe("dashboard HTTP server", () => {
     }
   });
 
+  it("passes requested login scopes from the dashboard login API", async () => {
+    const paths = await createDashboardTestPaths("dashboard-http-");
+    const server = await startDashboardServer({
+      auditPath: paths.auditPath,
+      authPath: paths.authPath,
+      configCwd: paths.configCwd,
+      host: "127.0.0.1",
+      port: 0,
+      researchDir: paths.researchDir,
+    });
+
+    try {
+      await fetchDashboardJson(server.binding.origin, "/api/config", {
+        body: JSON.stringify(configDraftFixture),
+        method: "POST",
+      });
+
+      const login = await fetchDashboardJson<{
+        data: { authorizationUrl: string; status: string };
+        status: string;
+      }>(server.binding.origin, "/api/auth/login/start", {
+        body: JSON.stringify({
+          openBrowser: false,
+          scopes: ["bitable:app", "im:message"],
+        }),
+        method: "POST",
+      });
+
+      expect(login.status).toBe("ok");
+      expect(login.data.status).toBe("waiting");
+      expect(
+        new URL(login.data.authorizationUrl).searchParams.get("scope"),
+      ).toBe("bitable:app im:message");
+    } finally {
+      await server.stop();
+    }
+  });
+
   it("exposes auth, audit, playground, research, and table routes with safe envelopes", async () => {
     const paths = await createDashboardTestPaths("dashboard-http-");
     const server = await startDashboardServer({
