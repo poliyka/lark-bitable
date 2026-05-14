@@ -50,7 +50,15 @@ export default class ValidCommand extends BaseCommand {
     workflow: Flags.string({
       default: "global",
       description: "Workflow to validate.",
-      options: ["global", "inspect", "triage", "research", "verify", "write"],
+      options: [
+        "global",
+        "inspect",
+        "triage",
+        "research",
+        "verify",
+        "write",
+        "dashboard",
+      ],
     }),
   };
 

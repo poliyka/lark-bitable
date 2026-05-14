@@ -108,6 +108,30 @@ describe("command-specific help", () => {
     expect(result.data?.rendered).toContain("Download Lark Media");
   });
 
+  it("documents dashboard, dashboard readiness, and research canonical output", async () => {
+    const auditPath = await createAuditPath();
+    const dashboard = await HelpCommand.run([
+      "dashboard",
+      "--json",
+      "--audit-path",
+      auditPath,
+    ]);
+    const research = await HelpCommand.run([
+      "research",
+      "--json",
+      "--audit-path",
+      auditPath,
+    ]);
+    const global = await HelpCommand.run(["--json", "--audit-path", auditPath]);
+
+    expect(dashboard.data?.rendered).toContain("48731");
+    expect(dashboard.data?.rendered).toContain("no-login dashboard");
+    expect(dashboard.data?.rendered).toContain("language switching");
+    expect(research.data?.rendered).toContain("canonical JSON");
+    expect(research.data?.rendered).toContain("-o");
+    expect(JSON.stringify(global.data)).toContain("lark-bitable dashboard");
+  });
+
   it("rejects unknown command-specific help with available command names", async () => {
     const auditPath = await createAuditPath();
 

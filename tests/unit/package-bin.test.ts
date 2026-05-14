@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
@@ -11,5 +11,11 @@ describe("package binary contract", () => {
     expect(packageJson.bin).toEqual({
       "lark-bitable": "bin/run.js",
     });
+  });
+
+  it("ships the dashboard command module through oclif command discovery", async () => {
+    await expect(
+      access("src/cli/commands/dashboard.ts"),
+    ).resolves.toBeUndefined();
   });
 });

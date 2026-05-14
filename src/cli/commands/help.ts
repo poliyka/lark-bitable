@@ -7,6 +7,7 @@ import type { CommandOutput } from "../output.js";
 export const commandNames = [
   "help",
   "doctor",
+  "dashboard",
   "lark",
   "valid",
   "configure",
@@ -139,6 +140,49 @@ const helpEntries: Record<CommandName, HelpEntry> = {
     purpose:
       "Check CLI installation, bootstrap, configure completeness, and Lark auth status.",
     title: "Doctor",
+  },
+  dashboard: {
+    aiUsage: [
+      "lark-bitable dashboard --no-open --json",
+      "lark-bitable dashboard --port 48731 --json",
+    ],
+    commonFailures: [
+      "requested port range is unavailable",
+      "browser open failed",
+      "missing Lark auth for Lark-backed pages",
+      "missing source configuration for table-backed pages",
+    ],
+    examples: [
+      "lark-bitable dashboard",
+      "lark-bitable dashboard --no-open",
+      "lark-bitable valid --workflow dashboard --json",
+    ],
+    humanUsage: [
+      "Run lark-bitable dashboard to start a local web UI on port 48731, or the next available incremented port.",
+      "The dashboard is local-only by default and does not require a dashboard username or password.",
+      "Use the pages for live configuration fixes, Lark login/logout, audit search, playground runs, research report browsing, table context, and UI language switching.",
+      "Language preference is stored only in browser web cache. Source data, audit snapshots, command output, and research reports are not translated.",
+    ],
+    inputs: [
+      "optional --port starting port",
+      "optional --no-open",
+      "optional --json",
+      "hidden --host for advanced local binding",
+    ],
+    nextSteps: [
+      "Open the reported local URL.",
+      "Use configuration and Lark login pages before Lark-backed table operations.",
+      "Run playground write actions in preview mode before confirming any mutation.",
+    ],
+    outputs: [
+      "selected local dashboard URL",
+      "requested and actual port",
+      "local-only and no-dashboard-login status",
+      "next safe actions",
+    ],
+    purpose:
+      "Start the local no-login dashboard for configure, Lark auth, audit logs, playground, research reports, table context, and language switching.",
+    title: "Dashboard",
   },
   filter: {
     aiUsage: [
@@ -329,10 +373,11 @@ const helpEntries: Record<CommandName, HelpEntry> = {
   },
   research: {
     aiUsage: [
-      "lark-bitable research --out reports/selected-bug-research.md --json",
+      "lark-bitable research --out reports/current-research.json --json",
+      "lark-bitable research -o reports/current-research.json --json",
     ],
     commonFailures: ["missing selection", "insufficient evidence"],
-    examples: ["lark-bitable research --out reports/selected-bug-research.md"],
+    examples: ["lark-bitable research -o reports/current-research.json"],
     humanUsage: [
       "Run lark-bitable triage first, then lark-bitable get <record-id> to inspect the full bug record, download any media with lark-bitable media download, then run lark-bitable research.",
     ],
@@ -341,7 +386,15 @@ const helpEntries: Record<CommandName, HelpEntry> = {
       "Open the report and collect more command/runtime evidence.",
       "If the record includes media, download and inspect it before treating the media contents as fact.",
     ],
-    outputs: ["facts", "assumptions", "analysis", "risks", "evidence"],
+    outputs: [
+      "facts",
+      "assumptions",
+      "analysis",
+      "risks",
+      "evidence",
+      "canonical JSON report under ~/.lark-bitable/research/",
+      "optional -o/--out symlink status",
+    ],
     purpose: "Produce an evidence-backed first research report.",
     title: "Research Report",
   },
@@ -561,6 +614,7 @@ export default class HelpCommand extends BaseCommand {
           rendered: renderGlobalHelp(),
           workflow: [
             "lark-bitable doctor",
+            "lark-bitable dashboard",
             "lark-bitable configure",
             "lark-bitable lark --login",
             "lark-bitable valid --workflow triage",
@@ -613,14 +667,15 @@ function renderGlobalHelp(): string {
     "  QA - verify a selected task with evidence-backed safe checks.",
     "",
     "For humans:",
-    "  1. lark-bitable configure",
-    "  2. lark-bitable lark --login",
-    "  3. lark-bitable valid --workflow triage",
-    "  4. lark-bitable schema",
-    "  5. lark-bitable triage",
-    "  6. lark-bitable get <record-id>",
-    "  7. lark-bitable media download <file-token> --out ./evidence/asset.bin",
-    "  8. lark-bitable research or lark-bitable verify, depending on active mode",
+    "  1. lark-bitable dashboard",
+    "  2. lark-bitable configure",
+    "  3. lark-bitable lark --login",
+    "  4. lark-bitable valid --workflow triage",
+    "  5. lark-bitable schema",
+    "  6. lark-bitable triage",
+    "  7. lark-bitable get <record-id>",
+    "  8. lark-bitable media download <file-token> --out ./evidence/asset.bin",
+    "  9. lark-bitable research or lark-bitable verify, depending on active mode",
     "",
     "For AI agents:",
     "  Use --json and pass explicit command arguments instead of relying on prompts.",

@@ -23,9 +23,18 @@ export async function checkReadiness(
   context: ReadinessContext = {},
 ): Promise<ValidationResult> {
   const checkedPrerequisites =
-    workflow === "write"
-      ? ["install", "bootstrap", "auth", "source", "fields", "write-permission"]
-      : ["install", "bootstrap", "auth", "source"];
+    workflow === "dashboard"
+      ? ["install", "dashboard-server", "config", "auth", "audit", "research"]
+      : workflow === "write"
+        ? [
+            "install",
+            "bootstrap",
+            "auth",
+            "source",
+            "fields",
+            "write-permission",
+          ]
+        : ["install", "bootstrap", "auth", "source"];
   const blockingIssues: Issue[] = [];
   const partialIssues: Issue[] = [];
   const remediationSteps: string[] = [];
@@ -38,7 +47,7 @@ export async function checkReadiness(
   const bootstrapStale =
     context.bootstrap?.installed && context.bootstrap.stale;
 
-  if (bootstrapInstalled === false) {
+  if (bootstrapInstalled === false && workflow !== "dashboard") {
     blockingIssues.push({
       code: "missing-bootstrap",
       message: "Bootstrap skill guidance is not installed.",
@@ -47,7 +56,7 @@ export async function checkReadiness(
     remediationSteps.push("Run lark-bitable doctor --install-skill");
   }
 
-  if (bootstrapStale) {
+  if (bootstrapStale && workflow !== "dashboard") {
     blockingIssues.push({
       code: "stale-bootstrap",
       message: "Bootstrap skill guidance is installed but out of date.",
@@ -59,7 +68,7 @@ export async function checkReadiness(
   const auth = await readAuthForReadiness(context);
   const authStatus = authStatusFor(auth);
   if (authStatus.status !== "ready") {
-    blockingIssues.push({
+    const authIssue = {
       code:
         authStatus.status === "missing"
           ? "missing-auth"
@@ -72,7 +81,15 @@ export async function checkReadiness(
         authStatus.status === "expired" && auth?.refreshToken
           ? "Run lark-bitable configure to store Lark app credentials, or run lark-bitable lark --login again."
           : "Run lark-bitable lark --login",
-    });
+    };
+    if (workflow === "dashboard") {
+      partialIssues.push({
+        ...authIssue,
+        message: `${authIssue.message} Lark-backed dashboard pages are blocked until login completes.`,
+      });
+    } else {
+      blockingIssues.push(authIssue);
+    }
     remediationSteps.push(
       authStatus.status === "expired" && auth?.refreshToken
         ? "Run lark-bitable configure to store Lark app credentials, or run lark-bitable lark --login again."
@@ -82,11 +99,20 @@ export async function checkReadiness(
 
   const source = context.configStore?.getSource();
   if (!source) {
-    blockingIssues.push({
+    const sourceIssue = {
       code: "missing-source",
       message: "No active Lark Bitable source is configured.",
       remediation: "Run lark-bitable configure <url>",
-    });
+    };
+    if (workflow === "dashboard") {
+      partialIssues.push({
+        ...sourceIssue,
+        message:
+          "No active Lark Bitable source is configured. The dashboard can start, but table-backed pages are blocked until configuration is saved.",
+      });
+    } else {
+      blockingIssues.push(sourceIssue);
+    }
     remediationSteps.push("Run lark-bitable configure <url>");
   }
 
@@ -169,11 +195,13 @@ export async function checkReadiness(
       ? "lark-bitable list"
       : workflow === "inspect"
         ? "lark-bitable list"
-        : workflow === "write"
-          ? 'lark-bitable write --op create --field "欄位=值" --json'
-          : workflow === "verify"
-            ? "lark-bitable verify"
-            : `lark-bitable ${workflow}`;
+        : workflow === "dashboard"
+          ? "lark-bitable dashboard"
+          : workflow === "write"
+            ? 'lark-bitable write --op create --field "欄位=值" --json'
+            : workflow === "verify"
+              ? "lark-bitable verify"
+              : `lark-bitable ${workflow}`;
 
   return {
     workflow,

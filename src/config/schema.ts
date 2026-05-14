@@ -360,15 +360,18 @@ export const auditLogFileSchema = z.object({
   entries: z.array(auditLogEntrySchema).default([]),
 });
 
+export const validationWorkflowSchema = z.enum([
+  "global",
+  "inspect",
+  "triage",
+  "research",
+  "verify",
+  "write",
+  "dashboard",
+]);
+
 export const validationResultSchema = z.object({
-  workflow: z.enum([
-    "global",
-    "inspect",
-    "triage",
-    "research",
-    "verify",
-    "write",
-  ]),
+  workflow: validationWorkflowSchema,
   status: z.enum(["ready", "partial", "blocked"]),
   checkedPrerequisites: z.array(z.string().min(1)),
   blockingIssues: z.array(issueSchema).default([]),
@@ -391,6 +394,21 @@ export const researchReportSchema = z.object({
   risks: z.array(z.string().min(1)).default([]),
   nextActions: z.array(z.string().min(1)).default([]),
   evidence: z.array(researchEvidenceSchema).default([]),
+});
+
+export const persistedResearchReportSchema = researchReportSchema.extend({
+  schemaVersion: z.literal(1),
+  name: z.string().min(1),
+  createdAt: isoTimestampSchema,
+  canonicalPath: z.string().min(1),
+  outputLinkPath: z.string().min(1).nullable().default(null),
+  outputLinkStatus: z
+    .enum(["none", "linked", "failed", "unsupported"])
+    .default("none"),
+  selectionMode: workflowModeSchema.nullable().optional(),
+  selectedRecordId: z.string().min(1).nullable().optional(),
+  ownerCriteria: ownerCriteriaSchema.nullable().optional(),
+  markdown: z.string().min(1),
 });
 
 export type Issue = z.infer<typeof issueSchema>;
@@ -423,3 +441,8 @@ export type AuditLogEntry = z.infer<typeof auditLogEntrySchema>;
 export type AuditLogFile = z.infer<typeof auditLogFileSchema>;
 export type AuditEvidenceSummary = z.infer<typeof auditEvidenceSummarySchema>;
 export type AuditRetentionApplied = z.infer<typeof auditRetentionAppliedSchema>;
+export type AuditCommandStatus = z.infer<typeof auditCommandStatusSchema>;
+export type PersistedResearchReport = z.infer<
+  typeof persistedResearchReportSchema
+>;
+export type ValidationWorkflow = z.infer<typeof validationWorkflowSchema>;

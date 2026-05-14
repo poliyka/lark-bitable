@@ -17,8 +17,10 @@ Use this skill before reading Lark Bitable data for a bug-fixing workflow.
 5. Run `lark-bitable valid --workflow verify` before `verify` in QA mode.
 6. Run `lark-bitable valid --workflow write` before committed `write`
    operations.
-7. Run `lark-bitable schema` first when you only need field headers.
-8. Run `lark-bitable schema --json` before querying or writing when the table schema,
+7. Run `lark-bitable valid --workflow dashboard` before relying on dashboard
+   readiness details.
+8. Run `lark-bitable schema` first when you only need field headers.
+9. Run `lark-bitable schema --json` before querying or writing when the table schema,
    field mappings, exact status values, owner field, or field types are not
    already known from current context.
 
@@ -56,6 +58,13 @@ version conflicts, or inconclusive live access.
   without `--confirm` first, inspect the preview, and only repeat with
   `--confirm` after the requested source, target record, and field changes are
   explicit.
+- `lark-bitable dashboard` is a local-only no-dashboard-login UI. It can start
+  even when Lark auth or source configuration is missing; Lark-backed pages
+  should be interpreted as partial/blocked until the dashboard config and Lark
+  login pages fix those prerequisites.
+- Dashboard language preference is browser web cache only. Do not treat it as
+  CLI config, and do not translate source data, audit snapshots, command output,
+  file paths, or research report contents.
 
 ## Audit Log
 
@@ -74,6 +83,23 @@ version conflicts, or inconclusive live access.
 - For tests or isolated automation, pass hidden `--audit-path <path>` or set
   `LARK_BITABLE_AUDIT_PATH=<path>` so audit logs do not mix with the user's
   normal local history.
+- The dashboard Audit Log page reads active and rotated audit logs and reports
+  malformed or unreadable files as skipped evidence. Use it for browsing, but
+  keep command JSON output as the source of truth for a just-executed command.
+
+## Dashboard
+
+- Start the local dashboard with `lark-bitable dashboard`; default port is
+  `48731`, and the command increments to the next available port when occupied.
+- Use `lark-bitable dashboard --no-open --json` in automation to retrieve
+  `data.binding.origin` without opening a browser.
+- The dashboard provides live configure, live Lark login/logout, audit log
+  search, playground runs, research report browsing, table context, and
+  Traditional Chinese/English UI language switching.
+- Playground write requests remain preview-first. Do not request or interpret a
+  committed write unless the user explicitly confirms mutation.
+- No database is used for dashboard state. Temporary UI state, including
+  language selection and playground drafts, belongs in browser web cache only.
 
 ## Login and Configure
 
@@ -174,6 +200,11 @@ Rules for write operations:
 
 - Use `lark-bitable triage` to select actionable bug records.
 - Use `lark-bitable research` to create the first report for the selected bug.
+- Every `research` invocation writes canonical JSON under
+  `~/.lark-bitable/research/{name}-{datetime}.json`.
+- `lark-bitable research -o <path>` or `--out <path>` creates a symbolic link to
+  the canonical JSON when safe. Do not assume `<path>` is an independent report
+  copy.
 
 ### Required bug-investigation flow
 
