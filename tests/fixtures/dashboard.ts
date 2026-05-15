@@ -11,6 +11,7 @@ export interface DashboardTestPaths {
   configCwd: string;
   home: string;
   researchDir: string;
+  runtimePath: string;
   root: string;
 }
 
@@ -25,6 +26,7 @@ export async function createDashboardTestPaths(
     configCwd: join(home, ".lark-bitable"),
     home,
     researchDir: join(home, ".lark-bitable", "research"),
+    runtimePath: join(home, ".lark-bitable", "dashboard", "runtime.json"),
     root,
   };
 }

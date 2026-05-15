@@ -15,6 +15,8 @@ export const dashboardDataSourceSchema = z.enum([
   "missing",
   "partial",
   "failed",
+  "stale",
+  "reconnecting",
 ]);
 
 export const dashboardApiStatusSchema = z.enum(["ok", "partial", "error"]);
@@ -146,3 +148,35 @@ export type LanguageCode = z.infer<typeof languageCodeSchema>;
 export type PlaygroundCommand = z.infer<typeof playgroundCommandSchema>;
 export type PlaygroundRunRequest = z.infer<typeof playgroundRunRequestSchema>;
 export type ResearchReportSummary = z.infer<typeof researchReportSummarySchema>;
+
+export {
+  clientViewStatePayloadSchema,
+  commandEventIngressSchema,
+  dashboardLiveDataSourceSchema,
+  dashboardLivePhaseSchema,
+  dashboardLiveTriggerSchema,
+  dashboardRuntimeSessionSchema,
+  dashboardSurfaceSchema,
+  liveCatchupRequiredPayloadSchema,
+  liveConnectedPayloadSchema,
+  liveIngressAcceptedResponseSchema,
+  liveMessageEnvelopeSchema,
+  liveMessageTypeSchema,
+  liveStalePayloadSchema,
+  stateInvalidationPayloadSchema,
+} from "./live-events.js";
+export type {
+  ClientViewStatePayload,
+  CommandEventIngress,
+  DashboardLiveDataSource,
+  DashboardLiveMessageEnvelope,
+  DashboardLivePhase,
+  DashboardLiveTrigger,
+  DashboardRuntimeSession,
+  DashboardSurface,
+  LiveCatchupRequiredPayload,
+  LiveConnectedPayload,
+  LiveIngressAcceptedResponse,
+  LiveStalePayload,
+  StateInvalidationPayload,
+} from "./live-events.js";

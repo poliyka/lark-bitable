@@ -45,6 +45,10 @@ class TestElement {
     return null;
   }
 
+  querySelectorAll(): TestElement[] {
+    return [];
+  }
+
   setAttribute(name: string, value: string): void {
     if (name.startsWith("data-")) {
       this.dataset[name.slice(5)] = value;
@@ -122,6 +126,7 @@ function createDashboardClientHarness(
     script.slice(0, initIndex) +
     "globalThis.__dashboardTestHooks={state,loadAuditDetail,loadResearchDetail};";
   const context = createContext({
+    URLSearchParams,
     document,
     fetch: fetchImpl,
     globalThis: {},
@@ -276,7 +281,7 @@ function createConfigDashboardClientHarness(
   expect(initIndex).toBeGreaterThan(0);
   const testableScript =
     script.slice(0, initIndex) +
-    "globalThis.__dashboardTestHooks={state,discoverSchema};";
+    "globalThis.__dashboardTestHooks={state,discoverSchema,handleLiveEnvelope};";
   const context = createContext({
     FormData: class {
       constructor(
@@ -299,6 +304,102 @@ function createConfigDashboardClientHarness(
     context.globalThis as {
       __dashboardTestHooks: {
         discoverSchema: () => Promise<void>;
+        handleLiveEnvelope: (envelope: unknown) => Promise<void>;
+        state: {
+          configDirty: boolean;
+          page: string;
+        };
+      };
+    }
+  ).__dashboardTestHooks;
+
+  return { document, hooks };
+}
+
+function createLiveDashboardClientHarness(
+  fetchImpl: (
+    path: string,
+    options?: Record<string, unknown>,
+  ) => Promise<unknown>,
+) {
+  const document = new TestDocument();
+  for (const id of [
+    "binding-status",
+    "binding-host",
+    "binding-port",
+    "readiness-card",
+    "readiness-ring",
+    "readiness-summary",
+    "readiness-pills",
+    "next-command",
+    "source-ds",
+    "source-kv",
+    "auth-pill",
+    "auth-kv",
+    "mode-pill",
+    "mode-kv",
+    "recent-activity",
+    "mapping-list",
+    "audit-count",
+    "audit-entry-count",
+    "audit-entries",
+    "audit-detail-title",
+    "audit-detail-status",
+    "audit-detail",
+    "audit-filter-form",
+    "live-connection-state",
+    "live-activity-count",
+    "live-activity-feed",
+    "research-search",
+    "research-count",
+    "research-files",
+    "research-path",
+    "research-meta",
+    "research-body",
+  ]) {
+    document.getElementById(id);
+  }
+
+  const script = dashboardAppScript();
+  const initIndex = script.lastIndexOf("bindEvents();applyLanguage");
+  expect(initIndex).toBeGreaterThan(0);
+  const testableScript =
+    script.slice(0, initIndex) +
+    "globalThis.__dashboardTestHooks={state,handleLiveEnvelope,connectLiveUpdates};";
+  const context = createContext({
+    FormData: class {
+      constructor(
+        private readonly form: TestElement & {
+          formEntries?: Array<[string, string]>;
+        },
+      ) {}
+
+      entries(): IterableIterator<[string, string]> {
+        return (this.form.formEntries ?? [])[Symbol.iterator]();
+      }
+    },
+    URLSearchParams,
+    document,
+    fetch: fetchImpl,
+    globalThis: {},
+  });
+
+  new Script(testableScript).runInContext(context);
+  const hooks = (
+    context.globalThis as {
+      __dashboardTestHooks: {
+        connectLiveUpdates: () => void;
+        handleLiveEnvelope: (envelope: unknown) => Promise<void>;
+        state: {
+          auditDetail: { id?: string } | null;
+          live: {
+            activity: unknown[];
+            connectionState: string;
+          };
+          page: string;
+          researchDetail: unknown;
+          selectedReportId: string | null;
+        };
       };
     }
   ).__dashboardTestHooks;
@@ -893,5 +994,338 @@ describe("dashboard design assets", () => {
       expect(dashboardLanguageCatalog["zh-TW"][key]).toBeTruthy();
       expect(dashboardLanguageCatalog.en[key]).toBeTruthy();
     }
+  });
+
+  it("tracks live connection state and command activity without manual refresh", async () => {
+    const html = dashboardHtml();
+    expect(html).toContain('id="live-connection-state"');
+    expect(html).toContain('id="live-activity-feed"');
+
+    const { document, hooks } = createLiveDashboardClientHarness(
+      async (path) => {
+        if (path === "/api/status") {
+          return jsonResponse({
+            status: "ok",
+            dataSource: "live",
+            data: {
+              binding: {
+                host: "127.0.0.1",
+                port: 48731,
+                status: "ready",
+              },
+              nextSafeActions: ["lark-bitable valid --workflow dashboard"],
+              overview: {
+                auth: { status: "missing", scopes: [] },
+                mode: { active: "Developer", source: "defaulted" },
+                readiness: {
+                  blockingIssues: [],
+                  partialIssues: [],
+                  status: "partial",
+                },
+                source: {},
+              },
+            },
+          });
+        }
+        if (path === "/api/audit?limit=5") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              entries: [
+                {
+                  command: "valid",
+                  durationMs: 12,
+                  id: "audit-1",
+                  startedAt: "2026-05-15T00:00:00.000Z",
+                  status: "partial",
+                },
+              ],
+            },
+          });
+        }
+        if (path === "/api/config") {
+          return jsonResponse({
+            status: "ok",
+            data: { draft: {} },
+          });
+        }
+        if (path === "/api/audit") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              entries: [
+                {
+                  command: "valid",
+                  durationMs: 12,
+                  id: "audit-1",
+                  startedAt: "2026-05-15T00:00:00.000Z",
+                  status: "partial",
+                },
+              ],
+            },
+          });
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    );
+
+    await hooks.handleLiveEnvelope({
+      createdAt: "2026-05-15T00:00:00.000Z",
+      dataSource: "live",
+      eventId: "evt_connected",
+      payload: {
+        catchUpRequired: true,
+        clientId: "client_01",
+        sessionId: "dash_01",
+        surfaces: ["shell", "overview"],
+      },
+      sequence: 1,
+      type: "live.connected",
+    });
+    await hooks.handleLiveEnvelope({
+      createdAt: "2026-05-15T00:00:01.000Z",
+      dataSource: "live",
+      eventId: "evt_command",
+      payload: {
+        changedSurfaces: ["shell", "overview", "audit"],
+        command: "valid",
+        commandRunId: "run_01",
+        evidenceCount: 0,
+        issues: [],
+        phase: "started",
+        status: "running",
+        trigger: "terminal",
+      },
+      sequence: 2,
+      type: "command.activity",
+    });
+
+    expect(hooks.state.live.connectionState).toBe("connected");
+    expect(hooks.state.live.activity).toMatchObject([
+      {
+        command: "valid",
+        commandRunId: "run_01",
+        phase: "started",
+      },
+    ]);
+    expect(document.getElementById("live-connection-state").textContent).toBe(
+      "connected",
+    );
+    expect(document.getElementById("live-activity-feed").innerHTML).toContain(
+      "valid",
+    );
+  });
+
+  it("ignores out-of-order live envelopes once a newer sequence has been applied", async () => {
+    const { document, hooks } = createLiveDashboardClientHarness(async () =>
+      jsonResponse({
+        status: "ok",
+        data: {
+          binding: { status: "ready" },
+          nextSafeActions: ["lark-bitable dashboard"],
+          overview: {},
+        },
+      }),
+    );
+
+    await hooks.handleLiveEnvelope({
+      createdAt: "2026-05-15T00:00:05.000Z",
+      dataSource: "stale",
+      eventId: "evt_stale",
+      payload: {
+        reason: "heartbeat missed",
+      },
+      sequence: 5,
+      type: "live.stale",
+    });
+    await hooks.handleLiveEnvelope({
+      createdAt: "2026-05-15T00:00:01.000Z",
+      dataSource: "live",
+      eventId: "evt_old",
+      payload: {
+        catchUpRequired: false,
+        clientId: "client_01",
+        sessionId: "dash_01",
+        surfaces: ["shell", "overview"],
+      },
+      sequence: 1,
+      type: "live.connected",
+    });
+
+    expect(hooks.state.live.connectionState).toBe("stale");
+    expect(document.getElementById("live-connection-state").textContent).toBe(
+      "stale",
+    );
+  });
+
+  it("falls back to manual refresh state when WebSocket support is unavailable", () => {
+    const { document, hooks } = createLiveDashboardClientHarness(async () =>
+      jsonResponse({
+        status: "ok",
+        data: {
+          binding: { status: "ready" },
+          nextSafeActions: ["lark-bitable dashboard"],
+          overview: {},
+        },
+      }),
+    );
+
+    hooks.connectLiveUpdates();
+
+    expect(hooks.state.live.connectionState).toBe("fallback");
+    expect(document.getElementById("live-connection-state").textContent).toBe(
+      "fallback",
+    );
+  });
+
+  it("keeps an unavailable audit selection visible instead of jumping to the first entry during live refresh", async () => {
+    const requestedPaths: string[] = [];
+    const { document, hooks } = createLiveDashboardClientHarness(
+      async (path) => {
+        requestedPaths.push(path);
+        if (path === "/api/audit?") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              entries: [
+                {
+                  command: "valid",
+                  durationMs: 12,
+                  id: "audit-1",
+                  startedAt: "2026-05-15T00:00:00.000Z",
+                  status: "partial",
+                },
+              ],
+            },
+          });
+        }
+        if (path === "/api/audit/audit-1") {
+          throw new Error("should not replace the missing audit selection");
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    );
+
+    hooks.state.page = "audit";
+    hooks.state.auditDetail = { id: "audit-missing" };
+
+    await hooks.handleLiveEnvelope({
+      createdAt: "2026-05-15T00:00:05.000Z",
+      dataSource: "file-backed",
+      eventId: "evt_audit",
+      payload: {
+        reason: "audit updated",
+        resources: ["/api/audit"],
+        surfaces: ["audit"],
+      },
+      sequence: 6,
+      type: "state.invalidate",
+    });
+
+    expect(requestedPaths).toEqual(["/api/audit?"]);
+    expect(document.getElementById("audit-detail-title").textContent).toContain(
+      "audit-missin",
+    );
+    expect(document.getElementById("audit-detail-status").innerHTML).toContain(
+      "error",
+    );
+    expect(document.getElementById("audit-detail").innerHTML).toContain(
+      "audit-detail-unavailable",
+    );
+  });
+
+  it("keeps an unavailable research selection visible instead of jumping to another report during live refresh", async () => {
+    const requestedPaths: string[] = [];
+    const { document, hooks } = createLiveDashboardClientHarness(
+      async (path) => {
+        requestedPaths.push(path);
+        if (path === "/api/research") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              reports: [
+                {
+                  createdAt: "2026-05-15T00:00:00.000Z",
+                  name: "other-report",
+                  reportId: "report-1",
+                  risks: [],
+                  selectedRecordId: "recLogin",
+                },
+              ],
+              unavailableReports: [],
+              researchDir: "~/.lark-bitable/research",
+            },
+          });
+        }
+        if (path === "/api/research/report-1") {
+          throw new Error("should not replace the missing research selection");
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    );
+
+    hooks.state.page = "research";
+    hooks.state.selectedReportId = "report-missing";
+
+    await hooks.handleLiveEnvelope({
+      createdAt: "2026-05-15T00:00:06.000Z",
+      dataSource: "file-backed",
+      eventId: "evt_research",
+      payload: {
+        reason: "research updated",
+        resources: ["/api/research"],
+        surfaces: ["research"],
+      },
+      sequence: 7,
+      type: "state.invalidate",
+    });
+
+    expect(requestedPaths).toEqual(["/api/research"]);
+    expect(document.getElementById("research-path").innerHTML).toContain(
+      "report-missing",
+    );
+    expect(document.getElementById("research-meta").innerHTML).toContain(
+      "error",
+    );
+    expect(document.getElementById("research-body").innerHTML).toContain(
+      "research-detail-unavailable",
+    );
+  });
+
+  it("preserves unsaved config draft fields during live config invalidation", async () => {
+    const { document, hooks } = createConfigDashboardClientHarness(
+      async (path) => {
+        if (path === "/api/config") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              draft: {
+                sourceName: "stored source",
+              },
+            },
+          });
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    );
+
+    hooks.state.page = "config";
+    hooks.state.configDirty = true;
+    document.getElementById("sourceName").value = "unsaved source";
+
+    await hooks.handleLiveEnvelope({
+      createdAt: "2026-05-15T00:00:05.000Z",
+      dataSource: "file-backed",
+      eventId: "evt_config",
+      payload: {
+        reason: "configure completed",
+        resources: ["/api/config"],
+        surfaces: ["config"],
+      },
+      sequence: 5,
+      type: "state.invalidate",
+    });
+
+    expect(document.getElementById("sourceName").value).toBe("unsaved source");
   });
 });

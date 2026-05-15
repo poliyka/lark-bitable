@@ -44,7 +44,9 @@ export async function runPlaygroundWorkflow(
     };
   }
 
+  const previousTrigger = process.env.LARK_BITABLE_LIVE_TRIGGER;
   try {
+    process.env.LARK_BITABLE_LIVE_TRIGGER = "dashboard";
     const result = await runDashboardCommand(input);
     return redactDashboardPayload(result);
   } catch (error) {
@@ -67,6 +69,12 @@ export async function runPlaygroundWorkflow(
       status: structuredOutput.status,
       structuredOutput,
     });
+  } finally {
+    if (previousTrigger === undefined) {
+      delete process.env.LARK_BITABLE_LIVE_TRIGGER;
+    } else {
+      process.env.LARK_BITABLE_LIVE_TRIGGER = previousTrigger;
+    }
   }
 }
 

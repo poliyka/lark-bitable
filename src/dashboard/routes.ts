@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { AuthStore } from "../config/auth-store.js";
@@ -32,10 +33,13 @@ import {
 } from "./research-service.js";
 import {
   auditQuerySchema,
+  commandEventIngressSchema,
   configDraftInputSchema,
   playgroundRunRequestSchema,
   type DashboardBinding,
+  type DashboardSurface,
 } from "./schemas.js";
+import type { DashboardLiveServer } from "./live-server.js";
 import { getDashboardRecords, getDashboardSchema } from "./table-service.js";
 
 export interface DashboardRouteContext {
@@ -49,6 +53,8 @@ export interface DashboardRouteContext {
     tableRecords?: "partial";
     tableSchema?: "partial";
   };
+  liveServer?: DashboardLiveServer;
+  liveToken?: string;
   researchDir?: string;
 }
 
@@ -190,6 +196,13 @@ async function routeDashboardRequest(
         "file-backed",
       ),
     );
+    publishDashboardRouteEvent(context, {
+      changedSurfaces: ["shell", "overview", "config", "table", "audit"],
+      command: "configure",
+      phase: "completed",
+      status: "ok",
+      trigger: "dashboard",
+    });
     return;
   }
 
@@ -216,6 +229,13 @@ async function routeDashboardRequest(
         }),
       ),
     );
+    publishDashboardRouteEvent(context, {
+      changedSurfaces: ["shell", "overview", "auth", "table", "audit"],
+      command: "login",
+      phase: "started",
+      status: "running",
+      trigger: "dashboard",
+    });
     return;
   }
 
@@ -235,6 +255,13 @@ async function routeDashboardRequest(
       configStore: new ConfigStore({ cwd: context.configCwd }),
     });
     sendJson(response, dashboardOk(await service.logout(), "file-backed"));
+    publishDashboardRouteEvent(context, {
+      changedSurfaces: ["shell", "overview", "auth", "table", "audit"],
+      command: "logout",
+      phase: "completed",
+      status: "ok",
+      trigger: "dashboard",
+    });
     return;
   }
 
@@ -284,6 +311,48 @@ async function routeDashboardRequest(
         ? dashboardOk({ run }, "live")
         : dashboardPartial({ run }, run.issues, "partial"),
     );
+    return;
+  }
+
+  if (url.pathname === "/api/live/events" && request.method === "POST") {
+    if (!context.liveServer || !context.liveToken) {
+      sendJson(
+        response,
+        dashboardError(
+          {
+            code: "dashboard-live-event-rejected",
+            message: "Live event was rejected.",
+            remediation:
+              "Refresh the dashboard or restart the dashboard service.",
+          },
+          503,
+          "failed",
+        ),
+      );
+      return;
+    }
+
+    const token = request.headers["x-dashboard-live-token"];
+    if (token !== context.liveToken) {
+      sendJson(
+        response,
+        dashboardError(
+          {
+            code: "dashboard-live-event-rejected",
+            message: "Live event was rejected.",
+            remediation:
+              "Refresh the dashboard or restart the dashboard service.",
+          },
+          403,
+          "failed",
+        ),
+      );
+      return;
+    }
+
+    const event = commandEventIngressSchema.parse(await readJson(request));
+    const accepted = context.liveServer.acceptCommandEvent(event);
+    sendJson(response, dashboardOk(accepted, "live"));
     return;
   }
 
@@ -444,4 +513,30 @@ function testFaultIssue(
   remediation: string,
 ): Issue {
   return { code, message, remediation };
+}
+
+function publishDashboardRouteEvent(
+  context: DashboardRouteContext,
+  input: {
+    changedSurfaces: DashboardSurface[];
+    command: string;
+    phase: "started" | "completed";
+    status: "running" | "ok";
+    trigger: "dashboard";
+  },
+): void {
+  context.liveServer?.acceptCommandEvent({
+    changedSurfaces: input.changedSurfaces,
+    command: input.command,
+    commandRunId: `route_${randomUUID()}`,
+    dataSource: "live",
+    durationMs: input.phase === "completed" ? 0 : null,
+    evidenceCount: 0,
+    finishedAt: input.phase === "completed" ? new Date().toISOString() : null,
+    issues: [],
+    phase: input.phase,
+    startedAt: new Date().toISOString(),
+    status: input.status,
+    trigger: input.trigger,
+  });
 }

@@ -160,6 +160,8 @@ const helpEntries: Record<CommandName, HelpEntry> = {
     humanUsage: [
       "Run lark-bitable dashboard to start a local web UI on port 48731, or the next available incremented port.",
       "The dashboard is local-only by default and does not require a dashboard username or password.",
+      "When the dashboard service is running, CLI commands and dashboard actions push redacted live updates to connected browser tabs over WebSocket.",
+      "If the dashboard is not running, command execution continues normally without dashboard warnings, prompts, or failures.",
       "Use the pages for live configuration fixes, Lark login/logout, audit search, playground runs, research report browsing, table context, and UI language switching.",
       "Language preference is stored only in browser web cache. Source data, audit snapshots, command output, and research reports are not translated.",
     ],
@@ -178,6 +180,7 @@ const helpEntries: Record<CommandName, HelpEntry> = {
       "selected local dashboard URL",
       "requested and actual port",
       "local-only and no-dashboard-login status",
+      "browser live connection state and command activity when connected",
       "next safe actions",
     ],
     purpose:

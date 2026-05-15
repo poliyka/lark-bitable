@@ -45,4 +45,28 @@ describe("dashboard API envelopes and redaction", () => {
     expect(JSON.stringify(redacted)).not.toContain("app-secret-value");
     expect(JSON.stringify(redacted)).not.toContain("oauth-code");
   });
+
+  it("redacts token-like values inside arrays and freeform issue text", () => {
+    const redacted = redactDashboardPayload({
+      headers: [
+        "authorization=Bearer top-secret-token",
+        "tenant_access_token=tenant-secret",
+        "clientToken=client-secret",
+      ],
+      issues: [
+        {
+          code: "oauth-code-leak",
+          message: "code=temporary-oauth-code",
+          remediation: "replace refreshToken=refresh-secret",
+        },
+      ],
+    });
+
+    const serialized = JSON.stringify(redacted);
+    expect(serialized).not.toContain("top-secret-token");
+    expect(serialized).not.toContain("tenant-secret");
+    expect(serialized).not.toContain("client-secret");
+    expect(serialized).not.toContain("temporary-oauth-code");
+    expect(serialized).not.toContain("refresh-secret");
+  });
 });

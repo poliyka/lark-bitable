@@ -96,6 +96,12 @@ version conflicts, or inconclusive live access.
 - The dashboard provides live configure, live Lark login/logout, audit log
   search, playground runs, research report browsing, table context, and
   Traditional Chinese/English UI language switching.
+- When the dashboard service is running, CLI commands and dashboard actions
+  emit redacted live activity and state invalidation over the local WebSocket
+  channel so open tabs refresh without manual reload.
+- If the dashboard service is absent, stale, or unreachable, CLI commands still
+  complete normally and must not be interpreted as failed because live delivery
+  was skipped.
 - Playground write requests remain preview-first. Do not request or interpret a
   committed write unless the user explicitly confirms mutation.
 - No database is used for dashboard state. Temporary UI state, including

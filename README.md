@@ -774,6 +774,15 @@ Dashboard 是本機 web UI，不需要 dashboard/web 帳密登入；這不代表
 讀取或寫入 Lark-backed 資料仍需要用 `lark-bitable lark --login` 或 dashboard 的
 Lark Login 頁面完成 Lark 授權。
 
+當 dashboard service 正在執行時，CLI 指令和 dashboard 內的 action 會透過本機
+WebSocket 把 redacted live activity 與 state invalidation 推到已連線的瀏覽器 tab。
+Overview、Configuration、Lark Login、Audit Log、Playground、Research、Source Table
+都會依受影響的 surface 即時 refresh，不需要手動 reload。
+
+如果 dashboard 沒啟動、runtime session 已 stale、或本機 live channel 暫時不可達，
+CLI 指令仍照常執行，不會因為 live update 失敗多印 warning，也不會改變指令本身的
+status、issues、evidence 或 audit entry。
+
 Dashboard v1 提供：
 
 - Live Configure：直接修正 Base URL、Lark app 設定、mode、欄位 mapping、actionable status 與 default owner，儲存後即時重新跑 readiness。
@@ -783,6 +792,12 @@ Dashboard v1 提供：
 - Research Library：瀏覽 `~/.lark-bitable/research/` 的 canonical JSON reports，保留 observed facts、assumptions、analysis、risks、next actions 與 evidence 分段。
 - Table Context：顯示目前 source/mode/auth/readiness、schema mapping、sampled values 和 recent records；缺少 auth/source 時顯示 blocked/partial remediation。
 - Language Switcher：dashboard-owned UI 文字支援繁體中文與英文切換，偏好只存 browser web cache。Lark 欄位名、record values、audit snapshots、command output、檔案路徑和 research report 內容不會被翻譯。
+
+Live update 行為補充：
+
+- 連線中的 tab 會看到 `connected`、`stale`、`reconnecting`、`fallback` 狀態。
+- 斷線後重新連回時，dashboard 會以現有 HTTP API 重新抓 authoritative state 做 catch-up，不會把錯過的事件偽裝成已 live-deliver。
+- unsaved configuration draft、Audit/Research 的已選 detail、Playground 的 command/response tab/run history、Table 的 filter 與 active tab 會在 live refresh 時盡量保留。
 
 ## 讀取多維表格
 
