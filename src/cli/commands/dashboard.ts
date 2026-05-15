@@ -54,6 +54,7 @@ export default class DashboardCommand extends BaseCommand {
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(DashboardCommand);
     const handle = await startDashboardServer({
+      appVersion: this.config.version,
       auditPath: flags["audit-path"],
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],

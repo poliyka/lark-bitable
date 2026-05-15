@@ -71,6 +71,32 @@ describe("audit query", () => {
     expect(JSON.stringify(detail)).not.toContain("secret-token");
   });
 
+  it("derives missing duration from started and finished timestamps", async () => {
+    const paths = await createDashboardTestPaths("audit-query-");
+    await mkdir(dirname(paths.auditPath), { recursive: true });
+    const entry = buildAuditEntry({
+      argv: ["valid", "--json"],
+      finishedAt: new Date("2026-05-14T01:00:01.250Z"),
+      output: { command: "valid", status: "ok" },
+      startedAt: new Date("2026-05-14T01:00:00.000Z"),
+    }) as Record<string, unknown>;
+    delete entry.durationMs;
+    await writeFile(paths.auditPath, `${JSON.stringify(entry)}\n`);
+
+    const list = await queryAuditEntries({
+      auditPath: paths.auditPath,
+      limit: 10,
+    });
+    const detail = await getAuditEntry({
+      auditPath: paths.auditPath,
+      id: String(entry.id),
+    });
+
+    expect(list.skippedFiles).toEqual([]);
+    expect(list.entries[0]?.durationMs).toBe(1250);
+    expect(detail?.entry.durationMs).toBe(1250);
+  });
+
   it("filters by issue code and finished-at boundary after redaction", async () => {
     const paths = await createDashboardTestPaths("audit-query-");
     await mkdir(dirname(paths.auditPath), { recursive: true });

@@ -39,6 +39,7 @@ import {
 import { getDashboardRecords, getDashboardSchema } from "./table-service.js";
 
 export interface DashboardRouteContext {
+  appVersion?: string;
   auditPath: string;
   authPath: string;
   binding: DashboardBinding;
@@ -81,7 +82,7 @@ async function routeDashboardRequest(
   if (request.method === "GET" && url.pathname === "/") {
     sendText(
       response,
-      dashboardHtml(context.binding),
+      dashboardHtml(context.binding, context.appVersion),
       "text/html; charset=utf-8",
     );
     return;

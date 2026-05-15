@@ -9,6 +9,8 @@ import { isCliError } from "./errors.js";
 import { writeOutput, type CommandOutput } from "./output.js";
 
 export abstract class BaseCommand extends Command {
+  private readonly commandStartedAt = new Date();
+
   static baseFlags = {
     "audit-path": Flags.string({
       default: resolveAuditPath(),
@@ -87,7 +89,9 @@ export abstract class BaseCommand extends Command {
       buildAuditEntry({
         argv: this.argv,
         error,
+        finishedAt: new Date(),
         output,
+        startedAt: this.commandStartedAt,
       }),
     );
     if (!result.ok) {

@@ -1,12 +1,12 @@
 import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-import {
-  auditLogEntrySchema,
-  type AuditLogEntry,
-  type AuditCommandStatus,
-  type WorkflowMode,
+import type {
+  AuditLogEntry,
+  AuditCommandStatus,
+  WorkflowMode,
 } from "../config/schema.js";
+import { parseAuditEntryWithDerivedDuration } from "./log.js";
 import { redactSecrets } from "../reporting/evidence.js";
 
 const REDACTED = "[REDACTED]";
@@ -94,7 +94,7 @@ async function readAuditEntries(auditPath: string): Promise<{
           Array.isArray((parsed as { entries?: unknown[] }).entries)
         ) {
           for (const entry of (parsed as { entries: unknown[] }).entries) {
-            entries.push(redactAuditEntry(auditLogEntrySchema.parse(entry)));
+            entries.push(redactAuditEntry(parseAuditEntry(entry)));
           }
           continue;
         }
@@ -107,9 +107,7 @@ async function readAuditEntries(auditPath: string): Promise<{
         .filter(({ line }) => line.trim())
         .forEach(({ index, line }) => {
           try {
-            entries.push(
-              redactAuditEntry(auditLogEntrySchema.parse(JSON.parse(line))),
-            );
+            entries.push(redactAuditEntry(parseAuditEntry(JSON.parse(line))));
           } catch (error) {
             skippedFiles.push({
               line: index + 1,
@@ -128,6 +126,10 @@ async function readAuditEntries(auditPath: string): Promise<{
     }
   }
   return { entries, skippedFiles };
+}
+
+function parseAuditEntry(entry: unknown): AuditLogEntry {
+  return parseAuditEntryWithDerivedDuration(entry);
 }
 
 async function discoverAuditFiles(

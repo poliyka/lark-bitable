@@ -9,6 +9,7 @@ import { createDashboardRouter } from "./routes.js";
 import type { DashboardBinding } from "./schemas.js";
 
 export interface StartDashboardServerInput {
+  appVersion?: string;
   auditPath?: string;
   authPath?: string;
   configCwd?: string;
@@ -50,6 +51,7 @@ export async function startDashboardServer(
   const server = createServer((request, response) =>
     createDashboardRouter({
       auditPath: input.auditPath ?? defaultAuditPath(),
+      appVersion: input.appVersion,
       authPath: input.authPath ?? defaultAuthPath(),
       binding,
       configCwd: input.configCwd,

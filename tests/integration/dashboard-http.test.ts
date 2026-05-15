@@ -11,6 +11,7 @@ describe("dashboard HTTP server", () => {
   it("serves the dashboard shell, assets, and status without web login", async () => {
     const paths = await createDashboardTestPaths("dashboard-http-");
     const server = await startDashboardServer({
+      appVersion: "9.8.7",
       auditPath: paths.auditPath,
       authPath: paths.authPath,
       configCwd: paths.configCwd,
@@ -33,6 +34,7 @@ describe("dashboard HTTP server", () => {
       }>(server.binding.origin, "/api/status");
 
       expect(html).toContain("lark-bitable-dashboard");
+      expect(html).toContain(`class="brand-ver">v9.8.7<`);
       expect(html).toContain(`id="binding-status">ready<`);
       expect(html).toContain(`id="binding-host">${server.binding.host}<`);
       expect(html).toContain(`id="binding-port">${server.binding.port}<`);

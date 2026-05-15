@@ -18,6 +18,7 @@ import {
   resolveAuditPath,
   sanitizeAuditArgv,
 } from "../../src/audit/log.js";
+import { queryAuditEntries } from "../../src/audit/query.js";
 import type { CommandOutput } from "../../src/cli/output.js";
 import { readAuditEntries } from "../fixtures/audit.js";
 
@@ -293,6 +294,93 @@ describe("audit log", () => {
       expect.objectContaining({ command: "list" }),
       expect.objectContaining({ command: "help" }),
     ]);
+  });
+
+  it("keeps appending when existing audit lines need derived duration", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "audit-derived-duration-"));
+    const path = join(dir, "logs", "audit.json");
+    const legacyEntry = buildAuditEntry({
+      argv: ["list"],
+      finishedAt: new Date("2026-05-13T06:59:58.750Z"),
+      output: output({ command: "list" }),
+      startedAt: new Date("2026-05-13T06:59:58.000Z"),
+    }) as Record<string, unknown>;
+    delete legacyEntry.durationMs;
+
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, `${JSON.stringify(legacyEntry)}\n`, "utf8");
+
+    const result = await appendAuditEntry(
+      path,
+      buildAuditEntry({
+        argv: ["help"],
+        output: output({ command: "help" }),
+        startedAt: now,
+        finishedAt: now,
+      }),
+      { now },
+    );
+
+    const rawEntries = await readAuditEntries(path);
+    const queried = await queryAuditEntries({ auditPath: path, limit: 10 });
+    expect(result).toMatchObject({ ok: true });
+    expect(rawEntries).toHaveLength(2);
+    expect(queried.skippedFiles).toEqual([]);
+    expect(queried.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ command: "list", durationMs: 750 }),
+        expect.objectContaining({ command: "help" }),
+      ]),
+    );
+  });
+
+  it("migrates wrapped audit JSON whose entries need derived duration", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "audit-wrapped-duration-"));
+    const path = join(dir, "audit.json");
+    const legacyEntry = buildAuditEntry({
+      argv: ["list"],
+      finishedAt: new Date("2026-05-13T06:59:58.750Z"),
+      output: output({ command: "list" }),
+      startedAt: new Date("2026-05-13T06:59:58.000Z"),
+    }) as Record<string, unknown>;
+    delete legacyEntry.durationMs;
+
+    await writeFile(
+      path,
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          retentionDays: 14,
+          entries: [legacyEntry],
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    const result = await appendAuditEntry(
+      path,
+      buildAuditEntry({
+        argv: ["help"],
+        output: output({ command: "help" }),
+        startedAt: now,
+        finishedAt: now,
+      }),
+      { now },
+    );
+
+    const raw = await readFile(path, "utf8");
+    const queried = await queryAuditEntries({ auditPath: path, limit: 10 });
+    expect(result).toMatchObject({ ok: true });
+    expect(raw.trimEnd().split("\n")).toHaveLength(2);
+    expect(queried.skippedFiles).toEqual([]);
+    expect(queried.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ command: "list", durationMs: 750 }),
+        expect.objectContaining({ command: "help" }),
+      ]),
+    );
   });
 
   it("splits mixed-day active audit entries into rotated daily logs", async () => {

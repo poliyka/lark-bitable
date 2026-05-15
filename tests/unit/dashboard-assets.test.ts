@@ -324,6 +324,13 @@ describe("dashboard design assets", () => {
     expect(html).not.toContain('id="binding-port">48731<');
   });
 
+  it("renders the dashboard version supplied by the running package", () => {
+    const html = dashboardHtml(undefined, "9.8.7");
+
+    expect(html).toContain('<div class="brand-ver">v9.8.7</div>');
+    expect(html).not.toContain('<div class="brand-ver">v1.0</div>');
+  });
+
   it("serves the full design shell with seven routed pages", () => {
     const html = dashboardHtml();
 
@@ -401,6 +408,55 @@ describe("dashboard design assets", () => {
     expect(css).toContain(".pg-grid");
     expect(css).toContain(".data-tbl");
     expect(css).toContain("@media");
+  });
+
+  it("defines a site-wide responsive layout foundation for grids and data surfaces", () => {
+    const html = dashboardHtml();
+    const css = dashboardStyles();
+
+    expect(css).toContain(
+      ".card, .readiness, .next-cmd, .terminal, .md-shell, .md-list, .md-viewer, .pg-grid, .src-banner, .table-scroll { min-width: 0; }",
+    );
+    expect(css).toContain(
+      ".grid-3 > *, .grid-2 > *, .grid-2-3 > *, .grid-1-2 > *, .split > *, .pg-grid > *, .md-shell > *, .src-banner > * { min-width: 0; }",
+    );
+    expect(css).toContain(
+      ".tbl, .data-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }",
+    );
+    expect(css).toContain(
+      ".table-scroll > .tbl, .table-scroll > .data-tbl { min-width: max-content; }",
+    );
+    expect(css).toContain(".terminal-body { min-width: 0;");
+    expect(css).toContain("@media (max-width: 860px)");
+    expect(css).toContain(
+      ".table-scroll > .tbl, .table-scroll > .data-tbl { min-width: 680px; }",
+    );
+    expect(css).toContain(".audit-filters .card-body { overflow-x: auto; }");
+    expect(html).toContain(
+      '<div class="card-body no-pad"><table class="tbl"><tbody id="recent-activity">',
+    );
+    expect(html).toContain(
+      '<div class="card-body no-pad"><table class="tbl"><tbody id="run-history">',
+    );
+  });
+
+  it("keeps the audit entries and detail split stable around long detail content", () => {
+    const css = dashboardStyles();
+
+    expect(css).toContain(
+      ".split { display: grid; grid-template-columns: minmax(420px, 1.35fr) minmax(0, 1fr);",
+    );
+    expect(css).toContain(".split > .card { min-width: 0; }");
+    expect(css).toContain(
+      "#audit-detail { max-height: min(720px, calc(100vh - 220px)); overflow: auto; }",
+    );
+    expect(css).toContain(
+      ".audit-row:focus-visible td { outline: 2px solid var(--accent); outline-offset: -2px; }",
+    );
+    expect(css).toContain("@media (max-width: 860px)");
+    expect(css).toContain(
+      ".split { grid-template-columns: minmax(0, 1fr); min-height: 0; }",
+    );
   });
 
   it("contains browser-only interaction logic for routing, language, and live APIs", () => {

@@ -150,6 +150,12 @@ export function buildAuditEntry(input: BuildAuditEntryInput): AuditLogEntry {
   };
 }
 
+export function parseAuditEntryWithDerivedDuration(
+  entry: unknown,
+): AuditLogEntry {
+  return auditLogEntrySchema.parse(entryWithDerivedDuration(entry));
+}
+
 export function appendAuditEntry(
   path: string,
   entry: AuditLogEntry,
@@ -269,10 +275,19 @@ function readAuditLog(path: string): AuditLogReadResult {
     }
 
     try {
-      const wrapped = auditLogFileSchema.safeParse(JSON.parse(raw));
+      const parsed = JSON.parse(raw) as unknown;
+      const wrapped = auditLogFileSchema.safeParse(parsed);
       if (wrapped.success) {
         return {
           entries: validateAuditEntries(wrapped.data.entries),
+          format: "wrapped",
+        };
+      }
+      if (isWrappedAuditLogLike(parsed)) {
+        return {
+          entries: validateAuditEntries(
+            parsed.entries.map(parseAuditEntryWithDerivedDuration),
+          ),
           format: "wrapped",
         };
       }
@@ -292,20 +307,67 @@ function readAuditLog(path: string): AuditLogReadResult {
   }
 }
 
+function isWrappedAuditLogLike(
+  value: unknown,
+): value is { entries: unknown[] } {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Array.isArray((value as { entries?: unknown }).entries)
+  );
+}
+
 function readAuditLines(raw: string): AuditLogEntry[] {
   return validateAuditEntries(
     raw
       .split("\n")
       .filter((line) => line.trim().length > 0)
-      .map((line) => auditLogEntrySchema.parse(JSON.parse(line))),
+      .map((line) => parseAuditEntryWithDerivedDuration(JSON.parse(line))),
   );
 }
 
 function validateAuditEntries(entries: AuditLogEntry[]): AuditLogEntry[] {
-  for (const entry of entries) {
+  const normalizedEntries = entries.map(parseAuditEntryWithDerivedDuration);
+  for (const entry of normalizedEntries) {
     timestampForRetention(entry);
   }
-  return entries;
+  return normalizedEntries;
+}
+
+function entryWithDerivedDuration(entry: unknown): unknown {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+    return entry;
+  }
+  const record = entry as Record<string, unknown>;
+  const currentDuration = record.durationMs;
+  if (
+    typeof currentDuration === "number" &&
+    Number.isFinite(currentDuration) &&
+    currentDuration > 0
+  ) {
+    return record;
+  }
+  const startedAt =
+    typeof record.startedAt === "string" ? Date.parse(record.startedAt) : NaN;
+  const finishedAt =
+    typeof record.finishedAt === "string" ? Date.parse(record.finishedAt) : NaN;
+  if (!Number.isFinite(startedAt) || !Number.isFinite(finishedAt)) {
+    return record;
+  }
+  const derivedDurationMs = Math.max(0, Math.round(finishedAt - startedAt));
+  if (
+    typeof currentDuration === "number" &&
+    Number.isFinite(currentDuration) &&
+    currentDuration === 0 &&
+    derivedDurationMs === 0
+  ) {
+    return record;
+  }
+  return {
+    ...record,
+    durationMs: derivedDurationMs,
+  };
 }
 
 function rotateActiveAuditLog(path: string, now: Date): void {
