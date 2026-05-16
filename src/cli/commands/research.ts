@@ -24,17 +24,49 @@ export default class ResearchCommand extends BaseCommand {
   static flags = {
     ...BaseCommand.baseFlags,
     "config-cwd": Flags.string({ hidden: true }),
+    assumption: Flags.string({
+      description:
+        "Assumption or unresolved constraint to include in the report. Repeat for multiple assumptions.",
+      multiple: true,
+    }),
     evidence: Flags.string({
       description: "Evidence as type:reference:excerpt.",
+      multiple: true,
+    }),
+    "likely-cause": Flags.string({
+      description:
+        "Likely cause to include in the report. Cite evidence when making a concrete claim.",
+      multiple: true,
+    }),
+    "next-action": Flags.string({
+      description: "Next action to include in the report.",
+      multiple: true,
+    }),
+    "original-detail": Flags.string({
+      description:
+        "Original issue detail to include in the Original Details section. Repeat for multiple details.",
       multiple: true,
     }),
     out: Flags.string({
       char: "o",
       description: "Path to create as a symlink to the canonical JSON report.",
     }),
+    "recommended-fix": Flags.string({
+      description:
+        "Recommended fix to include in the report. Cite evidence when making a concrete claim.",
+      multiple: true,
+    }),
     "research-dir": Flags.string({
       default: defaultResearchDir(),
       hidden: true,
+    }),
+    risk: Flags.string({
+      description: "Risk or caveat to include in the report.",
+      multiple: true,
+    }),
+    title: Flags.string({
+      description:
+        "Report title. Defaults to the selected ticket record id when omitted.",
     }),
   };
 
@@ -66,11 +98,13 @@ export default class ResearchCommand extends BaseCommand {
       repositoryFindings: evidence
         .filter((item) => item.type === "repository-file")
         .map((item) => `${item.excerpt} [${item.id}]`),
-      assumptions: ["Repository analysis is limited to provided evidence."],
-      likelyCauses: ["Unconfirmed until reproduction evidence is collected."],
-      recommendedFixes: ["Inspect cited repository areas before editing."],
-      risks: ["Missing runtime reproduction can hide the actual cause."],
-      nextActions: ["Collect command-output evidence before implementation."],
+      assumptions: flags.assumption,
+      likelyCauses: flags["likely-cause"],
+      originalDetails: flags["original-detail"],
+      recommendedFixes: flags["recommended-fix"],
+      risks: flags.risk,
+      nextActions: flags["next-action"],
+      title: flags.title,
     });
     const report = renderStructuredResearchReport(structuredReport);
     const canonical = await writeCanonicalResearchReport({

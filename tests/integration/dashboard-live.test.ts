@@ -1,3 +1,4 @@
+import { rm, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { Flags } from "@oclif/core";
@@ -5,6 +6,7 @@ import WebSocket from "ws";
 import { describe, expect, it, vi } from "vitest";
 
 import { ConfigStore } from "../../src/config/store.js";
+import { AuthStore } from "../../src/config/auth-store.js";
 import ResearchCommand from "../../src/cli/commands/research.js";
 import { CliError } from "../../src/cli/errors.js";
 import { BaseCommand } from "../../src/cli/base-command.js";
@@ -20,6 +22,7 @@ import {
   createDashboardTestPaths,
   fetchDashboardJson,
 } from "../fixtures/dashboard.js";
+import { fixtureSource } from "../fixtures/lark.js";
 import { selectedBugFixture } from "../fixtures/research.js";
 
 function liveWebSocketUrl(origin: string, lastSequence?: number): string {
@@ -59,6 +62,18 @@ async function captureProcessOutput<T>(
     stdoutSpy.mockRestore();
     stderrSpy.mockRestore();
   }
+}
+
+async function nextMessageMatching<T>(
+  collector: ReturnType<typeof createWebSocketMessageCollector>,
+  predicate: (message: { type?: string }) => message is T,
+  maxMessages = 8,
+): Promise<T> {
+  for (let index = 0; index < maxMessages; index += 1) {
+    const message = await collector.next<{ type?: string }>();
+    if (predicate(message)) return message;
+  }
+  throw new Error("Expected live message was not delivered.");
 }
 
 class DelayedOutcomeCommand extends BaseCommand {
@@ -252,20 +267,31 @@ describe("dashboard live updates", () => {
         method: "POST",
       });
 
-      const started = await collector.next<{
-        payload: { command: string; phase: string; trigger: string };
-        type: string;
-      }>();
-      await collector.next();
-      const outcome = await collector.next<{
-        payload: {
-          command: string;
-          phase: string;
-          status: string;
-          trigger: string;
-        };
-        type: string;
-      }>();
+      const started = await nextMessageMatching(
+        collector,
+        (
+          message,
+        ): message is {
+          payload: { command: string; phase: string; trigger: string };
+          type: string;
+        } => message.type === "command.activity",
+      );
+      const outcome = await nextMessageMatching(
+        collector,
+        (
+          message,
+        ): message is {
+          payload: {
+            command: string;
+            phase: string;
+            status: string;
+            trigger: string;
+          };
+          type: string;
+        } =>
+          message.type === "command.activity" &&
+          message.payload?.phase === "partial",
+      );
 
       expect(run.status).toBe("partial");
       expect(run.data.run.command).toBe("valid");
@@ -375,6 +401,175 @@ describe("dashboard live updates", () => {
           "/api/table/records",
         ]),
       );
+    } finally {
+      collector.stop();
+      await closeWebSocket(socket);
+      await server.stop();
+    }
+  });
+
+  it("broadcasts state invalidation when local config or auth files are deleted outside the dashboard", async () => {
+    const paths = await createDashboardTestPaths("dashboard-live-");
+    const store = new ConfigStore({ cwd: paths.configCwd });
+    store.setSource(fixtureSource);
+    store.setLarkApp({
+      appId: "cli-app-id",
+      appSecret: "cli-secret-value",
+      callbackPort: 14543,
+      domain: "larksuite.com",
+      redirectUri: "http://127.0.0.1:14543/callback",
+      scopes: ["bitable:app:readonly"],
+      updatedAt: "2026-05-15T00:00:00.000Z",
+    });
+    await new AuthStore(paths.authPath).write({
+      accessToken: "test-access-token",
+      accountLabel: "qa-user@example.com",
+      domain: "larksuite.com",
+      expiresAt: "2099-05-07T12:00:00.000Z",
+      scopes: ["bitable:app:readonly"],
+      status: "ready",
+      storagePath: paths.authPath,
+    });
+    const server = await startDashboardServer({
+      auditPath: paths.auditPath,
+      authPath: paths.authPath,
+      configCwd: paths.configCwd,
+      host: "127.0.0.1",
+      port: 0,
+      researchDir: paths.researchDir,
+      runtimePath: paths.runtimePath,
+    });
+    const socket = new WebSocket(liveWebSocketUrl(server.binding.origin));
+    const collector = createWebSocketMessageCollector(socket);
+
+    try {
+      await waitForWebSocketOpen(socket);
+      await collector.next();
+
+      await rm(store.path);
+
+      const configInvalidate = await collector.next<{
+        payload: { reason: string; resources: string[]; surfaces: string[] };
+        type: string;
+      }>();
+
+      await rm(paths.authPath);
+
+      const authInvalidate = await collector.next<{
+        payload: { reason: string; resources: string[]; surfaces: string[] };
+        type: string;
+      }>();
+
+      expect(configInvalidate.type).toBe("state.invalidate");
+      expect(configInvalidate.payload.reason).toContain("config.json");
+      expect(configInvalidate.payload.surfaces).toEqual(
+        expect.arrayContaining(["shell", "overview", "config", "audit"]),
+      );
+      expect(configInvalidate.payload.resources).toEqual(
+        expect.arrayContaining(["/api/status", "/api/config", "/api/audit"]),
+      );
+
+      expect(authInvalidate.type).toBe("state.invalidate");
+      expect(authInvalidate.payload.reason).toContain("auth.json");
+      expect(authInvalidate.payload.surfaces).toEqual(
+        expect.arrayContaining(["shell", "overview", "auth", "audit"]),
+      );
+      expect(authInvalidate.payload.resources).toEqual(
+        expect.arrayContaining(["/api/status", "/api/audit"]),
+      );
+    } finally {
+      collector.stop();
+      await closeWebSocket(socket);
+      await server.stop();
+    }
+  });
+
+  it("keeps state-file watching non-blocking during concurrent external writes", async () => {
+    const paths = await createDashboardTestPaths("dashboard-live-");
+    const store = new ConfigStore({ cwd: paths.configCwd });
+    const server = await startDashboardServer({
+      auditPath: paths.auditPath,
+      authPath: paths.authPath,
+      configCwd: paths.configCwd,
+      host: "127.0.0.1",
+      port: 0,
+      researchDir: paths.researchDir,
+      runtimePath: paths.runtimePath,
+    });
+    const socket = new WebSocket(liveWebSocketUrl(server.binding.origin));
+    const collector = createWebSocketMessageCollector(socket);
+    const configPayload = (index: number) =>
+      `${JSON.stringify(
+        {
+          activeSource: {
+            ...fixtureSource,
+            name: `Project Bugs ${index}`,
+          },
+          larkApp: {
+            appId: `cli-app-id-${index}`,
+            appSecret: "cli-secret-value",
+            callbackPort: 14543,
+            domain: "larksuite.com",
+            redirectUri: "http://127.0.0.1:14543/callback",
+            scopes: ["bitable:app:readonly"],
+            updatedAt: "2026-05-15T00:00:00.000Z",
+          },
+        },
+        null,
+        2,
+      )}\n`;
+    const authPayload = (index: number) =>
+      `${JSON.stringify(
+        {
+          accessToken: `test-access-token-${index}`,
+          accountLabel: "qa-user@example.com",
+          domain: "larksuite.com",
+          expiresAt: "2099-05-07T12:00:00.000Z",
+          scopes: ["bitable:app:readonly"],
+          status: "ready",
+          storagePath: paths.authPath,
+          updatedAt: "2026-05-15T00:00:00.000Z",
+        },
+        null,
+        2,
+      )}\n`;
+
+    try {
+      await waitForWebSocketOpen(socket);
+      await collector.next();
+
+      const writeResult = await Promise.race([
+        Promise.all(
+          Array.from({ length: 24 }, (_, index) =>
+            index % 2 === 0
+              ? writeFile(store.path, configPayload(index), { mode: 0o600 })
+              : writeFile(paths.authPath, authPayload(index), { mode: 0o600 }),
+          ),
+        ).then(() => "completed" as const),
+        delay(3_000).then(() => "timed-out" as const),
+      ]);
+
+      await writeFile(store.path, configPayload(100), { mode: 0o600 });
+      await writeFile(paths.authPath, authPayload(100), { mode: 0o600 });
+
+      const invalidate = await Promise.race([
+        collector.next<{
+          payload: { reason: string; resources: string[]; surfaces: string[] };
+          type: string;
+        }>(),
+        delay(3_000).then(() => undefined),
+      ]);
+      const status = await fetchDashboardJson<{ status: string }>(
+        server.binding.origin,
+        "/api/status",
+      );
+
+      expect(writeResult).toBe("completed");
+      expect(invalidate?.type).toBe("state.invalidate");
+      expect(invalidate?.payload.surfaces).toEqual(
+        expect.arrayContaining(["overview"]),
+      );
+      expect(status.status).toMatch(/^(ok|partial)$/);
     } finally {
       collector.stop();
       await closeWebSocket(socket);

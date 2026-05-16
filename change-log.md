@@ -1,5 +1,37 @@
 # Change Log
 
+## 1.2.0 - 2026-05-16
+
+### Changed
+
+- Bumped npm package version from `1.1.1` to `1.2.0`.
+- Expanded the local dashboard with WebSocket live updates so browser views react to command activity and external state changes without manual refresh.
+- Added live invalidation for `config.json` and `auth.json` changes so the dashboard converges when those files are deleted or rewritten outside the dashboard process.
+- Updated the dashboard overview to surface doctor-level readiness, source configuration health, auth status, and bootstrap skill status instead of only a coarse ready state.
+- Improved the dashboard UI for audit filtering, date-time picking, research report display, auth scope selection, recent activity, and playground execution feedback.
+- Expanded the research report flow so report titles and original details can be entered explicitly, with the selected ticket title used as the default.
+- Kept the CLI and dashboard command runner resilient when the dashboard is absent and added regression coverage for concurrent external writes.
+
+### Fixed
+
+- Fixed dashboard state-watch behavior so it does not block concurrent CLI writes while watching config and auth files.
+- Fixed the dashboard playground, research, auth, and audit interactions that previously failed to render or update correctly.
+- Fixed `doctor` output so it reports the actual configuration and bootstrap health gathered from doctor-level inspection.
+
+### Verification
+
+Run release validation:
+
+```bash
+pnpm format:check
+pnpm test
+pnpm build
+pnpm quickstart:validate
+git diff --check
+```
+
+Release smoke checks already ran in this workspace for the dashboard server and live WebSocket updates.
+
 ## 1.0.1 - 2026-05-12
 
 ### Changed

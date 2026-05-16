@@ -376,7 +376,7 @@ const helpEntries: Record<CommandName, HelpEntry> = {
   },
   research: {
     aiUsage: [
-      "lark-bitable research --out reports/current-research.json --json",
+      'lark-bitable research --evidence "repository-file:src/auth.ts:auth handler exists" --assumption "OAuth config may differ in production" --likely-cause "Callback failure leaves loading active [E2]" --recommended-fix "Reset loading in the failure branch [E2]" --risk "May mask a separate token refresh failure" --next-action "Run callback failure tests" --out reports/current-research.json --json',
       "lark-bitable research -o reports/current-research.json --json",
     ],
     commonFailures: ["missing selection", "insufficient evidence"],
@@ -384,7 +384,15 @@ const helpEntries: Record<CommandName, HelpEntry> = {
     humanUsage: [
       "Run lark-bitable triage first, then lark-bitable get <record-id> to inspect the full bug record, download any media with lark-bitable media download, then run lark-bitable research.",
     ],
-    inputs: ["selected record id or previous triage selection"],
+    inputs: [
+      "previous triage selection",
+      "repeatable --evidence type:reference:excerpt",
+      "repeatable --assumption",
+      "repeatable --likely-cause",
+      "repeatable --recommended-fix",
+      "repeatable --risk",
+      "repeatable --next-action",
+    ],
     nextSteps: [
       "Open the report and collect more command/runtime evidence.",
       "If the record includes media, download and inspect it before treating the media contents as fact.",

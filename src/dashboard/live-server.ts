@@ -34,6 +34,11 @@ export interface DashboardLiveServer {
     head: Buffer,
     runtimeSession: DashboardRuntimeSession,
   ): void;
+  invalidateState(input: {
+    dataSource?: DashboardLiveDataSource;
+    reason: string;
+    surfaces: DashboardSurface[];
+  }): DashboardLiveIngressAcceptance;
   stop(): Promise<void>;
 }
 
@@ -188,6 +193,22 @@ export function createDashboardLiveServer(input: {
           }
         }
       });
+    },
+    invalidateState(input) {
+      const invalidationEnvelope = nextEnvelope(
+        "state.invalidate",
+        input.dataSource ?? "file-backed",
+        buildStateInvalidationPayload({
+          reason: input.reason,
+          surfaces: input.surfaces,
+        }),
+      );
+      broadcast(invalidationEnvelope);
+      return {
+        accepted: true,
+        eventId: invalidationEnvelope.eventId,
+        sequence: invalidationEnvelope.sequence,
+      };
     },
     async stop() {
       clearInterval(heartbeatTimer);

@@ -2,16 +2,8 @@ import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../base-command.js";
 import type { CommandOutput } from "../output.js";
-import { AuthStore, defaultAuthPath } from "../../config/auth-store.js";
-import { ConfigStore } from "../../config/store.js";
-import {
-  defaultSkillTargetDirs,
-  installBootstrapSkill,
-  installBootstrapSkillTargets,
-  inspectBootstrapSkill,
-  inspectBootstrapSkillTargets,
-} from "../../bootstrap/installer.js";
-import { resolveWorkflowMode } from "../../mode/mode-config.js";
+import { defaultAuthPath } from "../../config/auth-store.js";
+import { inspectDoctorHealth } from "../../config/doctor-health.js";
 
 export default class DoctorCommand extends BaseCommand {
   static description =
@@ -41,131 +33,24 @@ export default class DoctorCommand extends BaseCommand {
 
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(DoctorCommand);
-    const authStore = new AuthStore(flags["auth-path"]);
-    const auth = await authStore.read();
-    const store = new ConfigStore({ cwd: flags["config-cwd"] });
-    const source = store.getSource();
-    const larkApp = store.getLarkApp();
-    const mode = resolveWorkflowMode(store);
-    const missingMappings = source
-      ? [
-          source.statusField ? null : "status-field",
-          source.priorityField ? null : "priority-field",
-          source.fieldAliases.title ? null : "title-field",
-        ].filter((value): value is string => Boolean(value))
-      : [];
-    const bootstrap = flags["skill-dir"]
-      ? flags["install-skill"]
-        ? await installBootstrapSkill({
-            targetDir: flags["skill-dir"],
-          })
-        : await inspectBootstrapSkill({
-            targetDir: flags["skill-dir"],
-          })
-      : flags["install-skill"]
-        ? await installBootstrapSkillTargets({
-            targetDirs: defaultSkillTargetDirs(),
-          })
-        : await inspectBootstrapSkillTargets({
-            targetDirs: defaultSkillTargetDirs(),
-          });
+    const health = await inspectDoctorHealth({
+      authPath: flags["auth-path"],
+      cli: {
+        bin: this.config.bin,
+        version: this.config.version,
+      },
+      configCwd: flags["config-cwd"],
+      installSkill: flags["install-skill"],
+      skillDir: flags["skill-dir"],
+    });
     const output: CommandOutput = {
       command: "doctor",
-      status: auth && source && bootstrap.installed ? "ok" : "partial",
-      auth: {
-        status: auth?.status ?? "missing",
-        storagePath: authStore.path,
-        domain: auth?.domain,
-        accountLabel: auth?.accountLabel,
-        expiresAt: auth?.expiresAt,
-      },
-      mode: {
-        active: mode.active,
-        source: mode.source,
-      },
-      issues: [],
-      data: {
-        cli: {
-          bin: this.config.bin,
-          version: this.config.version,
-        },
-        configPath: store.path,
-        authPath: authStore.path,
-        bootstrapSkillInstalled: bootstrap.installed,
-        bootstrapSkillPath: bootstrap.skillPath,
-        bootstrapSkillPaths:
-          "targets" in bootstrap
-            ? bootstrap.targets.map((target) => target.skillPath)
-            : [bootstrap.skillPath],
-        bootstrapSkillTargets:
-          "targets" in bootstrap
-            ? bootstrap.targets.map((target) => ({
-                installed: target.installed,
-                path: target.skillPath,
-                stale: target.stale,
-                targetDir: target.targetDir,
-              }))
-            : [
-                {
-                  installed: bootstrap.installed,
-                  path: bootstrap.skillPath,
-                  stale: bootstrap.stale,
-                  targetDir: bootstrap.targetDir,
-                },
-              ],
-        bootstrapSkillStale: bootstrap.stale,
-        sourceConfigured: Boolean(source),
-        larkAppConfigured: Boolean(larkApp),
-        activeMode: mode.active,
-        modeSource: mode.source,
-        configureMappingsReady: Boolean(source) && missingMappings.length === 0,
-        missingConfigureMappings: missingMappings,
-        installSkillRequested: Boolean(flags["install-skill"]),
-      },
+      status: health.status,
+      auth: health.auth,
+      mode: health.mode,
+      issues: health.issues,
+      data: health.data,
     };
-
-    if (!auth) {
-      output.issues?.push({
-        code: "missing-auth",
-        message: "Lark auth is missing.",
-        remediation: "Run lark-bitable lark --login",
-      });
-    }
-    if (!source) {
-      output.issues?.push({
-        code: "missing-source",
-        message: "No active Lark Bitable source is configured.",
-        remediation: "Run lark-bitable configure <url>",
-      });
-    }
-    if (source && missingMappings.length > 0) {
-      output.issues?.push({
-        code: "incomplete-configure",
-        message:
-          "Active source exists, but required bug mappings are incomplete.",
-        remediation:
-          "Run lark-bitable configure and choose status, priority, and title fields.",
-      });
-    }
-    if (!larkApp) {
-      output.issues?.push({
-        code: "missing-lark-app-config",
-        message:
-          "Lark app settings are not stored, so refresh and interactive field discovery may fail.",
-        remediation:
-          "Run lark-bitable configure and provide Lark app id, app secret, and redirect URI.",
-      });
-    }
-    if (!bootstrap.installed) {
-      output.issues?.push({
-        code: "missing-bootstrap",
-        message: "Bootstrap skill guidance is not installed.",
-        remediation: "Run lark-bitable doctor --install-skill",
-      });
-    }
-
-    output.status =
-      output.issues && output.issues.length > 0 ? "partial" : "ok";
 
     this.emit(output, Boolean(flags.json));
     return output;

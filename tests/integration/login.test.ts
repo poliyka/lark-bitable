@@ -84,7 +84,7 @@ describe("login command", () => {
     const auditEntries = await readAuditEntries(auditPath);
     expect(auditEntries).toHaveLength(1);
     expect(auditEntries[0]).toMatchObject({
-      command: "larkcommand",
+      command: "lark",
       status: "error",
       issues: [expect.objectContaining({ code: "login-canceled" })],
     });

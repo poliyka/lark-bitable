@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { startDashboardServer } from "../../src/dashboard/server.js";
+import { ConfigStore } from "../../src/config/store.js";
 import {
   configDraftFixture,
   createDashboardTestPaths,
   fetchDashboardJson,
 } from "../fixtures/dashboard.js";
+import { fixtureSource } from "../fixtures/lark.js";
 
 describe("dashboard HTTP server", () => {
   it("serves the dashboard shell, assets, and status without web login", async () => {
@@ -74,6 +76,70 @@ describe("dashboard HTTP server", () => {
       expect(
         await fetchDashboardJson(server.binding.origin, "/api/config"),
       ).toMatchObject({ status: "ok" });
+    } finally {
+      await server.stop();
+    }
+  });
+
+  it("keeps overview readiness partial when doctor-level configuration is incomplete", async () => {
+    const paths = await createDashboardTestPaths("dashboard-http-");
+    const configStore = new ConfigStore({ cwd: paths.configCwd });
+    configStore.setSource({
+      ...fixtureSource,
+      fieldAliases: {},
+      priorityField: undefined,
+      statusField: undefined,
+    });
+    const server = await startDashboardServer({
+      auditPath: paths.auditPath,
+      authPath: paths.authPath,
+      configCwd: paths.configCwd,
+      host: "127.0.0.1",
+      port: 0,
+      researchDir: paths.researchDir,
+    });
+
+    try {
+      const status = await fetchDashboardJson<{
+        data: {
+          overview: {
+            configuration: {
+              configureMappingsReady: boolean;
+              larkAppConfigured: boolean;
+              missingConfigureMappings: string[];
+              sourceConfigured: boolean;
+            };
+            readiness: {
+              partialIssues: Array<{ code: string }>;
+              status: string;
+            };
+          };
+        };
+      }>(server.binding.origin, "/api/status");
+
+      expect(status.data.overview.configuration).toMatchObject({
+        configureMappingsReady: false,
+        larkAppConfigured: false,
+        sourceConfigured: true,
+      });
+      expect(
+        status.data.overview.configuration.missingConfigureMappings,
+      ).toEqual(
+        expect.arrayContaining([
+          "status-field",
+          "priority-field",
+          "title-field",
+        ]),
+      );
+      expect(status.data.overview.readiness.status).toBe("partial");
+      expect(
+        status.data.overview.readiness.partialIssues.map((issue) => issue.code),
+      ).toEqual(
+        expect.arrayContaining([
+          "incomplete-configure",
+          "missing-lark-app-config",
+        ]),
+      );
     } finally {
       await server.stop();
     }

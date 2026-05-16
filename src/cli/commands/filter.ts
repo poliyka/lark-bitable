@@ -3,12 +3,15 @@ import {
   input as promptInput,
   select as promptSelect,
 } from "@inquirer/prompts";
+import { z } from "zod";
 
 import { BaseCommand } from "../base-command.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
 import {
+  filterRecordsByCriteria,
   filterRecords,
+  type FilterCriterion,
   type FilterOperator,
 } from "../../lark/record-mapper.js";
 import {
@@ -47,6 +50,11 @@ export default class FilterCommand extends BaseCommand {
     owner: Flags.string({
       description: "Filter records by owner when an owner field is configured.",
     }),
+    where: Flags.string({
+      description:
+        'Repeatable JSON criterion: {"field":"狀態","operator":"equals","value":"待處理"}. Criteria are ANDed.',
+      multiple: true,
+    }),
   };
 
   async run(): Promise<CommandOutput> {
@@ -61,48 +69,30 @@ export default class FilterCommand extends BaseCommand {
       commandOwner: flags.owner,
       ignoreDefaultOwner: flags["no-default-owner"],
     });
-    const interactive = process.stdin.isTTY && !flags.json;
-    const field =
-      flags.field ??
-      (interactive
-        ? await promptSelect({
-            choices: Array.from(
-              new Set(
-                ownerResult.records.flatMap((record) =>
-                  Object.keys(record.fields),
-                ),
-              ),
-            ).map((name) => ({ name, value: name })),
-            message: "Choose a field to filter",
-          })
-        : undefined);
-    const operator: FilterOperator =
-      flags.contains || (!flags.equals && interactive)
-        ? interactive && !flags.contains && !flags.equals
-          ? await promptSelect({
-              choices: [
-                { name: "equals", value: "equals" },
-                { name: "contains", value: "contains" },
-              ],
-              message: "Choose a comparison",
-            })
-          : "contains"
-        : "equals";
-    const value =
-      flags.contains ??
-      flags.equals ??
-      (interactive
-        ? await promptInput({
-            message: "Value to match",
-            required: true,
-          })
-        : undefined);
-    if (!field || !value) {
+    const criteria =
+      flags.where?.map(parseWhereCriterion) ??
+      (await legacyCriteriaFromFlags({
+        contains: flags.contains,
+        equals: flags.equals,
+        field: flags.field,
+        json: Boolean(flags.json),
+        records: ownerResult.records,
+      }));
+    if (criteria.length === 0) {
       throw new Error(
-        "Filter requires --field plus --equals or --contains, or an interactive terminal.",
+        "Filter requires --where, --field plus --equals or --contains, or an interactive terminal.",
       );
     }
-    const matches = filterRecords(ownerResult.records, field, operator, value);
+    const legacyCriterion = criteria[0];
+    const matches =
+      criteria.length === 1 && !flags.where && legacyCriterion
+        ? filterRecords(
+            ownerResult.records,
+            legacyCriterion.field,
+            legacyCriterion.operator,
+            legacyCriterion.value,
+          )
+        : filterRecordsByCriteria(ownerResult.records, criteria);
     const limit = parsePositiveLimit({
       defaultLimit: 20,
       flagLimit: flags.limit,
@@ -127,11 +117,7 @@ export default class FilterCommand extends BaseCommand {
       ownerCriteria: ownerResult.criteria,
       queryLimit: limitedResult.queryLimit,
       data: {
-        criteria: {
-          field,
-          operator,
-          value,
-        },
+        criteria: flags.where ? criteria : criteria[0],
         records: limitedResult.items,
       },
     };
@@ -139,4 +125,64 @@ export default class FilterCommand extends BaseCommand {
     this.emit(output, Boolean(flags.json));
     return output;
   }
+}
+
+const whereCriterionSchema = z.object({
+  field: z.string().min(1),
+  operator: z.enum(["equals", "contains"]),
+  value: z.union([z.string(), z.number(), z.boolean()]).transform(String),
+});
+
+function parseWhereCriterion(value: string): FilterCriterion {
+  try {
+    return whereCriterionSchema.parse(JSON.parse(value));
+  } catch (error) {
+    throw new Error(
+      `Invalid --where criterion: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+async function legacyCriteriaFromFlags(input: {
+  contains?: string;
+  equals?: string;
+  field?: string;
+  json: boolean;
+  records: Array<{ fields: Record<string, unknown> }>;
+}): Promise<FilterCriterion[]> {
+  const interactive = process.stdin.isTTY && !input.json;
+  const field =
+    input.field ??
+    (interactive
+      ? await promptSelect({
+          choices: Array.from(
+            new Set(
+              input.records.flatMap((record) => Object.keys(record.fields)),
+            ),
+          ).map((name) => ({ name, value: name })),
+          message: "Choose a field to filter",
+        })
+      : undefined);
+  const operator: FilterOperator =
+    input.contains || (!input.equals && interactive)
+      ? interactive && !input.contains && !input.equals
+        ? await promptSelect({
+            choices: [
+              { name: "equals", value: "equals" },
+              { name: "contains", value: "contains" },
+            ],
+            message: "Choose a comparison",
+          })
+        : "contains"
+      : "equals";
+  const value =
+    input.contains ??
+    input.equals ??
+    (interactive
+      ? await promptInput({
+          message: "Value to match",
+          required: true,
+        })
+      : undefined);
+  return field && value ? [{ field, operator, value }] : [];
 }

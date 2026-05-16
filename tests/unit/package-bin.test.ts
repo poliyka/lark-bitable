@@ -2,6 +2,8 @@ import { access, readFile } from "node:fs/promises";
 
 import { describe, expect, it } from "vitest";
 
+import { isSourceEntrypoint } from "../../src/cli/index.js";
+
 describe("package binary contract", () => {
   it("exposes only the lark-bitable system command", async () => {
     const packageJson = JSON.parse(await readFile("package.json", "utf8")) as {
@@ -17,5 +19,14 @@ describe("package binary contract", () => {
     await expect(
       access("src/cli/commands/dashboard.ts"),
     ).resolves.toBeUndefined();
+  });
+
+  it("treats the TypeScript CLI entrypoint as development mode", () => {
+    expect(
+      isSourceEntrypoint("file:///repo/lark-bitable/src/cli/index.ts"),
+    ).toBe(true);
+    expect(
+      isSourceEntrypoint("file:///repo/lark-bitable/dist/cli/index.js"),
+    ).toBe(false);
   });
 });

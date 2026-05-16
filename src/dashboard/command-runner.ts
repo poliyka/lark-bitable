@@ -58,6 +58,17 @@ export function buildCommandArgv(
   for (const [key, value] of Object.entries(parameters)) {
     if (value === undefined || value === null || value === false) continue;
     if (!isSupportedDashboardParameter(command, key)) continue;
+    if (key === "filters" && command === "filter") {
+      for (const item of toArray(value)) {
+        argv.push("--where", JSON.stringify(item));
+      }
+      continue;
+    }
+    if (key === "fields" && command === "write") {
+      const fieldsJson = JSON.stringify(value);
+      if (fieldsJson !== "{}") argv.push("--fields-json", fieldsJson);
+      continue;
+    }
     if (key === "confirm") {
       if (command === "write" && input.confirmWrite && value === true) {
         argv.push("--confirm");
@@ -72,7 +83,11 @@ export function buildCommandArgv(
       argv.push(value);
       continue;
     }
-    const flag = `--${kebabCase(key)}`;
+    if (key === "text" && typeof value === "string" && command === "search") {
+      argv.push(value);
+      continue;
+    }
+    const flag = `--${flagNameForParameter(command, key)}`;
     if (value === true) {
       argv.push(flag);
     } else if (Array.isArray(value)) {
@@ -184,15 +199,51 @@ function kebabCase(value: string): string {
   return value.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
 }
 
+function flagNameForParameter(command: PlaygroundCommand, key: string): string {
+  if (command === "research") {
+    const researchFlags: Record<string, string> = {
+      assumptions: "assumption",
+      likelyCauses: "likely-cause",
+      nextActions: "next-action",
+      originalDetails: "original-detail",
+      recommendedFixes: "recommended-fix",
+      risks: "risk",
+    };
+    return researchFlags[key] ?? kebabCase(key);
+  }
+  return kebabCase(key);
+}
+
+function toArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
 function isSupportedDashboardParameter(
   command: PlaygroundCommand,
   key: string,
 ): boolean {
   const supported: Record<PlaygroundCommand, Set<string>> = {
-    filter: new Set(["contains", "equals", "field", "limit", "owner"]),
+    filter: new Set([
+      "contains",
+      "equals",
+      "field",
+      "filters",
+      "limit",
+      "owner",
+    ]),
     get: new Set(["recordId"]),
     list: new Set(["limit"]),
-    research: new Set(["evidence", "out"]),
+    research: new Set([
+      "assumptions",
+      "evidence",
+      "likelyCauses",
+      "nextActions",
+      "originalDetails",
+      "out",
+      "recommendedFixes",
+      "risks",
+      "title",
+    ]),
     schema: new Set(["sampleLimit"]),
     search: new Set(["limit", "text"]),
     triage: new Set(["limit", "owner"]),
@@ -202,6 +253,7 @@ function isSupportedDashboardParameter(
       "clientToken",
       "confirm",
       "field",
+      "fields",
       "fieldsJson",
       "op",
       "recordId",

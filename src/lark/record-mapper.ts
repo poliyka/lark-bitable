@@ -2,6 +2,12 @@ import type { BitableRecord, SourceMetadata } from "../config/schema.js";
 
 export type FilterOperator = "equals" | "contains";
 
+export interface FilterCriterion {
+  field: string;
+  operator: FilterOperator;
+  value: string;
+}
+
 export interface RawBitableRecord {
   fields?: Record<string, unknown>;
   record_id?: string;
@@ -46,6 +52,22 @@ export function filterRecords(
     }
     return false;
   });
+}
+
+export function filterRecordsByCriteria(
+  records: BitableRecord[],
+  criteria: FilterCriterion[],
+): BitableRecord[] {
+  return criteria.reduce(
+    (current, criterion) =>
+      filterRecords(
+        current,
+        criterion.field,
+        criterion.operator,
+        criterion.value,
+      ),
+    records,
+  );
 }
 
 export function searchRecords(

@@ -105,6 +105,44 @@ describe("dashboard live runtime session", () => {
     await second.stop();
   });
 
+  it("does not let an older manager heartbeat overwrite a replacement session", async () => {
+    const paths = await createDashboardTestPaths("dashboard-live-runtime-");
+    const first = createDashboardRuntimeSessionManager({
+      binding: readyBinding,
+      deliveryToken: "token-1",
+      pid: 1111,
+      runtimePath: paths.runtimePath,
+      sessionId: "dash_first",
+    });
+    const second = createDashboardRuntimeSessionManager({
+      binding: {
+        ...readyBinding,
+        origin: "http://127.0.0.1:48732",
+        port: 48732,
+      },
+      deliveryToken: "token-2",
+      pid: 2222,
+      runtimePath: paths.runtimePath,
+      sessionId: "dash_second",
+    });
+
+    await first.start(new Date("2026-05-15T00:00:00.000Z"));
+    await second.start(new Date("2026-05-15T00:00:01.000Z"));
+
+    await expect(
+      first.heartbeat(new Date("2026-05-15T00:00:02.000Z")),
+    ).resolves.toBeUndefined();
+    await expect(
+      readDashboardRuntimeSession(paths.runtimePath),
+    ).resolves.toMatchObject({
+      deliveryToken: "token-2",
+      origin: "http://127.0.0.1:48732",
+      sessionId: "dash_second",
+    });
+
+    await second.stop();
+  });
+
   it("cleans up the runtime session file on stop", async () => {
     const paths = await createDashboardTestPaths("dashboard-live-runtime-");
     const manager = createDashboardRuntimeSessionManager({

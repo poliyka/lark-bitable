@@ -104,6 +104,52 @@ describe("filter command", () => {
     expect(JSON.stringify(result.data)).not.toContain("recDone");
   });
 
+  it("applies repeatable where criteria with AND semantics", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "filter-"));
+    const authPath = join(cwd, "auth.json");
+    await new AuthStore(authPath).write({
+      ...readyAuthSession,
+      storagePath: authPath,
+    });
+    new ConfigStore({ cwd }).setSource(fixtureSource);
+    const records = [
+      ...fixtureRecords,
+      {
+        ...fixtureRecords[0],
+        recordId: "recOtherLogin",
+        fields: {
+          ...fixtureRecords[0].fields,
+          標題: "Settings page error",
+          狀態: "待處理",
+        },
+      },
+    ];
+
+    const result = await FilterCommand.run([
+      "--where",
+      '{"field":"狀態","operator":"equals","value":"待處理"}',
+      "--where",
+      '{"field":"標題","operator":"contains","value":"Login"}',
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--fixture",
+      JSON.stringify(records),
+      "--json",
+    ]);
+
+    expect(JSON.stringify(result.data)).toContain("recLogin");
+    expect(JSON.stringify(result.data)).not.toContain("recDone");
+    expect(JSON.stringify(result.data)).not.toContain("recOtherLogin");
+    expect(result.data).toMatchObject({
+      criteria: [
+        { field: "狀態", operator: "equals", value: "待處理" },
+        { field: "標題", operator: "contains", value: "Login" },
+      ],
+    });
+  });
+
   it("keeps filtering when an owner value is provided without a configured owner field", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "filter-"));
     const authPath = join(cwd, "auth.json");

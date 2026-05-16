@@ -131,6 +131,13 @@ export default class TriageCommand extends BaseCommand {
           title: selected.title,
           status: selected.status,
           priority: selected.priority,
+          owner: selected.owner,
+          originalDescription: selected.originalDescription,
+          reproductionSteps: selected.reproductionSteps,
+          expectedBehavior: selected.expectedBehavior,
+          actualBehavior: selected.actualBehavior,
+          links: selected.links,
+          notes: selected.notes,
           missingFields: selected.missingFields,
         },
       });

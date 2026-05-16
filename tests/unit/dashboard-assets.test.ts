@@ -33,31 +33,179 @@ class TestElement {
   className = "";
   dataset: Record<string, string> = {};
   disabled = false;
-  innerHTML = "";
   textContent = "";
   value = "";
+  private attributes = new Map<string, string>();
+  private childSelectors = new Map<string, TestElement>();
+  private html = "";
+  private listeners = new Map<string, Array<(event: unknown) => unknown>>();
 
   constructor(readonly id = "") {}
 
-  addEventListener(): void {}
-
-  querySelector(): TestElement | null {
-    return null;
+  get innerHTML(): string {
+    return this.html;
   }
 
-  querySelectorAll(): TestElement[] {
+  set innerHTML(value: string) {
+    this.html = value;
+  }
+
+  addEventListener(
+    eventName: string,
+    listener: (event: unknown) => unknown,
+  ): void {
+    const listeners = this.listeners.get(eventName) ?? [];
+    listeners.push(listener);
+    this.listeners.set(eventName, listeners);
+  }
+
+  async click(): Promise<void> {
+    const event = {
+      currentTarget: this,
+      preventDefault() {},
+      stopPropagation() {},
+      target: this,
+    };
+    for (const listener of this.listeners.get("click") ?? []) {
+      await listener(event);
+    }
+  }
+
+  querySelector(selector: string): TestElement | null {
+    return this.childSelectors.get(selector) ?? null;
+  }
+
+  querySelectorAll(selector: string): TestElement[] {
+    if (selector === "[data-repeat-param]")
+      return parseRepeatControls(this.html);
+    if (selector === "[data-repeat-row]") {
+      return (
+        this.childSelectors
+          .get("__repeatRows__")
+          ?.querySelectorAll("__items__") ?? []
+      );
+    }
+    if (selector === "[data-repeat-value]") {
+      return (this.querySelectorAll("[data-repeat-row]") ?? [])
+        .map((row) => row.querySelector("[data-repeat-value]"))
+        .filter((input): input is TestElement => Boolean(input));
+    }
+    if (selector === "__items__") {
+      return this.childSelectors.has("__items__")
+        ? JSON.parse(this.childSelectors.get("__items__")?.value ?? "[]").map(
+            (item: string) => repeatRowFromEncoded(item),
+          )
+        : [];
+    }
     return [];
   }
 
   setAttribute(name: string, value: string): void {
+    this.attributes.set(name, value);
     if (name.startsWith("data-")) {
       this.dataset[name.slice(5)] = value;
     }
   }
+
+  getAttribute(name: string): string | null {
+    return this.attributes.get(name) ?? null;
+  }
+
+  setChild(selector: string, element: TestElement): void {
+    this.childSelectors.set(selector, element);
+  }
+}
+
+function decodeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
+function createValuedElement(value: string): TestElement {
+  const element = new TestElement();
+  element.value = decodeHtmlAttribute(value);
+  return element;
+}
+
+function repeatRowFromEncoded(encoded: string): TestElement {
+  const [kind, ...values] = JSON.parse(encoded) as string[];
+  if (kind === "repeat-list") {
+    const row = new TestElement();
+    row.setChild("[data-repeat-value]", createValuedElement(values[0] ?? ""));
+    return row;
+  }
+  if (kind === "filter-list") {
+    const row = new TestElement();
+    row.setChild("[data-filter-field]", createValuedElement(values[0] ?? ""));
+    row.setChild(
+      "[data-filter-operator]",
+      createValuedElement(values[1] ?? ""),
+    );
+    row.setChild("[data-filter-value]", createValuedElement(values[2] ?? ""));
+    return row;
+  }
+  const row = new TestElement();
+  row.setChild("[data-field-key]", createValuedElement(values[0] ?? ""));
+  row.setChild("[data-field-value]", createValuedElement(values[1] ?? ""));
+  return row;
+}
+
+function repeatRowsContainer(rows: string[][]): TestElement {
+  const container = new TestElement();
+  const encodedRows = rows.map((row) => JSON.stringify(JSON.stringify(row)));
+  container.setChild(
+    "__items__",
+    createValuedElement(`[${encodedRows.join(",")}]`),
+  );
+  return container;
+}
+
+function parseRepeatControls(html: string): TestElement[] {
+  const controls: TestElement[] = [];
+  const controlRegex =
+    /<div class="repeat-control" data-repeat-param="([^"]+)" data-repeat-kind="([^"]+)">([\s\S]*?)<button type="button" class="btn btn-ghost btn-xs" data-add-row/g;
+  for (const match of html.matchAll(controlRegex)) {
+    const [, name = "", kind = "", body = ""] = match;
+    const control = new TestElement();
+    control.dataset.repeatParam = decodeHtmlAttribute(name);
+    control.dataset.repeatKind = decodeHtmlAttribute(kind);
+    const rows: string[][] = [];
+    if (kind === "repeat-list") {
+      for (const row of body.matchAll(/data-repeat-value value="([^"]*)"/g)) {
+        rows.push(["repeat-list", row[1] ?? ""]);
+      }
+    } else if (kind === "filter-list") {
+      const rowRegex =
+        /data-filter-field placeholder="field" value="([^"]*)"[\s\S]*?<option ([^>]*)>equals<\/option><option ([^>]*)>contains<\/option>[\s\S]*?data-filter-value placeholder="value" value="([^"]*)"/g;
+      for (const row of body.matchAll(rowRegex)) {
+        rows.push([
+          "filter-list",
+          row[1] ?? "",
+          String(row[3] ?? "").includes("selected") ? "contains" : "equals",
+          row[4] ?? "",
+        ]);
+      }
+    } else if (kind === "field-map") {
+      const rowRegex =
+        /data-field-key placeholder="field" value="([^"]*)"[\s\S]*?data-field-value placeholder="value" value="([^"]*)"/g;
+      for (const row of body.matchAll(rowRegex)) {
+        rows.push(["field-map", row[1] ?? "", row[2] ?? ""]);
+      }
+    }
+    control.setChild("__repeatRows__", repeatRowsContainer(rows));
+    controls.push(control);
+  }
+  return controls;
 }
 
 class TestDocument {
   readonly auditRows: TestElement[] = [];
+  readonly authScopePresetButtons: TestElement[] = [];
+  readonly responseTabButtons: TestElement[] = [];
   readonly researchFiles: TestElement[] = [];
   readonly flowSteps: TestElement[] = [];
   readonly schemaFieldSelects: TestElement[] = [];
@@ -72,8 +220,13 @@ class TestDocument {
     return element;
   }
 
+  addEventListener(): void {}
+
   querySelectorAll(selector: string): TestElement[] {
     if (selector === ".audit-row") return this.auditRows;
+    if (selector === "[data-auth-scope-preset]")
+      return this.authScopePresetButtons;
+    if (selector === "#response-tabs button") return this.responseTabButtons;
     if (selector === ".md-file") return this.researchFiles;
     if (selector === "#login-flow-steps .flow-step") return this.flowSteps;
     if (selector === "[data-schema-field]") return this.schemaFieldSelects;
@@ -181,9 +334,11 @@ function createAuthDashboardClientHarness(
   const openedUrls: string[] = [];
 
   for (const id of [
-    "auth-scopes",
+    "auth-logout",
+    "auth-start",
+    "auth-open",
+    "auth-scope-list",
     "auth-url",
-    "login-flow-status",
     "auth-state-pill",
     "auth-state-list",
     "binding-status",
@@ -205,7 +360,11 @@ function createAuthDashboardClientHarness(
   ]) {
     document.getElementById(id);
   }
-  document.getElementById("auth-scopes").value = "bitable:app:readonly";
+  for (const preset of ["readonly", "writable"]) {
+    const button = document.getElementById(`auth-scope-${preset}`);
+    button.dataset.authScopePreset = preset;
+    document.authScopePresetButtons.push(button);
+  }
   for (let index = 0; index < 4; index += 1) {
     document.flowSteps.push(new TestElement(`flow-step-${index + 1}`));
   }
@@ -215,12 +374,13 @@ function createAuthDashboardClientHarness(
   expect(initIndex).toBeGreaterThan(0);
   const testableScript =
     script.slice(0, initIndex) +
-    "globalThis.__dashboardTestHooks={state,startLogin,logoutAuth};";
+    "globalThis.__dashboardTestHooks={state,bindEvents,loadAuth,startLogin,logoutAuth};";
   const context = createContext({
     document,
     fetch: fetchImpl,
     setTimeout: (callback: () => void) => timers.setTimeout(callback),
     window: {
+      addEventListener: () => {},
       open: (url: string) => {
         openedUrls.push(url);
       },
@@ -235,6 +395,8 @@ function createAuthDashboardClientHarness(
         state: {
           status: unknown;
         };
+        bindEvents: () => void;
+        loadAuth: () => Promise<void>;
         startLogin: () => Promise<void>;
         logoutAuth: () => Promise<void>;
       };
@@ -348,8 +510,6 @@ function createLiveDashboardClientHarness(
     "audit-detail",
     "audit-filter-form",
     "live-connection-state",
-    "live-activity-count",
-    "live-activity-feed",
     "research-search",
     "research-count",
     "research-files",
@@ -393,7 +553,6 @@ function createLiveDashboardClientHarness(
         state: {
           auditDetail: { id?: string } | null;
           live: {
-            activity: unknown[];
             connectionState: string;
           };
           page: string;
@@ -405,6 +564,94 @@ function createLiveDashboardClientHarness(
   ).__dashboardTestHooks;
 
   return { document, hooks };
+}
+
+function createPlaygroundControlHarness() {
+  const document = new TestDocument();
+  for (const id of [
+    "cmd-list",
+    "params-title",
+    "command-safety",
+    "playground-form",
+    "cmd-preview-text",
+    "playground-output",
+    "playground-response-pills",
+    "response-title",
+    "run-history",
+    "playground-run",
+    "response-tabs",
+  ]) {
+    document.getElementById(id);
+  }
+  for (const tabName of ["structured", "human", "audit"]) {
+    const tab = new TestElement(`response-tab-${tabName}`);
+    tab.dataset.responseTab = tabName;
+    document.responseTabButtons.push(tab);
+  }
+
+  const script = dashboardAppScript();
+  const initIndex = script.lastIndexOf("bindEvents();applyLanguage");
+  expect(initIndex).toBeGreaterThan(0);
+  const testableScript =
+    script.slice(0, initIndex) +
+    "globalThis.__dashboardTestHooks={state,renderParamForm,addPlaygroundRow,clearRunHistory,renderResponse,renderRunHistory,setPlaygroundRunning,runPlayground,setCommandRunState:(command,lastRun,history)=>{state.commandRuns[command]={lastRun,history};state.lastRun=lastRun;state.runHistory=history;}};";
+  const context = createContext({
+    FormData: class {
+      entries(): IterableIterator<[string, string]> {
+        return [][Symbol.iterator]();
+      }
+    },
+    document,
+    fetch: async () =>
+      jsonResponse({
+        status: "ok",
+        data: {
+          run: {
+            command: "valid",
+            humanOutput: "done",
+          },
+        },
+      }),
+    globalThis: {},
+  });
+
+  new Script(testableScript).runInContext(context);
+  const hooks = (
+    context.globalThis as {
+      __dashboardTestHooks: {
+        addPlaygroundRow: (paramName: string) => void;
+        clearRunHistory: () => void;
+        renderResponse: () => void;
+        renderRunHistory: () => void;
+        renderParamForm: () => void;
+        runPlayground: () => Promise<void>;
+        setPlaygroundRunning: (command: string, running: boolean) => void;
+        setCommandRunState: (
+          command: string,
+          lastRun: unknown,
+          history: unknown[],
+        ) => void;
+        state: {
+          command: string;
+          commandDrafts: Record<string, unknown>;
+        };
+      };
+    }
+  ).__dashboardTestHooks;
+
+  return { document, hooks };
+}
+
+function countOccurrences(value: string, needle: string): number {
+  return value.split(needle).length - 1;
+}
+
+function repeatRowCountForParam(value: string, paramName: string): number {
+  return (
+    parseRepeatControls(value)
+      .find((control) => control.dataset.repeatParam === paramName)
+      ?.querySelectorAll("[data-repeat-row]").length ?? 0
+  );
 }
 
 describe("dashboard design assets", () => {
@@ -476,8 +723,6 @@ describe("dashboard design assets", () => {
       "titleField",
       "ownerField",
       "defaultOwner",
-      "auth-scopes",
-      "auth-callback-mode",
     ]) {
       expect(html).toContain(`for="${id}"`);
       expect(html).toContain(`id="${id}"`);
@@ -497,8 +742,36 @@ describe("dashboard design assets", () => {
     expect(script).toContain("for=\"'+controlId+'\"");
   });
 
+  it("renders auth scope presets and removes the unused callback mode control", () => {
+    const html = dashboardHtml();
+
+    expect(html).toContain('data-auth-scope-preset="readonly"');
+    expect(html).toContain('data-auth-scope-preset="writable"');
+    expect(html).toContain('class="scope-switch readonly"');
+    expect(html).toContain('id="auth-scope-list"');
+    expect(html).not.toContain('id="auth-scopes"');
+    expect(html).not.toContain("Requested Scopes");
+    expect(html).not.toContain('id="auth-callback-mode"');
+    expect(html).not.toContain("Callback Mode");
+  });
+
+  it("keeps dashboard scope copy aligned with README login examples", () => {
+    const html = dashboardHtml();
+    const script = dashboardAppScript();
+
+    expect(html).toContain('placeholder="bitable:app:readonly"');
+    expect(html).not.toContain(
+      'placeholder="bitable:app:readonly bitable:app"',
+    );
+    expect(script).toContain(
+      "const AUTH_SCOPE_PRESETS={readonly:['bitable:app:readonly'],writable:['bitable:app']};",
+    );
+  });
+
   it("ships the dark terminal design system from the HTML design", () => {
     const css = dashboardStyles();
+    const html = dashboardHtml();
+    const script = dashboardAppScript();
 
     expect(css).toContain("--bg: #060708");
     expect(css).toContain("--accent: oklch(0.82 0.17 145)");
@@ -509,6 +782,14 @@ describe("dashboard design assets", () => {
     expect(css).toContain(".pg-grid");
     expect(css).toContain(".data-tbl");
     expect(css).toContain("@media");
+    expect(css).toContain(".terminal-textarea");
+    expect(html).toContain('data-copy-target="config-output"');
+    expect(html).toContain('data-copy-target="playground-output"');
+    expect(script).toContain('class="terminal textarea-terminal"');
+    expect(script).toContain('class="terminal-textarea"');
+    expect(script).toContain(
+      "copyText('value' in target?target.value:target.textContent)",
+    );
   });
 
   it("defines a site-wide responsive layout foundation for grids and data surfaces", () => {
@@ -519,7 +800,7 @@ describe("dashboard design assets", () => {
       ".card, .readiness, .next-cmd, .terminal, .md-shell, .md-list, .md-viewer, .pg-grid, .src-banner, .table-scroll { min-width: 0; }",
     );
     expect(css).toContain(
-      ".grid-3 > *, .grid-2 > *, .grid-2-3 > *, .grid-1-2 > *, .split > *, .pg-grid > *, .md-shell > *, .src-banner > * { min-width: 0; }",
+      ".grid-3 > *, .grid-2 > *, .grid-1-2 > *, .split > *, .pg-grid > *, .md-shell > *, .src-banner > * { min-width: 0; }",
     );
     expect(css).toContain(
       ".tbl, .data-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }",
@@ -533,12 +814,88 @@ describe("dashboard design assets", () => {
       ".table-scroll > .tbl, .table-scroll > .data-tbl { min-width: 680px; }",
     );
     expect(css).toContain(".audit-filters .card-body { overflow-x: auto; }");
+    expect(css).toContain(
+      ".audit-table { border-collapse: separate; border-spacing: 0 8px;",
+    );
+    expect(css).toContain(
+      ".audit-table th + th, .audit-table td + td { border-left: 8px solid var(--surface); }",
+    );
+    expect(css).toContain(".audit-filters { margin-bottom: 16px; }");
+    expect(css).toContain(
+      "*::-webkit-scrollbar-thumb { background: color-mix(in oklch, var(--line-2), var(--muted) 35%);",
+    );
     expect(html).toContain(
       '<div class="card-body no-pad"><table class="tbl"><tbody id="recent-activity">',
     );
+    expect(html).toContain('<table class="tbl audit-table">');
     expect(html).toContain(
       '<div class="card-body no-pad"><table class="tbl"><tbody id="run-history">',
     );
+  });
+
+  it("places overview recent activity above source cards as a full-width row", () => {
+    const html = dashboardHtml();
+
+    const recentIndex = html.indexOf('<div class="card overview-recent-card">');
+    const sourceIndex = html.indexOf("<h3>Source · Base</h3>");
+    const fieldMappingsIndex = html.indexOf("<h3>Field Mappings</h3>");
+
+    expect(recentIndex).toBeGreaterThan(0);
+    expect(sourceIndex).toBeGreaterThan(recentIndex);
+    expect(fieldMappingsIndex).toBeGreaterThan(sourceIndex);
+    expect(html).not.toContain('class="grid-2-3"');
+  });
+
+  it("keeps the topbar focused on navigation and explicit WebSocket state", () => {
+    const html = dashboardHtml();
+    const script = dashboardAppScript();
+
+    expect(html).not.toContain('id="refresh-current"');
+    expect(html).toContain('id="live-connection-state">WebSocket · connecting');
+    expect(script).not.toContain("$('refresh-current')");
+    expect(script).toContain("node.textContent='WebSocket · '+status");
+  });
+
+  it("offers every audit command and initializes a human date-time range picker", () => {
+    const html = dashboardHtml();
+    const script = dashboardAppScript();
+
+    expect(html).toContain('id="audit-command-filter"');
+    expect(html).toContain('id="audit-from-picker"');
+    expect(html).toContain('id="audit-to-picker"');
+    expect(html).toContain('name="from" id="audit-from"');
+    expect(html).toContain('name="to" id="audit-to"');
+    expect(html).toContain("/assets/vendor/flatpickr.min.css");
+    expect(html).toContain("/assets/vendor/flatpickr.min.js");
+    expect(script).toContain("const AUDIT_COMMAND_OPTIONS=[");
+    for (const command of [
+      "configure",
+      "dashboard",
+      "doctor",
+      "filter",
+      "get",
+      "help",
+      "lark",
+      "list",
+      "login",
+      "logout",
+      "media download",
+      "research",
+      "schema",
+      "search",
+      "triage",
+      "valid",
+      "verify",
+      "write",
+    ]) {
+      expect(script).toContain(`'${command}'`);
+    }
+    expect(script).toContain("function renderAuditCommandFilter");
+    expect(script).toContain("renderAuditCommandFilter(state.auditEntries)");
+    expect(script).toContain("function initAuditDateTimePickers");
+    expect(script).toContain("selectedDates[0].toISOString()");
+    expect(script).toContain("enableTime:true");
+    expect(script).toContain("time_24hr:true");
   });
 
   it("keeps the audit entries and detail split stable around long detail content", () => {
@@ -606,6 +963,10 @@ describe("dashboard design assets", () => {
     const script = dashboardAppScript();
 
     expect(script).toContain("name:'sampleLimit',label:'--sample-limit'");
+    expect(script).toContain("name:'title',label:'--title'");
+    expect(script).toContain(
+      "name:'originalDetails',label:'--original-detail'",
+    );
     expect(script).not.toContain(
       "name:'limit',label:'--limit',type:'number',value:'20'}]},\n  {name:'list'",
     );
@@ -614,7 +975,225 @@ describe("dashboard design assets", () => {
       "name:'recordId',label:'--record-id',type:'text'}]},\n  {name:'verify'",
     );
     expect(script).toContain("name:'op',label:'--op',type:'select'");
-    expect(script).toContain("name:'fieldsJson',label:'--fields-json'");
+    expect(script).not.toContain("type:'textarea',value:'{}'");
+    expect(script).toContain("name:'fields',label:'fields'");
+  });
+
+  it("renders richer playground controls for repeatable filters and write field rows", () => {
+    const script = dashboardAppScript();
+
+    expect(script).toContain("name:'filters',label:'filters'");
+    expect(script).toContain("type:'filter-list'");
+    expect(script).toContain("name:'fields',label:'fields'");
+    expect(script).toContain("type:'field-map'");
+    expect(script).toContain("data-repeat-param");
+    expect(script).toContain("addPlaygroundRow");
+    expect(script).toContain("collectFilterRows");
+    expect(script).toContain("collectFieldMapRows");
+    expect(script).toContain("duplicate-field-key");
+    expect(script).toContain("name:'title',label:'--title'");
+    expect(script).toContain(
+      "name:'originalDetails',label:'--original-detail'",
+    );
+    expect(script).toContain("name:'assumptions',label:'--assumption'");
+    expect(script).toContain("name:'likelyCauses',label:'--likely-cause'");
+    expect(script).toContain(
+      "name:'recommendedFixes',label:'--recommended-fix'",
+    );
+    expect(script).toContain("name:'risks',label:'--risk'");
+    expect(script).toContain("name:'nextActions',label:'--next-action'");
+  });
+
+  it("adds visible playground rows when repeat controls start blank", () => {
+    const { document, hooks } = createPlaygroundControlHarness();
+    const form = document.getElementById("playground-form");
+
+    hooks.state.command = "filter";
+    hooks.renderParamForm();
+    expect(countOccurrences(form.innerHTML, "data-repeat-row")).toBe(1);
+    hooks.addPlaygroundRow("filters");
+    expect(countOccurrences(form.innerHTML, "data-repeat-row")).toBe(2);
+
+    hooks.state.command = "research";
+    hooks.renderParamForm();
+    expect(countOccurrences(form.innerHTML, "data-repeat-row")).toBe(7);
+    hooks.addPlaygroundRow("evidence");
+    expect(countOccurrences(form.innerHTML, "data-repeat-row")).toBe(8);
+
+    hooks.state.command = "write";
+    hooks.renderParamForm();
+    expect(countOccurrences(form.innerHTML, "data-repeat-row")).toBe(1);
+    hooks.addPlaygroundRow("fields");
+    expect(countOccurrences(form.innerHTML, "data-repeat-row")).toBe(2);
+  });
+
+  it("keeps the write confirm checkbox and description aligned on one row", () => {
+    const { document, hooks } = createPlaygroundControlHarness();
+    const form = document.getElementById("playground-form");
+    const css = dashboardStyles();
+
+    hooks.state.command = "write";
+    hooks.renderParamForm();
+
+    expect(form.innerHTML).toContain('class="checkbox-control"');
+    expect(form.innerHTML).toContain('class="checkbox-text"');
+    expect(form.innerHTML).toContain('id="pg-param-write-confirm"');
+    expect(form.innerHTML).not.toContain(
+      ' /> <span class="text-muted text-mono">explicit confirmation</span>',
+    );
+    expect(css).toContain(
+      ".checkbox-control { display: flex; align-items: center;",
+    );
+    expect(css).toContain('.checkbox-control input[type="checkbox"]');
+  });
+
+  it("preserves blank research rows when adding rows for another section", () => {
+    const { document, hooks } = createPlaygroundControlHarness();
+    const form = document.getElementById("playground-form");
+
+    hooks.state.command = "research";
+    hooks.renderParamForm();
+
+    hooks.addPlaygroundRow("evidence");
+    expect(repeatRowCountForParam(form.innerHTML, "evidence")).toBe(2);
+    expect(repeatRowCountForParam(form.innerHTML, "assumptions")).toBe(1);
+
+    hooks.addPlaygroundRow("assumptions");
+    expect(repeatRowCountForParam(form.innerHTML, "evidence")).toBe(2);
+    expect(repeatRowCountForParam(form.innerHTML, "assumptions")).toBe(2);
+  });
+
+  it("marks the active playground command as running while a request is in flight", async () => {
+    const { document, hooks } = createPlaygroundControlHarness();
+
+    hooks.state.command = "valid";
+    hooks.renderParamForm();
+    hooks.setPlaygroundRunning("valid", true);
+
+    expect(document.getElementById("response-title").textContent).toBe(
+      "valid · running",
+    );
+    expect(document.getElementById("playground-output").textContent).toBe(
+      "Running valid...",
+    );
+    expect(document.getElementById("playground-run").disabled).toBe(true);
+    expect(document.getElementById("playground-run").innerHTML).toContain(
+      "running-dot",
+    );
+
+    hooks.setPlaygroundRunning("valid", false);
+
+    expect(document.getElementById("playground-run").disabled).toBe(false);
+    expect(document.getElementById("response-title").textContent).toBe(
+      "valid · idle",
+    );
+  });
+
+  it("renders response and run history for the active command only", () => {
+    const { document, hooks } = createPlaygroundControlHarness();
+
+    hooks.state.command = "valid";
+    hooks.setCommandRunState(
+      "valid",
+      {
+        data: { run: { command: "valid", humanOutput: "valid response" } },
+        status: "ok",
+      },
+      [
+        {
+          args: { workflow: "dashboard" },
+          command: "valid",
+          durationMs: 12,
+          status: "ok",
+          time: "2026-05-15T06:00:00.000Z",
+        },
+      ],
+    );
+    hooks.renderResponse();
+    hooks.renderRunHistory();
+
+    expect(document.getElementById("response-title").textContent).toContain(
+      "valid",
+    );
+    expect(document.getElementById("response-title").textContent).not.toContain(
+      "POST /api/playground/run",
+    );
+    expect(document.getElementById("playground-output").textContent).toContain(
+      "valid",
+    );
+    expect(
+      document.getElementById("playground-response-pills").innerHTML,
+    ).not.toContain("valid</span>");
+    expect(
+      document.getElementById("playground-response-pills").innerHTML,
+    ).not.toContain("0 evidence");
+    expect(document.getElementById("run-history").innerHTML).toContain("valid");
+
+    hooks.state.command = "filter";
+    hooks.renderResponse();
+    hooks.renderRunHistory();
+
+    expect(document.getElementById("response-title").textContent).toBe(
+      "filter · idle",
+    );
+    expect(document.getElementById("playground-output").textContent).toBe(
+      "Select a filter run to inspect.",
+    );
+    expect(document.getElementById("run-history").innerHTML).not.toContain(
+      "valid",
+    );
+  });
+
+  it("clears run history for the active command only", () => {
+    const { document, hooks } = createPlaygroundControlHarness();
+
+    hooks.setCommandRunState(
+      "valid",
+      {
+        data: { run: { command: "valid", humanOutput: "valid response" } },
+        status: "ok",
+      },
+      [
+        {
+          args: { workflow: "dashboard" },
+          command: "valid",
+          durationMs: 12,
+          status: "ok",
+          time: "2026-05-15T06:00:00.000Z",
+        },
+      ],
+    );
+    hooks.setCommandRunState(
+      "filter",
+      {
+        data: { run: { command: "filter", humanOutput: "filter response" } },
+        status: "ok",
+      },
+      [
+        {
+          args: {
+            filters: [{ field: "Status", operator: "equals", value: "Open" }],
+          },
+          command: "filter",
+          durationMs: 20,
+          status: "ok",
+          time: "2026-05-15T06:01:00.000Z",
+        },
+      ],
+    );
+
+    hooks.state.command = "filter";
+    hooks.clearRunHistory();
+    expect(document.getElementById("run-history").innerHTML).toContain(
+      "no filter runs yet",
+    );
+
+    hooks.state.command = "valid";
+    hooks.renderRunHistory();
+    expect(document.getElementById("run-history").innerHTML).toContain("valid");
+    expect(document.getElementById("run-history").innerHTML).not.toContain(
+      "filter",
+    );
   });
 
   it("renders selectable field mapping controls and visible schema discovery remediation", () => {
@@ -676,6 +1255,13 @@ describe("dashboard design assets", () => {
     expect(document.getElementById("audit-detail-title").textContent).toContain(
       "new",
     );
+    const auditDetailHtml = document.getElementById("audit-detail").innerHTML;
+    expect(auditDetailHtml).toContain('data-copy-target="audit-detail-json"');
+    expect(auditDetailHtml).toContain('id="audit-detail-json"');
+    expect(auditDetailHtml).toContain("mode");
+    expect(auditDetailHtml).toContain("—");
+    expect(auditDetailHtml).not.toContain("no evidence");
+    expect(auditDetailHtml).not.toContain('["--json"]');
     expect(newRow.classList.values.has("selected")).toBe(true);
     expect(oldRow.classList.values.has("selected")).toBe(false);
   });
@@ -754,11 +1340,76 @@ describe("dashboard design assets", () => {
     expect(hooks.state.researchDetail).toMatchObject({
       reportId: "new-report",
     });
-    expect(document.getElementById("research-path").innerHTML).toContain(
-      "new report",
+    expect(document.getElementById("research-path").innerHTML).toBe(
+      "/tmp/new-report.json",
+    );
+    expect(document.getElementById("research-path").innerHTML).not.toContain(
+      "/<b>",
     );
     expect(newFile.classList.values.has("selected")).toBe(true);
     expect(oldFile.classList.values.has("selected")).toBe(false);
+  });
+
+  it("labels research file output status in user-facing terms", async () => {
+    const { document, hooks } = createDashboardClientHarness((path) => {
+      if (path.endsWith("/linked-report")) {
+        return Promise.resolve(
+          jsonResponse({
+            status: "ok",
+            data: {
+              report: {
+                reportId: "linked-report",
+                name: "linked report",
+                canonicalPath: "/tmp/research/linked-report.json",
+                outputLinkPath: "/tmp/current-report.json",
+                outputLinkStatus: "linked",
+                selectedRecordId: "rec-linked",
+                evidence: [],
+              },
+            },
+          }),
+        );
+      }
+      if (path.endsWith("/file-report")) {
+        return Promise.resolve(
+          jsonResponse({
+            status: "ok",
+            data: {
+              report: {
+                reportId: "file-report",
+                name: "file report",
+                canonicalPath: "/tmp/research/file-report.json",
+                outputLinkStatus: "none",
+                selectedRecordId: "rec-file",
+                evidence: [],
+              },
+            },
+          }),
+        );
+      }
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    await hooks.loadResearchDetail("linked-report");
+
+    expect(document.getElementById("research-path").innerHTML).toBe(
+      "/tmp/research/linked-report.json",
+    );
+    expect(document.getElementById("research-meta").innerHTML).toContain(
+      "symbol link",
+    );
+    expect(document.getElementById("research-meta").innerHTML).not.toContain(
+      ">linked<",
+    );
+
+    await hooks.loadResearchDetail("file-report");
+
+    expect(document.getElementById("research-meta").innerHTML).toContain(
+      "file",
+    );
+    expect(document.getElementById("research-meta").innerHTML).not.toContain(
+      "none",
+    );
   });
 
   it("clears stale research detail state when detail loading fails", async () => {
@@ -865,9 +1516,6 @@ describe("dashboard design assets", () => {
 
     await hooks.startLogin();
 
-    expect(document.getElementById("login-flow-status").textContent).toBe(
-      "waiting",
-    );
     expect(document.flowSteps[2]?.classList.values.has("active")).toBe(true);
     expect(openedUrls).toEqual([
       "https://accounts.larksuite.com/open-apis/authen/v1/authorize",
@@ -876,12 +1524,9 @@ describe("dashboard design assets", () => {
 
     await hooks.logoutAuth();
 
-    expect(document.getElementById("login-flow-status").textContent).toBe(
-      "idle",
-    );
     expect(document.flowSteps[2]?.classList.values.has("active")).toBe(false);
     expect(document.getElementById("auth-url").textContent).toBe(
-      "authorization URL will appear here",
+      "Logged out. Local auth.json has been cleared.",
     );
 
     timers.runNext();
@@ -896,12 +1541,207 @@ describe("dashboard design assets", () => {
     );
     await flushPromises();
 
-    expect(document.getElementById("login-flow-status").textContent).toBe(
-      "idle",
-    );
     expect(document.flowSteps[2]?.classList.values.has("active")).toBe(false);
     expect(document.getElementById("auth-url").textContent).toBe(
-      "authorization URL will appear here",
+      "Logged out. Local auth.json has been cleared.",
+    );
+  });
+
+  it("applies auth scope presets and sends the selected scopes when login starts", async () => {
+    const calls: Array<{ path: string; options?: Record<string, unknown> }> =
+      [];
+    const { document, hooks } = createAuthDashboardClientHarness(
+      async (path, options) => {
+        calls.push({ path, options });
+        if (path === "/api/auth/login/start") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              status: "waiting",
+              authorizationUrl: "https://accounts.example.test/oauth",
+            },
+          });
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    );
+
+    hooks.bindEvents();
+    await document.getElementById("auth-scope-writable").click();
+
+    expect(document.getElementById("auth-scope-list").innerHTML).toContain(
+      "bitable:app",
+    );
+    expect(
+      document
+        .getElementById("auth-scope-writable")
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+
+    await document.getElementById("auth-start").click();
+
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "/api/auth/login/start",
+          options: expect.objectContaining({
+            body: JSON.stringify({
+              openBrowser: false,
+              scopes: ["bitable:app"],
+            }),
+            method: "POST",
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it("uses configured auth scopes only to choose the matching preset preview", async () => {
+    const { document, hooks } = createAuthDashboardClientHarness(
+      async (path) => {
+        if (path === "/api/status") {
+          return jsonResponse({
+            status: "partial",
+            dataSource: "file-backed",
+            data: {
+              binding: {
+                status: "ready",
+                host: "127.0.0.1",
+                port: 48731,
+              },
+              overview: {
+                readiness: {
+                  status: "partial",
+                  blockingIssues: [],
+                  partialIssues: [],
+                },
+                source: {},
+                auth: {
+                  status: "missing",
+                  scopes: [],
+                  storagePath: "/tmp/auth.json",
+                },
+                mode: {
+                  active: "developer",
+                  source: "config",
+                },
+              },
+              nextSafeActions: ["lark-bitable lark --login"],
+            },
+          });
+        }
+        if (path === "/api/config") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              draft: {
+                scopes: ["bitable:app:readonly", "bitable:app"],
+              },
+            },
+          });
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    );
+
+    await hooks.loadAuth();
+
+    expect(document.getElementById("auth-scope-list").innerHTML).toContain(
+      "bitable:app:readonly",
+    );
+    expect(
+      document
+        .getElementById("auth-scope-readonly")
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      document
+        .getElementById("auth-scope-writable")
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+  });
+
+  it("runs dashboard logout from the auth page button and shows completion", async () => {
+    const calls: Array<{ path: string; options?: Record<string, unknown> }> =
+      [];
+    const { document, hooks } = createAuthDashboardClientHarness(
+      async (path, options) => {
+        calls.push({ path, options });
+        if (path === "/api/auth/logout") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              auth: {
+                status: "missing",
+                scopes: [],
+                storagePath: "/tmp/auth.json",
+              },
+            },
+          });
+        }
+        if (path === "/api/status") {
+          return jsonResponse({
+            status: "partial",
+            dataSource: "file-backed",
+            data: {
+              binding: {
+                status: "ready",
+                host: "127.0.0.1",
+                port: 48731,
+              },
+              overview: {
+                readiness: {
+                  status: "partial",
+                  blockingIssues: [],
+                  partialIssues: [],
+                },
+                source: {},
+                auth: {
+                  status: "missing",
+                  scopes: [],
+                  storagePath: "/tmp/auth.json",
+                },
+                mode: {
+                  active: "developer",
+                  source: "config",
+                },
+              },
+              nextSafeActions: ["lark-bitable lark --login"],
+            },
+          });
+        }
+        if (path === "/api/audit?limit=5") {
+          return jsonResponse({
+            status: "ok",
+            data: { entries: [] },
+          });
+        }
+        if (path === "/api/config") {
+          return jsonResponse({
+            status: "ok",
+            data: { draft: {} },
+          });
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    );
+
+    hooks.bindEvents();
+    await document.getElementById("auth-logout").click();
+
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          options: expect.objectContaining({ body: "{}", method: "POST" }),
+          path: "/api/auth/logout",
+        }),
+      ]),
+    );
+    expect(document.getElementById("auth-state-pill").innerHTML).toContain(
+      "missing",
+    );
+    expect(document.getElementById("auth-url").textContent).toBe(
+      "Logged out. Local auth.json has been cleared.",
     );
   });
 
@@ -996,13 +1836,18 @@ describe("dashboard design assets", () => {
     }
   });
 
-  it("tracks live connection state and command activity without manual refresh", async () => {
+  it("uses live updates to refresh recent activity without the overview live feed", async () => {
     const html = dashboardHtml();
     expect(html).toContain('id="live-connection-state"');
-    expect(html).toContain('id="live-activity-feed"');
+    expect(html).toContain('id="recent-activity"');
+    expect(html).not.toContain("Live Activity");
+    expect(html).not.toContain('id="live-activity-feed"');
+    expect(dashboardStyles()).not.toContain(".live-activity-item");
 
+    const requestedPaths: string[] = [];
     const { document, hooks } = createLiveDashboardClientHarness(
       async (path) => {
+        requestedPaths.push(path);
         if (path === "/api/status") {
           return jsonResponse({
             status: "ok",
@@ -1101,19 +1946,13 @@ describe("dashboard design assets", () => {
     });
 
     expect(hooks.state.live.connectionState).toBe("connected");
-    expect(hooks.state.live.activity).toMatchObject([
-      {
-        command: "valid",
-        commandRunId: "run_01",
-        phase: "started",
-      },
-    ]);
     expect(document.getElementById("live-connection-state").textContent).toBe(
-      "connected",
+      "WebSocket · connected",
     );
-    expect(document.getElementById("live-activity-feed").innerHTML).toContain(
+    expect(document.getElementById("recent-activity").innerHTML).toContain(
       "valid",
     );
+    expect(requestedPaths).toContain("/api/audit?limit=5");
   });
 
   it("ignores out-of-order live envelopes once a newer sequence has been applied", async () => {
@@ -1154,7 +1993,7 @@ describe("dashboard design assets", () => {
 
     expect(hooks.state.live.connectionState).toBe("stale");
     expect(document.getElementById("live-connection-state").textContent).toBe(
-      "stale",
+      "WebSocket · stale",
     );
   });
 
@@ -1174,7 +2013,7 @@ describe("dashboard design assets", () => {
 
     expect(hooks.state.live.connectionState).toBe("fallback");
     expect(document.getElementById("live-connection-state").textContent).toBe(
-      "fallback",
+      "WebSocket · fallback",
     );
   });
 
@@ -1281,8 +2120,8 @@ describe("dashboard design assets", () => {
     });
 
     expect(requestedPaths).toEqual(["/api/research"]);
-    expect(document.getElementById("research-path").innerHTML).toContain(
-      "report-missing",
+    expect(document.getElementById("research-path").innerHTML).toBe(
+      "~/.lark-bitable/research",
     );
     expect(document.getElementById("research-meta").innerHTML).toContain(
       "error",

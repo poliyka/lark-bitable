@@ -1,6 +1,6 @@
 {
   "name": "lark-bitable",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "type": "module",
   "description": "AI-facing Lark Bitable CLI for bug triage and evidence-backed reports.",
   "license": "MIT",
@@ -53,6 +53,7 @@
     "@larksuiteoapi/node-sdk": "^1.62.1",
     "@oclif/core": "^4.11.1",
     "conf": "^15.1.0",
+    "flatpickr": "^4.6.13",
     "open": "^11.0.0",
     "ws": "^8.20.1",
     "zod": "^4.4.3"

@@ -3,6 +3,7 @@ import type { AddressInfo } from "node:net";
 
 import { defaultAuditPath } from "../audit/log.js";
 import { defaultAuthPath } from "../config/auth-store.js";
+import { ConfigStore } from "../config/store.js";
 import { defaultResearchDir } from "../reporting/research-store.js";
 import {
   createDashboardLiveServer,
@@ -13,6 +14,7 @@ import {
   defaultDashboardRuntimePath,
   type DashboardRuntimeSessionManager,
 } from "./live-runtime.js";
+import { startDashboardStateWatcher } from "./state-watch.js";
 import { findAvailablePort, DEFAULT_DASHBOARD_PORT } from "./port.js";
 import { createDashboardRouter } from "./routes.js";
 import type { DashboardBinding } from "./schemas.js";
@@ -62,6 +64,8 @@ export async function startDashboardServer(
   };
   let liveServer: DashboardLiveServer | undefined;
   let runtime: DashboardRuntimeSessionManager | undefined;
+  let stateWatcher: ReturnType<typeof startDashboardStateWatcher> | undefined;
+  const configStore = new ConfigStore({ cwd: input.configCwd });
   const server = createServer((request, response) =>
     createDashboardRouter({
       auditPath: input.auditPath ?? defaultAuditPath(),
@@ -97,6 +101,11 @@ export async function startDashboardServer(
     runtimePath: input.runtimePath ?? defaultDashboardRuntimePath(),
   });
   await runtime.start(new Date());
+  stateWatcher = startDashboardStateWatcher({
+    authPath: input.authPath ?? defaultAuthPath(),
+    configPath: configStore.path,
+    liveServer,
+  });
   server.on("upgrade", (request, socket, head) => {
     const activeSession = runtime?.session;
     if (!liveServer || !activeSession) {
@@ -116,6 +125,7 @@ export async function startDashboardServer(
     runtime,
     server,
     async stop() {
+      stateWatcher?.stop();
       await runtime?.stop();
       await liveServer?.stop();
       if (!server.listening) return;

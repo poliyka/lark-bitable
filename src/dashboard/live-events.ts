@@ -153,6 +153,7 @@ const commandSurfaceMap: Record<string, DashboardSurface[]> = {
   list: ["shell", "overview", "table", "audit"],
   login: ["shell", "overview", "auth", "table", "audit"],
   logout: ["shell", "overview", "auth", "table", "audit"],
+  "media download": ["shell", "overview", "audit"],
   research: ["shell", "overview", "research", "audit"],
   schema: ["shell", "overview", "config", "table", "audit"],
   search: ["shell", "overview", "table", "audit"],

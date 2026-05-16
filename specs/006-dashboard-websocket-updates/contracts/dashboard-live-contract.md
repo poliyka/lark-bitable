@@ -110,8 +110,8 @@ Sent when a command or dashboard workflow starts, progresses, finishes, fails, i
 
 Client behavior:
 
-- Show or update command activity.
 - Reload only affected visible surfaces unless the event asks for full catch-up.
+- On the overview page, command activity updates are represented by the Recent Activity table after the browser re-reads audit/status APIs; there is no separate live activity feed.
 - Preserve active route, filters, selected detail, scroll position, and unsaved drafts.
 
 ### `state.invalidate`

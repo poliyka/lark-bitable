@@ -16,6 +16,25 @@ describe("bug candidate sorting", () => {
     expect(candidates[0]?.priority).toBe("P0");
   });
 
+  it("keeps original detail text from common Bitable description fields", () => {
+    const candidates = extractBugCandidates(
+      [
+        {
+          ...fixtureRecords[0]!,
+          fields: {
+            ...fixtureRecords[0]!.fields,
+            原始詳細敘述: "使用者送出登入表單後 spinner 一直轉。",
+          },
+        },
+      ],
+      fixtureSource,
+    );
+
+    expect(candidates[0]?.originalDescription).toBe(
+      "使用者送出登入表單後 spinner 一直轉。",
+    );
+  });
+
   it("filters by actionable status and sorts known priorities first", () => {
     const candidates = extractBugCandidates(
       [

@@ -206,6 +206,10 @@ Rules for write operations:
 
 - Use `lark-bitable triage` to select actionable bug records.
 - Use `lark-bitable research` to create the first report for the selected bug.
+  Do not rely on the empty section defaults: pass repeatable
+  `--assumption`, `--likely-cause`, `--recommended-fix`, `--risk`, and
+  `--next-action` flags when those sections are known, and cite evidence in
+  concrete claims.
 - Every `research` invocation writes canonical JSON under
   `~/.lark-bitable/research/{name}-{datetime}.json`.
 - `lark-bitable research -o <path>` or `--out <path>` creates a symbolic link to

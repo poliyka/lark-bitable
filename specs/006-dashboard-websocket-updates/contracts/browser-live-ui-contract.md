@@ -25,6 +25,7 @@ Rules:
 Overview:
 
 - Refresh `/api/status`, recent audit summary, and config mapping summary when invalidated.
+- Do not render a separate live activity feed; the existing Recent Activity table is the user-facing live activity surface.
 - Preserve current page and shell state.
 
 Configuration:
@@ -46,7 +47,7 @@ Audit Logs:
 
 Playground:
 
-- Update command activity and run status when dashboard-triggered workflows run.
+- Update run status when dashboard-triggered workflows run.
 - Preserve command selection, parameter drafts, response tab, and run history unless the user clears them.
 
 Research Reports:

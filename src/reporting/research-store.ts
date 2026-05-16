@@ -78,10 +78,11 @@ export async function writeCanonicalResearchReport(
   const researchDir = input.researchDir ?? defaultResearchDir();
   await mkdir(researchDir, { recursive: true, mode: 0o700 });
   const now = input.now ?? new Date();
-  const name = safeResearchName(input.report.name);
+  const name = input.report.name?.trim() || "research";
+  const fileName = safeResearchName(name);
   const createdAt = input.report.createdAt ?? now.toISOString();
   const canonicalPath = await nextCanonicalPath({
-    name,
+    name: fileName,
     now,
     researchDir,
   });

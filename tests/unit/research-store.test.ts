@@ -30,8 +30,9 @@ describe("research store", () => {
 
     expect(first.canonicalPath).not.toBe(second.canonicalPath);
     expect(JSON.parse(await readFile(first.canonicalPath, "utf8")).name).toBe(
-      "Login-Bug",
+      "../Login Bug",
     );
+    expect(first.canonicalPath).toContain("Login-Bug");
   });
 
   it("creates safe symlinks and reports unsafe existing paths", async () => {

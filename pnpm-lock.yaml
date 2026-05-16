@@ -19,6 +19,9 @@ importers:
       conf:
         specifier: ^15.1.0
         version: 15.1.0
+      flatpickr:
+        specifier: ^4.6.13
+        version: 4.6.13
       open:
         specifier: ^11.0.0
         version: 11.0.0
@@ -2322,6 +2325,12 @@ packages:
     resolution:
       {
         integrity: sha512-1IMnbjt4KzsQfnhnzNd8wUEgXZ44IzZaZmnLYx7D5FZlaHt2gW20Cri8Q+E/t5tIj4+epTBub+2Zxu/vNILzqQ==,
+      }
+
+  flatpickr@4.6.13:
+    resolution:
+      {
+        integrity: sha512-97PMG/aywoYpB4IvbvUJi0RQi8vearvU0oov1WW3k0WZPBMrTQVqekSX5CjSG/M4Q3i6A/0FKXC7RyAoAUUSPw==,
       }
 
   follow-redirects@1.16.0:
@@ -5411,6 +5420,8 @@ snapshots:
   find-yarn-workspace-root@2.0.0:
     dependencies:
       micromatch: 4.0.8
+
+  flatpickr@4.6.13: {}
 
   follow-redirects@1.16.0: {}
 

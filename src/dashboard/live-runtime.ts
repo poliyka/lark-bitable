@@ -126,6 +126,15 @@ export function createDashboardRuntimeSessionManager(
     },
     async heartbeat(now = new Date()) {
       if (!activeSession) return undefined;
+      const current = await readDashboardRuntimeSession(runtimePath);
+      if (!current || current.sessionId !== activeSession.sessionId) {
+        activeSession = undefined;
+        if (heartbeatTimer) {
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = undefined;
+        }
+        return undefined;
+      }
       activeSession = await writeDashboardRuntimeSession({
         ...input,
         deliveryToken: activeSession.deliveryToken,

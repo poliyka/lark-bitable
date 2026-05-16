@@ -8,6 +8,20 @@ function fieldValue(record: BitableRecord, field?: string): unknown {
   return field ? record.fields[field] : undefined;
 }
 
+const originalDescriptionFieldNames = [
+  "原始詳細敘述",
+  "原始詳細描述",
+  "詳細敘述",
+  "詳細描述",
+  "原始描述",
+  "描述",
+  "說明",
+  "description",
+  "details",
+  "detail",
+  "originalDescription",
+];
+
 export function extractBugCandidates(
   records: BitableRecord[],
   source: BitableSource,
@@ -39,6 +53,10 @@ export function extractBugCandidates(
       status: fieldValue(record, source.statusField),
       priority: fieldValue(record, source.priorityField),
       owner: fieldValue(record, source.fieldAliases?.owner),
+      originalDescription: firstDefinedFieldValue(record, [
+        source.fieldAliases?.originalDescription,
+        ...originalDescriptionFieldNames,
+      ]),
       reproductionSteps: fieldValue(
         record,
         source.fieldAliases?.reproductionSteps,
@@ -49,9 +67,21 @@ export function extractBugCandidates(
       ),
       actualBehavior: fieldValue(record, source.fieldAliases?.actualBehavior),
       links: fieldValue(record, source.fieldAliases?.links),
+      notes: fieldValue(record, source.fieldAliases?.notes),
       missingFields,
     };
   });
+}
+
+function firstDefinedFieldValue(
+  record: BitableRecord,
+  fields: Array<string | undefined>,
+): unknown {
+  for (const field of fields) {
+    const value = fieldValue(record, field);
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return undefined;
 }
 
 export function filterActionableCandidates(

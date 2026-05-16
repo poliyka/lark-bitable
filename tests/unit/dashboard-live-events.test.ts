@@ -48,6 +48,11 @@ describe("dashboard live events", () => {
       "research",
       "audit",
     ]);
+    expect(defaultChangedSurfacesForCommand("media download")).toEqual([
+      "shell",
+      "overview",
+      "audit",
+    ]);
     expect(defaultChangedSurfacesForCommand("dashboard")).toEqual([
       "shell",
       "overview",

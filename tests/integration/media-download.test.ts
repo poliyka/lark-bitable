@@ -8,6 +8,7 @@ import MediaDownloadCommand from "../../src/cli/commands/media/download.js";
 import { CliError } from "../../src/cli/errors.js";
 import { AuthStore } from "../../src/config/auth-store.js";
 import { readyAuthSession } from "../fixtures/auth.js";
+import { readAuditEntries } from "../fixtures/audit.js";
 import { mediaFileTokenFixture } from "../fixtures/media.js";
 
 describe("media download command", () => {
@@ -28,6 +29,31 @@ describe("media download command", () => {
         "--json",
       ]),
     ).rejects.toThrow(CliError);
+  });
+
+  it("writes missing-auth media download failures under the media download audit command", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "media-download-"));
+    const auditPath = join(cwd, "logs", "audit.json");
+
+    await expect(
+      MediaDownloadCommand.run([
+        mediaFileTokenFixture,
+        "--auth-path",
+        join(cwd, "missing-auth.json"),
+        "--audit-path",
+        auditPath,
+        "--out",
+        join(cwd, "asset.bin"),
+        "--json",
+      ]),
+    ).rejects.toThrow(CliError);
+
+    const entries = await readAuditEntries(auditPath);
+    expect(entries[0]).toMatchObject({
+      command: "media download",
+      status: "error",
+      issues: [{ code: "missing-auth" }],
+    });
   });
 
   it("downloads through authenticated Drive media API and returns file metadata", async () => {

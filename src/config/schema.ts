@@ -75,6 +75,7 @@ export const bitableSourceSchema = z.object({
     .object({
       title: z.string().min(1).optional(),
       owner: z.string().min(1).optional(),
+      originalDescription: z.string().min(1).optional(),
       reproductionSteps: z.string().min(1).optional(),
       expectedBehavior: z.string().min(1).optional(),
       actualBehavior: z.string().min(1).optional(),
@@ -136,10 +137,12 @@ export const bugCandidateSchema = z.object({
   status: z.unknown().optional(),
   priority: z.unknown().optional(),
   owner: z.unknown().optional(),
+  originalDescription: z.unknown().optional(),
   reproductionSteps: z.unknown().optional(),
   expectedBehavior: z.unknown().optional(),
   actualBehavior: z.unknown().optional(),
   links: z.unknown().optional(),
+  notes: z.unknown().optional(),
   missingFields: z.array(z.string().min(1)).default([]),
 });
 
@@ -386,6 +389,7 @@ export const validationResultSchema = z.object({
 
 export const researchReportSchema = z.object({
   bugSummary: z.string().min(1),
+  originalDetails: z.array(z.string().min(1)).default([]),
   observedFacts: z.array(z.string().min(1)).default([]),
   assumptions: z.array(z.string().min(1)).default([]),
   analysis: z.array(z.string().min(1)).default([]),

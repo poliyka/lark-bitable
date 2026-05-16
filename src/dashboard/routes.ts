@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { join } from "node:path";
 
 import { AuthStore } from "../config/auth-store.js";
+import { inspectDoctorHealth } from "../config/doctor-health.js";
 import { checkReadiness } from "../config/readiness.js";
 import type { Issue } from "../config/schema.js";
 import { ConfigStore } from "../config/store.js";
@@ -101,6 +104,28 @@ async function routeDashboardRequest(
     sendText(response, dashboardStyles(), "text/css; charset=utf-8");
     return;
   }
+  if (
+    request.method === "GET" &&
+    url.pathname === "/assets/vendor/flatpickr.min.js"
+  ) {
+    sendText(
+      response,
+      await readVendorAsset("flatpickr/dist/flatpickr.min.js"),
+      "text/javascript; charset=utf-8",
+    );
+    return;
+  }
+  if (
+    request.method === "GET" &&
+    url.pathname === "/assets/vendor/flatpickr.min.css"
+  ) {
+    sendText(
+      response,
+      await readVendorAsset("flatpickr/dist/flatpickr.min.css"),
+      "text/css; charset=utf-8",
+    );
+    return;
+  }
 
   if (url.pathname === "/api/status" && request.method === "GET") {
     if (context.dashboardTestFaults?.status === "error") {
@@ -120,11 +145,45 @@ async function routeDashboardRequest(
     }
     const configStore = new ConfigStore({ cwd: context.configCwd });
     const authStore = new AuthStore(context.authPath);
+    const doctor = await inspectDoctorHealth({
+      authPath: context.authPath,
+      cli: context.appVersion
+        ? { bin: "lark-bitable", version: context.appVersion }
+        : undefined,
+      configCwd: context.configCwd,
+    });
     const readiness = await checkReadiness("dashboard", {
       authStore,
-      bootstrapInstalled: true,
+      bootstrap: doctor.bootstrap,
       configStore,
     });
+    const doctorIssues = doctor.issues.filter(
+      (issue) =>
+        !readiness.partialIssues.some(
+          (readinessIssue) => readinessIssue.code === issue.code,
+        ) &&
+        !readiness.blockingIssues.some(
+          (readinessIssue) => readinessIssue.code === issue.code,
+        ),
+    );
+    const overviewReadiness = {
+      ...readiness,
+      partialIssues: [...readiness.partialIssues, ...doctorIssues],
+      remediationSteps: [
+        ...new Set([
+          ...readiness.remediationSteps,
+          ...doctorIssues
+            .map((issue) => issue.remediation)
+            .filter((value): value is string => Boolean(value)),
+        ]),
+      ],
+      status:
+        readiness.blockingIssues.length > 0
+          ? "blocked"
+          : readiness.partialIssues.length + doctorIssues.length > 0
+            ? "partial"
+            : "ready",
+    } as const;
     sendJson(
       response,
       dashboardOk({
@@ -134,15 +193,18 @@ async function routeDashboardRequest(
           context.binding.host === "127.0.0.1" ||
           context.binding.host === "localhost",
         nextSafeActions: [
-          readiness.nextSafeCommand ?? "lark-bitable dashboard",
+          overviewReadiness.remediationSteps[0] ??
+            overviewReadiness.nextSafeCommand ??
+            "lark-bitable dashboard",
         ],
         overview: {
           auth: await projectAuthState(authStore),
+          configuration: doctor.data,
           mode: {
-            active: readiness.activeMode ?? null,
-            source: readiness.modeSource,
+            active: doctor.mode.active ?? null,
+            source: doctor.mode.source,
           },
-          readiness,
+          readiness: overviewReadiness,
           source: configStore.getSource() ?? null,
         },
       }),
@@ -483,6 +545,10 @@ function sendText(
     "content-type": contentType,
   });
   response.end(body);
+}
+
+async function readVendorAsset(relativePath: string): Promise<string> {
+  return readFile(join(process.cwd(), "node_modules", relativePath), "utf8");
 }
 
 function sendJson(

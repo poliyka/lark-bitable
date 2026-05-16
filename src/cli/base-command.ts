@@ -1,5 +1,7 @@
 import { Command, Flags, type Interfaces } from "@oclif/core";
 import { randomUUID } from "node:crypto";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   appendAuditEntry,
@@ -15,6 +17,11 @@ import { deliverCommandLiveEvent } from "../dashboard/live-client.js";
 import { runtimePathFromAuditPath } from "../dashboard/live-runtime.js";
 import { isCliError } from "./errors.js";
 import { writeOutput, type CommandOutput } from "./output.js";
+
+const cliPackageRoot = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 
 export abstract class BaseCommand extends Command {
   private readonly commandStartedAt = new Date();
@@ -42,7 +49,7 @@ export abstract class BaseCommand extends Command {
       argv,
       opts ?? {
         devPlugins: false,
-        root: process.cwd(),
+        root: cliPackageRoot,
       },
     ) as Promise<ReturnType<T["run"]>>;
   }
@@ -77,7 +84,7 @@ export abstract class BaseCommand extends Command {
   protected async catch(error: Error): Promise<unknown> {
     if (isCliError(error)) {
       const output: CommandOutput = {
-        command: this.id ?? "unknown",
+        command: this.commandName(),
         status: error.status,
         issues: [
           {
@@ -101,7 +108,7 @@ export abstract class BaseCommand extends Command {
       throw error;
     }
     const output: CommandOutput = {
-      command: this.id ?? this.constructor.name.toLowerCase() ?? "unknown",
+      command: this.commandName(),
       status: "error",
       issues: [
         {
@@ -197,6 +204,14 @@ export abstract class BaseCommand extends Command {
   }
 
   private liveCommandName(): string {
+    return this.commandName();
+  }
+
+  private commandName(): string {
+    const configured = (
+      this.ctor as typeof BaseCommand & { commandName?: string }
+    ).commandName;
+    if (configured) return configured;
     const ctorName = this.constructor.name || "unknown";
     const derived = ctorName
       .replace(/Command$/, "")
@@ -204,7 +219,7 @@ export abstract class BaseCommand extends Command {
       .toLowerCase();
     const explicit = this.id?.trim().toLowerCase();
     if (explicit && !explicit.endsWith("command")) return explicit;
-    return derived;
+    return derived.replace(/-/g, " ");
   }
 
   private liveTrigger(): DashboardLiveTrigger {
