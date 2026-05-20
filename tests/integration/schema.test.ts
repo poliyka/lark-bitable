@@ -12,7 +12,7 @@ import { readAuditEntries } from "../fixtures/audit.js";
 import { fixtureRecords, fixtureSource } from "../fixtures/lark.js";
 
 describe("schema command", () => {
-  it("prints only numbered headers in human mode", async () => {
+  it("prints field metadata as a readable table in human mode", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "schema-human-"));
     const authPath = join(cwd, "auth.json");
     const auditPath = join(cwd, "logs", "audit.json");
@@ -59,11 +59,13 @@ describe("schema command", () => {
       stdoutSpy.mockRestore();
     }
 
-    expect(rendered).toContain("headers:");
-    expect(rendered).toContain("1. 標題");
-    expect(rendered).toContain("2. 狀態");
-    expect(rendered).not.toContain("observedValues");
-    expect(rendered).not.toContain('"mappings"');
+    expect(rendered).toContain("command: schema");
+    expect(rendered).toContain("data.fields:");
+    expect(rendered).toContain("┌");
+    expect(rendered).toContain("fieldName");
+    expect(rendered).toContain("標題");
+    expect(rendered).toContain("observedValues");
+    expect(rendered).not.toContain('data: {"fields"');
 
     const entries = await readAuditEntries(auditPath);
     expect(entries).toEqual([

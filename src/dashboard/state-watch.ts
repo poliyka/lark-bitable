@@ -1,4 +1,11 @@
-import { mkdirSync, watch, type FSWatcher } from "node:fs";
+import {
+  mkdirSync,
+  unwatchFile,
+  watch,
+  watchFile,
+  type FSWatcher,
+  type Stats,
+} from "node:fs";
 import { dirname, basename } from "node:path";
 
 import type { DashboardLiveServer } from "./live-server.js";
@@ -15,6 +22,7 @@ export interface DashboardStateWatcherInput {
 }
 
 const STATE_WATCH_DEBOUNCE_MS = 100;
+const STATE_WATCH_POLL_MS = 500;
 
 export function startDashboardStateWatcher(
   input: DashboardStateWatcherInput,
@@ -40,6 +48,10 @@ export function startDashboardStateWatcher(
   ]);
   const dirs = [...new Set([...watchedFiles.keys()].map(dirname))];
   const watchers: FSWatcher[] = [];
+  const pollListeners = new Map<
+    string,
+    { listener: (current: Stats, previous: Stats) => void }
+  >();
   const timers = new Map<string, NodeJS.Timeout>();
 
   for (const dir of dirs) {
@@ -59,8 +71,17 @@ export function startDashboardStateWatcher(
           }
         }
       });
+      watcher.on("error", () => {
+        try {
+          watcher.close();
+        } catch {
+          // Polling fallback remains active when native watching is unavailable.
+        }
+        startPollingFallback();
+      });
       watchers.push(watcher);
     } catch {
+      startPollingFallback();
       // Dashboard status still has fallback reconciliation in the browser.
     }
   }
@@ -69,7 +90,17 @@ export function startDashboardStateWatcher(
     stop() {
       for (const timer of timers.values()) clearTimeout(timer);
       timers.clear();
-      for (const watcher of watchers) watcher.close();
+      for (const [path, { listener }] of pollListeners.entries()) {
+        unwatchFile(path, listener);
+      }
+      pollListeners.clear();
+      for (const watcher of watchers) {
+        try {
+          watcher.close();
+        } catch {
+          // Already closed by an fs.watch error.
+        }
+      }
     },
   };
 
@@ -88,5 +119,27 @@ export function startDashboardStateWatcher(
     }, STATE_WATCH_DEBOUNCE_MS);
     timer.unref?.();
     timers.set(path, timer);
+  }
+
+  function startPollingFallback(): void {
+    if (pollListeners.size > 0) return;
+
+    for (const [path, target] of watchedFiles.entries()) {
+      const listener = (current: Stats, previous: Stats) => {
+        if (
+          current.mtimeMs === previous.mtimeMs &&
+          current.size === previous.size
+        ) {
+          return;
+        }
+        scheduleInvalidation(path, target);
+      };
+      watchFile(
+        path,
+        { interval: STATE_WATCH_POLL_MS, persistent: false },
+        listener,
+      );
+      pollListeners.set(path, { listener });
+    }
   }
 }

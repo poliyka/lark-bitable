@@ -24,7 +24,6 @@ export default class SchemaCommand extends BaseCommand {
 
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(SchemaCommand);
-    const json = Boolean(flags.json);
     const context = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
@@ -92,20 +91,7 @@ export default class SchemaCommand extends BaseCommand {
       },
     };
 
-    if (json) {
-      this.emit(output, true);
-      return output;
-    }
-
-    process.stdout.write("headers:\n");
-    if (fields.length === 0) {
-      process.stdout.write("(none)\n");
-    } else {
-      fields.forEach((field, index) => {
-        process.stdout.write(`${index + 1}. ${field.fieldName}\n`);
-      });
-    }
-    this.writeAudit(output);
+    this.emit(output, Boolean(flags.json));
     return output;
   }
 }

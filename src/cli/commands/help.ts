@@ -351,24 +351,20 @@ const helpEntries: Record<CommandName, HelpEntry> = {
     ],
     examples: ["lark-bitable schema", "lark-bitable schema --json"],
     humanUsage: [
-      "Run lark-bitable schema to print only numbered field headers for quick inspection.",
-      "Add --json when you need full schema metadata (types, options, mappings, and sampled values).",
+      "Run lark-bitable schema to print a readable field metadata table for quick inspection.",
+      "Add --json when automation needs machine-readable schema metadata instead of formatted tables and sections.",
     ],
     inputs: [
-      "no required input for header-only view",
-      "optional positive integer sample limit (used by --json)",
+      "no required input for the human-readable schema table",
+      "optional positive integer sample limit",
     ],
     nextSteps: [
       "Use mappings and observed status values to choose exact filter or triage criteria.",
       "Run lark-bitable list --limit 20 --json or lark-bitable get <record-id> --json for record data.",
     ],
     outputs: [
-      "without --json: numbered field headers only",
-      "with --json: field names",
-      "with --json: field types and UI types when available",
-      "with --json: single/multi select options when available",
-      "with --json: configured mappings",
-      "with --json: sampled non-empty counts and observed values",
+      "without --json: readable field metadata table plus mappings, sample counts, and next commands",
+      "with --json: machine-readable field names, field metadata, mappings, sample counts, and observed values",
     ],
     purpose:
       "Inspect configured table schema and current field mappings without guessing table shape.",

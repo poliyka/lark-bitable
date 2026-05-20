@@ -132,6 +132,20 @@ describe("command-specific help", () => {
     expect(JSON.stringify(global.data)).toContain("lark-bitable dashboard");
   });
 
+  it("documents schema human tables separately from machine-readable JSON", async () => {
+    const auditPath = await createAuditPath();
+    const schema = await HelpCommand.run([
+      "schema",
+      "--json",
+      "--audit-path",
+      auditPath,
+    ]);
+
+    expect(schema.data?.rendered).toContain("readable field metadata table");
+    expect(schema.data?.rendered).toContain("machine-readable schema metadata");
+    expect(schema.data?.rendered).not.toContain("numbered field headers");
+  });
+
   it("rejects unknown command-specific help with available command names", async () => {
     const auditPath = await createAuditPath();
 
