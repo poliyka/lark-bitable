@@ -13,7 +13,7 @@
 
 ### Fixed
 
-- Fixed dashboard state watching so config/auth invalidation still works when native `fs.watch` is unavailable or errors, using a polling fallback that is cleaned up on watcher shutdown.
+- Fixed dashboard state watching so config/auth invalidation still works when native `fs.watch` is unavailable, errors, or misses a delete/change event, using a polling companion that is cleaned up on watcher shutdown.
 - Fixed dashboard audit detail refresh behavior so a selected or pending audit row remains selected when live updates refresh the audit list.
 - Fixed dashboard audit detail error handling so unavailable selected entries stay visible with a clear remediation instead of silently jumping to another audit entry.
 - Avoided dumping long report or markdown strings into human CLI output by replacing them with compact omitted-length summaries.

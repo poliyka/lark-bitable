@@ -82,17 +82,39 @@ describe("dashboard state watcher", () => {
     expect(fsMock.unwatchFile).toHaveBeenCalledWith(configPath, listener);
   });
 
-  it("does not poll state files while native file watching is active", async () => {
+  it("keeps polling state files while native file watching is active", async () => {
     const { startDashboardStateWatcher } =
       await import("../../src/dashboard/state-watch.js");
+    const liveServer = { invalidateState: vi.fn() };
+    const configPath = "/tmp/lark-bitable/config.json";
+    const authPath = "/tmp/lark-bitable/auth.json";
 
-    startDashboardStateWatcher({
-      authPath: "/tmp/lark-bitable/auth.json",
-      configPath: "/tmp/lark-bitable/config.json",
-      liveServer: { invalidateState: vi.fn() },
+    const watcher = startDashboardStateWatcher({
+      authPath,
+      configPath,
+      liveServer,
+    });
+    const configWatch = fsMock.watchFile.mock.calls.find(
+      ([path]) => path === configPath,
+    );
+
+    expect(configWatch).toBeDefined();
+
+    const listener = configWatch?.[2] as (
+      current: Stats,
+      previous: Stats,
+    ) => void;
+    listener(stats({ mtimeMs: 0, size: 0 }), stats({ mtimeMs: 1, size: 32 }));
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(liveServer.invalidateState).toHaveBeenCalledWith({
+      reason: "config.json changed on disk",
+      surfaces: ["shell", "overview", "config", "audit"],
     });
 
-    expect(fsMock.watchFile).not.toHaveBeenCalled();
+    watcher.stop();
+
+    expect(fsMock.unwatchFile).toHaveBeenCalledWith(configPath, listener);
   });
 });
 

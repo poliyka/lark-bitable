@@ -77,14 +77,15 @@ export function startDashboardStateWatcher(
         } catch {
           // Polling fallback remains active when native watching is unavailable.
         }
-        startPollingFallback();
+        startPollingCompanion();
       });
       watchers.push(watcher);
     } catch {
-      startPollingFallback();
+      startPollingCompanion();
       // Dashboard status still has fallback reconciliation in the browser.
     }
   }
+  startPollingCompanion();
 
   return {
     stop() {
@@ -121,7 +122,7 @@ export function startDashboardStateWatcher(
     timers.set(path, timer);
   }
 
-  function startPollingFallback(): void {
+  function startPollingCompanion(): void {
     if (pollListeners.size > 0) return;
 
     for (const [path, target] of watchedFiles.entries()) {
