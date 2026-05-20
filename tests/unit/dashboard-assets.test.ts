@@ -525,7 +525,7 @@ function createLiveDashboardClientHarness(
   expect(initIndex).toBeGreaterThan(0);
   const testableScript =
     script.slice(0, initIndex) +
-    "globalThis.__dashboardTestHooks={state,handleLiveEnvelope,connectLiveUpdates};";
+    "globalThis.__dashboardTestHooks={state,handleLiveEnvelope,connectLiveUpdates,loadAuditDetail};";
   const context = createContext({
     FormData: class {
       constructor(
@@ -550,6 +550,7 @@ function createLiveDashboardClientHarness(
       __dashboardTestHooks: {
         connectLiveUpdates: () => void;
         handleLiveEnvelope: (envelope: unknown) => Promise<void>;
+        loadAuditDetail: (id: string) => Promise<void>;
         state: {
           auditDetail: { id?: string } | null;
           live: {
@@ -557,6 +558,7 @@ function createLiveDashboardClientHarness(
           };
           page: string;
           researchDetail: unknown;
+          selectedAuditId: string | null;
           selectedReportId: string | null;
         };
       };
@@ -2071,6 +2073,112 @@ describe("dashboard design assets", () => {
     expect(document.getElementById("audit-detail").innerHTML).toContain(
       "audit-detail-unavailable",
     );
+  });
+
+  it("keeps a pending audit row selection stable when live refresh arrives before detail loads", async () => {
+    const pendingDetail = createDeferred<unknown>();
+    const requestedPaths: string[] = [];
+    let selectedDetailRequests = 0;
+    const entries = [
+      {
+        command: "valid",
+        durationMs: 12,
+        id: "audit-1",
+        startedAt: "2026-05-15T00:00:00.000Z",
+        status: "partial",
+      },
+      {
+        command: "schema",
+        durationMs: 7,
+        id: "audit-2",
+        startedAt: "2026-05-15T00:00:01.000Z",
+        status: "ok",
+      },
+    ];
+    const { document, hooks } = createLiveDashboardClientHarness(
+      async (path) => {
+        requestedPaths.push(path);
+        if (path === "/api/audit/audit-2") {
+          selectedDetailRequests += 1;
+          if (selectedDetailRequests === 1) return pendingDetail.promise;
+          return jsonResponse({
+            status: "ok",
+            data: {
+              entry: {
+                command: "schema",
+                id: "audit-2",
+                startedAt: "2026-05-15T00:00:01.000Z",
+                status: "ok",
+              },
+            },
+          });
+        }
+        if (path === "/api/audit?") {
+          return jsonResponse({
+            status: "ok",
+            data: { entries },
+          });
+        }
+        if (path === "/api/audit/audit-1") {
+          return jsonResponse({
+            status: "ok",
+            data: {
+              entry: {
+                command: "valid",
+                id: "audit-1",
+                startedAt: "2026-05-15T00:00:00.000Z",
+                status: "partial",
+              },
+            },
+          });
+        }
+        throw new Error(`unexpected path: ${path}`);
+      },
+    );
+    const firstRow = new TestElement();
+    firstRow.dataset.id = "audit-1";
+    const secondRow = new TestElement();
+    secondRow.dataset.id = "audit-2";
+    document.auditRows.push(firstRow, secondRow);
+
+    hooks.state.page = "audit";
+    const pendingSelection = hooks.loadAuditDetail("audit-2");
+    await flushPromises();
+
+    await hooks.handleLiveEnvelope({
+      createdAt: "2026-05-15T00:00:05.000Z",
+      dataSource: "file-backed",
+      eventId: "evt_audit",
+      payload: {
+        reason: "audit updated",
+        resources: ["/api/audit"],
+        surfaces: ["audit"],
+      },
+      sequence: 7,
+      type: "state.invalidate",
+    });
+
+    expect(requestedPaths).not.toContain("/api/audit/audit-1");
+    expect(hooks.state.selectedAuditId).toBe("audit-2");
+    expect(document.getElementById("audit-entries").innerHTML).toContain(
+      'class="audit-row selected" data-id="audit-2"',
+    );
+
+    pendingDetail.resolve(
+      jsonResponse({
+        status: "ok",
+        data: {
+          entry: {
+            command: "schema",
+            id: "audit-2",
+            startedAt: "2026-05-15T00:00:01.000Z",
+            status: "ok",
+          },
+        },
+      }),
+    );
+    await pendingSelection;
+    expect(hooks.state.auditDetail).toMatchObject({ id: "audit-2" });
   });
 
   it("keeps an unavailable research selection visible instead of jumping to another report during live refresh", async () => {
