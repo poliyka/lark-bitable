@@ -1,5 +1,35 @@
 # Change Log
 
+## 1.3.0 - 2026-05-20
+
+### Changed
+
+- Bumped npm package version from `1.2.0` to `1.3.0`.
+- Reworked non-`--json` CLI output so command `data` renders as readable sections and tables instead of one-line JSON blobs.
+- Added table-backed human rendering for common output shapes, including records, search matches, schema fields, candidates, field changes, issues, and evidence.
+- Updated `schema` human output to use the shared renderer and show field metadata, mappings, sample counts, and next commands while preserving the machine-readable `--json` contract.
+- Added `cli-table3` for terminal table formatting and updated command-specific help to distinguish readable human output from machine-readable JSON.
+- Expanded regression coverage for human output formatting, schema output, command help, dashboard state watching, and live dashboard audit refresh behavior.
+
+### Fixed
+
+- Fixed dashboard state watching so config/auth invalidation still works when native `fs.watch` is unavailable or errors, using a polling fallback that is cleaned up on watcher shutdown.
+- Fixed dashboard audit detail refresh behavior so a selected or pending audit row remains selected when live updates refresh the audit list.
+- Fixed dashboard audit detail error handling so unavailable selected entries stay visible with a clear remediation instead of silently jumping to another audit entry.
+- Avoided dumping long report or markdown strings into human CLI output by replacing them with compact omitted-length summaries.
+
+### Verification
+
+Run release validation:
+
+```bash
+pnpm format:check
+pnpm test
+pnpm build
+pnpm quickstart:validate
+git diff --check
+```
+
 ## 1.2.0 - 2026-05-16
 
 ### Changed
