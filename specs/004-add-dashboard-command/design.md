@@ -117,8 +117,8 @@ whether it is live, file-backed, missing, partial, or failed.
 ### Config `data-page="config"`
 
 Shows editable source URL, source display name, workflow mode, Lark app
-settings, redirect URI, callback port, scopes, field mappings, actionable
-status, and default owner. App secrets display only stored/missing/provided
+settings, redirect URI, callback port, field mappings, actionable status, and
+default owner. App secrets display only stored/missing/provided
 state. Saving config refreshes readiness without restarting the dashboard.
 
 ### Auth `data-page="auth"`

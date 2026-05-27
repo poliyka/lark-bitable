@@ -55,7 +55,6 @@ export const configDraftFixture: ConfigDraftInput = {
   larkDomain: "larksuite.com",
   redirectUri: "http://127.0.0.1:14543/callback",
   callbackPort: 14543,
-  scopes: ["bitable:app:readonly"],
   statusField: "狀態",
   priorityField: "優先級",
   titleField: "標題",

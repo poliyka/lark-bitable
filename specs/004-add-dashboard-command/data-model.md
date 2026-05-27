@@ -71,7 +71,6 @@ Fields:
 - `larkDomain`: Lark domain.
 - `redirectUri`: OAuth redirect URI.
 - `callbackPort`: Local callback port used by Lark login.
-- `scopes`: Requested Lark auth scopes.
 - `statusField`: Optional status field mapping.
 - `priorityField`: Optional priority field mapping.
 - `titleField`: Optional title field mapping.

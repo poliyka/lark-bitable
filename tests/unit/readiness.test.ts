@@ -110,7 +110,6 @@ describe("checkReadiness", () => {
       appSecret: "cli-secret",
       callbackPort: 14543,
       domain: "larksuite.com",
-      scopes: ["bitable:app:readonly"],
       updatedAt: "2026-05-11T08:00:00.000Z",
     });
 

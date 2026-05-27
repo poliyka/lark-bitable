@@ -354,7 +354,6 @@ describe("configure command", () => {
       callbackPort: 15432,
       domain: "feishu.cn",
       redirectUri: "http://127.0.0.1:15432/callback",
-      scopes: ["bitable:app:readonly"],
       updatedAt: new Date().toISOString(),
     });
 

@@ -418,7 +418,6 @@ describe("dashboard live updates", () => {
       callbackPort: 14543,
       domain: "larksuite.com",
       redirectUri: "http://127.0.0.1:14543/callback",
-      scopes: ["bitable:app:readonly"],
       updatedAt: "2026-05-15T00:00:00.000Z",
     });
     await new AuthStore(paths.authPath).write({
@@ -511,7 +510,6 @@ describe("dashboard live updates", () => {
             callbackPort: 14543,
             domain: "larksuite.com",
             redirectUri: "http://127.0.0.1:14543/callback",
-            scopes: ["bitable:app:readonly"],
             updatedAt: "2026-05-15T00:00:00.000Z",
           },
         },

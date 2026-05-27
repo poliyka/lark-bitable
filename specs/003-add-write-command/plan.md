@@ -37,9 +37,9 @@ tests. No new runtime dependency is planned.
 **Storage**: Existing `~/.lark-bitable/config.json` for source/Lark app config
 and `~/.lark-bitable/auth.json` for auth. Write operations, previews, and
 results are transient command output and are not stored by default. Existing
-configured OAuth scopes may need to include a write-capable Bitable permission
-for committed writes; missing write permission is reported as readiness or
-command failure, not as a config migration blocker.
+auth scopes may need to include a write-capable Bitable permission for
+committed writes; missing write permission is reported as readiness or command
+failure, not as a config migration blocker.
 **Testing**: Vitest unit and integration tests using fixtures and mocked Lark
 SDK transports. Live write validation remains manual quickstart because it
 requires user credentials, a writable test Base, app permissions, and table

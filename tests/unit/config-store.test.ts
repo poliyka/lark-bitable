@@ -124,7 +124,6 @@ describe("ConfigStore", () => {
       callbackPort: 14543,
       domain: "larksuite.com",
       redirectUri: "http://127.0.0.1:14543/callback",
-      scopes: ["bitable:app:readonly"],
       updatedAt: "2026-05-08T04:00:00.000Z",
     });
 
@@ -134,10 +133,31 @@ describe("ConfigStore", () => {
       callbackPort: 14543,
       domain: "larksuite.com",
       redirectUri: "http://127.0.0.1:14543/callback",
-      scopes: ["bitable:app:readonly"],
     });
 
     store.clearLarkApp();
     expect(store.getLarkApp()).toBeUndefined();
+  });
+
+  it("does not persist OAuth scopes in Lark app configuration", async () => {
+    const store = new ConfigStore({
+      cwd: await mkdtemp(join(tmpdir(), "lark-config-")),
+      projectName: "test-config",
+    });
+
+    store.setLarkApp({
+      appId: "cli-app",
+      appSecret: "cli-secret",
+      callbackPort: 14543,
+      domain: "larksuite.com",
+      redirectUri: "http://127.0.0.1:14543/callback",
+      scopes: ["bitable:app"],
+      updatedAt: "2026-05-08T04:00:00.000Z",
+    } as never);
+
+    expect(store.getLarkApp()).not.toHaveProperty("scopes");
+    expect(
+      JSON.parse(await readFile(store.path, "utf8")).larkApp,
+    ).not.toHaveProperty("scopes");
   });
 });

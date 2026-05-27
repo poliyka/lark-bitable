@@ -7,7 +7,7 @@ import {
   authStatusFor,
   createAuthSession,
   createSsoAuthorizationUrl,
-  exchangeAuthorizationCode,
+  exchangeAuthorizationCode as exchangeLarkAuthorizationCode,
 } from "../lark/auth.js";
 import {
   createLocalSsoServer,
@@ -65,6 +65,7 @@ export async function projectAuthState(authStore: AuthStore) {
 export function createDashboardAuthService(input: {
   authStore: AuthStore;
   configStore: ConfigStore;
+  exchangeAuthorizationCode?: typeof exchangeLarkAuthorizationCode;
 }): DashboardAuthService {
   return {
     async loginStatus(flowId) {
@@ -128,6 +129,8 @@ export function createDashboardAuthService(input: {
             return undefined;
           })
         : undefined;
+      const exchangeAuthorizationCode =
+        input.exchangeAuthorizationCode ?? exchangeLarkAuthorizationCode;
       const redirectUri =
         localSso?.redirectUri ??
         app.redirectUri ??
@@ -136,7 +139,7 @@ export function createDashboardAuthService(input: {
         appId: app.appId,
         domain: app.domain,
         redirectUri,
-        scopes: options.scopes ?? app.scopes,
+        scopes: options.scopes,
         state: flowId,
       });
       const flow: LoginFlowView = {
@@ -180,7 +183,7 @@ export function createDashboardAuthService(input: {
                 expiresAt: exchanged.expiresAt,
                 refreshExpiresAt: exchanged.refreshExpiresAt,
                 refreshToken: exchanged.refreshToken,
-                scopes: exchanged.scopes ?? app.scopes,
+                scopes: exchanged.scopes ?? options.scopes,
                 storagePath: input.authStore.path,
               }),
             );

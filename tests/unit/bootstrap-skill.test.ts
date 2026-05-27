@@ -32,7 +32,7 @@ describe("bootstrap skill contract", () => {
       "Query commands support `--limit <positive-integer>`",
     );
     expect(skill).toContain("refresh before starting a browser login");
-    expect(skill).toContain("Inspect the stored scopes");
+    expect(skill).toContain("Inspect the stored auth scopes");
     expect(skill).toContain('lark-bitable lark --login --scope="<scope>"');
     expect(skill).toContain("run `lark-bitable get <record-id>`");
     expect(skill).toContain("media download <file-token>");

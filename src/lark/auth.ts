@@ -375,7 +375,7 @@ export function createAuthSession(input: LoginInput): LarkAuthSession {
     domain: input.domain,
     accountLabel: input.accountLabel,
     appIdentity: input.appIdentity,
-    scopes: input.scopes ?? ["bitable:app:readonly"],
+    scopes: input.scopes ?? [],
     accessToken: input.accessToken,
     refreshToken: input.refreshToken,
     expiresAt:

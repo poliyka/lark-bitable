@@ -135,11 +135,11 @@ version conflicts, or inconclusive live access.
   app credentials exist; the CLI can refresh with the stored refresh token and
   app secret. Only fall back to `lark-bitable lark --login` when refresh is not
   possible or still leaves auth unusable.
-- Inspect the stored scopes before fallback login. Check the current auth scopes
-  in `~/.lark-bitable/auth.json` and the configured `larkApp.scopes` in
-  `~/.lark-bitable/config.json`, then preserve the required scope set when
-  logging in again. Use `lark-bitable lark --login --scope="<scope>"` for each
-  required scope; for write-capable Bitable access this normally means
+- Inspect the stored auth scopes before fallback login. Check the current auth
+  scopes in `~/.lark-bitable/auth.json`, then request the required scope set
+  explicitly when logging in again. Use
+  `lark-bitable lark --login --scope="<scope>"` for each required scope; for
+  write-capable Bitable access this normally means
   `lark-bitable lark --login --scope="bitable:app"`. Do not replace an expired
   write-capable token with a fresh readonly token.
 - For committed Bitable writes, the user access token must be requested with

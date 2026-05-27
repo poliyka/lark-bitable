@@ -51,7 +51,8 @@ Each scenario must end in exactly one status:
 - `D-CONFIG-10`: Field discovery or sync updates every mapping control with available fields.
 - `D-CONFIG-11`: Changed mappings save and synchronize to Overview.
 - `D-CONFIG-12`: Blocked field discovery reports blocked or missing dependency honestly.
-- `D-CONFIG-13`: Scopes input normalizes to individual scope values.
+- `D-CONFIG-13`: Config page does not expose OAuth scope storage; requested
+  scopes are controlled only from the Lark Login page.
 - `D-CONFIG-14`: Callback port validation handles invalid values clearly.
 - `D-CONFIG-15`: Default owner and actionable status save behavior matches visible form values.
 

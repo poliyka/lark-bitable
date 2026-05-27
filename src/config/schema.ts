@@ -112,7 +112,6 @@ export const larkAppConfigSchema = z.object({
   callbackPort: z.number().int().min(0).max(65535).default(14543),
   domain: z.string().min(1).default("larksuite.com"),
   redirectUri: z.string().url().optional(),
-  scopes: z.array(z.string().min(1)).default(["bitable:app:readonly"]),
   updatedAt: isoTimestampSchema,
 });
 

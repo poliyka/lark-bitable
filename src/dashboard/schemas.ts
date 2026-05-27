@@ -57,7 +57,6 @@ export const configDraftInputSchema = z.object({
   larkDomain: z.string().min(1).default("larksuite.com"),
   redirectUri: z.string().url().optional(),
   callbackPort: z.number().int().min(0).max(65535).default(14543),
-  scopes: z.array(z.string().min(1)).default(["bitable:app:readonly"]),
   statusField: z.string().min(1).optional(),
   priorityField: z.string().min(1).optional(),
   titleField: z.string().min(1).optional(),

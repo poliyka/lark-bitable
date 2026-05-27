@@ -169,8 +169,7 @@ export default class LarkCommand extends BaseCommand {
       flagDomain && flagDomain !== "larksuite.com"
         ? flagDomain
         : (configured?.domain ?? flagDomain ?? "larksuite.com");
-    const scopes =
-      (flags.scope as string[] | undefined) ?? configured?.scopes ?? undefined;
+    const scopes = flags.scope as string[] | undefined;
     if (mode === "sso" && !appId) {
       throw new CliError({
         code: "missing-sso-config",
@@ -254,7 +253,7 @@ export default class LarkCommand extends BaseCommand {
       domain,
       accountLabel: flags.account as string | undefined,
       appIdentity: appId,
-      scopes: scopes ?? exchanged.scopes,
+      scopes: exchanged.scopes ?? scopes,
       expiresAt: (flags.expiresAt as string | undefined) ?? exchanged.expiresAt,
       refreshExpiresAt: exchanged.refreshExpiresAt,
     });

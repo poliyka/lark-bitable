@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
 
 import {
   loadConfigDraft,
@@ -22,13 +23,13 @@ describe("dashboard config service", () => {
       callbackPort: 14543,
       domain: "larksuite.com",
       redirectUri: "http://127.0.0.1:14543/callback",
-      scopes: ["bitable:app:readonly"],
       updatedAt: "2026-05-14T00:00:00.000Z",
     });
 
     const draft = await loadConfigDraft({ configStore: store });
 
     expect(draft.draft.larkAppSecretState).toBe("stored-redacted");
+    expect(draft.draft).not.toHaveProperty("scopes");
     expect(JSON.stringify(draft)).not.toContain("stored-secret");
   });
 
@@ -40,7 +41,6 @@ describe("dashboard config service", () => {
       appSecret: "stored-secret",
       callbackPort: 14543,
       domain: "larksuite.com",
-      scopes: ["bitable:app:readonly"],
       updatedAt: "2026-05-14T00:00:00.000Z",
     });
 
@@ -55,7 +55,12 @@ describe("dashboard config service", () => {
 
     expect(store.getSource()?.tableId).toBe(fixtureSource.tableId);
     expect(store.getLarkApp()?.appSecret).toBe("stored-secret");
+    expect(store.getLarkApp()).not.toHaveProperty("scopes");
+    expect(
+      JSON.parse(await readFile(store.path, "utf8")).larkApp,
+    ).not.toHaveProperty("scopes");
     expect(saved.readiness.workflow).toBe("dashboard");
+    expect(saved.draft).not.toHaveProperty("scopes");
     expect(JSON.stringify(saved)).not.toContain("stored-secret");
   });
 

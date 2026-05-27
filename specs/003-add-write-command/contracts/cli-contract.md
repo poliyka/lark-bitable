@@ -170,7 +170,8 @@ requirements discoverable.
 **Behavior**:
 
 - Existing configure inputs remain valid.
-- Existing `--lark-scope` remains the mechanism for custom OAuth scopes.
+- `lark-bitable lark --login --scope <scope>` is the mechanism for requesting
+  custom OAuth scopes.
 - Documentation/help should instruct users to request a write-capable Bitable
   permission when they intend to commit writes.
 - Existing read-only defaults remain valid for users who only need read,

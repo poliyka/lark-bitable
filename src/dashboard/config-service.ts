@@ -40,7 +40,6 @@ export async function loadConfigDraft(input: {
       larkDomain: larkApp?.domain ?? "larksuite.com",
       redirectUri: larkApp?.redirectUri,
       callbackPort: larkApp?.callbackPort ?? 14543,
-      scopes: larkApp?.scopes ?? ["bitable:app:readonly"],
       statusField: source?.statusField,
       priorityField: source?.priorityField,
       titleField: source?.fieldAliases.title,
@@ -106,7 +105,6 @@ export async function saveConfigDraft(input: {
         callbackPort: draft.callbackPort,
         domain: draft.larkDomain,
         redirectUri: draft.redirectUri,
-        scopes: draft.scopes,
         updatedAt: new Date().toISOString(),
       }),
     );

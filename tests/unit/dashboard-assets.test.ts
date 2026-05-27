@@ -718,7 +718,6 @@ describe("dashboard design assets", () => {
       "redirectUri",
       "callbackPort",
       "larkDomain",
-      "scopes",
       "statusField",
       "actionableStatus",
       "priorityField",
@@ -761,10 +760,8 @@ describe("dashboard design assets", () => {
     const html = dashboardHtml();
     const script = dashboardAppScript();
 
-    expect(html).toContain('placeholder="bitable:app:readonly"');
-    expect(html).not.toContain(
-      'placeholder="bitable:app:readonly bitable:app"',
-    );
+    expect(html).not.toContain('id="scopes"');
+    expect(html).not.toContain('name="scopes"');
     expect(script).toContain(
       "const AUTH_SCOPE_PRESETS={readonly:['bitable:app:readonly'],writable:['bitable:app']};",
     );
@@ -1598,7 +1595,7 @@ describe("dashboard design assets", () => {
     );
   });
 
-  it("uses configured auth scopes only to choose the matching preset preview", async () => {
+  it("keeps the selected auth scope preset when auth state reloads", async () => {
     const { document, hooks } = createAuthDashboardClientHarness(
       async (path) => {
         if (path === "/api/status") {
@@ -1632,35 +1629,27 @@ describe("dashboard design assets", () => {
             },
           });
         }
-        if (path === "/api/config") {
-          return jsonResponse({
-            status: "ok",
-            data: {
-              draft: {
-                scopes: ["bitable:app:readonly", "bitable:app"],
-              },
-            },
-          });
-        }
         throw new Error(`unexpected path: ${path}`);
       },
     );
 
+    hooks.bindEvents();
+    await document.getElementById("auth-scope-writable").click();
     await hooks.loadAuth();
 
     expect(document.getElementById("auth-scope-list").innerHTML).toContain(
-      "bitable:app:readonly",
+      "bitable:app",
     );
     expect(
       document
         .getElementById("auth-scope-readonly")
         .getAttribute("aria-pressed"),
-    ).toBe("true");
+    ).toBe("false");
     expect(
       document
         .getElementById("auth-scope-writable")
         .getAttribute("aria-pressed"),
-    ).toBe("false");
+    ).toBe("true");
   });
 
   it("runs dashboard logout from the auth page button and shows completion", async () => {

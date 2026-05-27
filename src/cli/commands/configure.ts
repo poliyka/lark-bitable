@@ -77,10 +77,6 @@ export default class ConfigureCommand extends BaseCommand {
         "Registered Lark OAuth redirect URI used by browser-based SSO login.",
       env: "LARK_REDIRECT_URI",
     }),
-    "lark-scope": Flags.string({
-      description: "Requested Lark OAuth scope.",
-      multiple: true,
-    }),
     "actionable-status": Flags.string({
       description: "Status value treated as actionable.",
     }),
@@ -329,9 +325,6 @@ export default class ConfigureCommand extends BaseCommand {
               callbackPort,
               domain: larkDomain,
               redirectUri: larkRedirectUri,
-              scopes: flags["lark-scope"]?.length
-                ? flags["lark-scope"]
-                : (previousLarkApp?.scopes ?? ["bitable:app:readonly"]),
               updatedAt: new Date().toISOString(),
             }),
           )
@@ -376,7 +369,6 @@ export default class ConfigureCommand extends BaseCommand {
               callbackPort: larkApp.callbackPort,
               domain: larkApp.domain,
               redirectUri: larkApp.redirectUri,
-              scopes: larkApp.scopes,
               secretState: "stored",
             }
           : null,
