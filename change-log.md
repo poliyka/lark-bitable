@@ -1,5 +1,33 @@
 # Change Log
 
+## 2.0.0 - 2026-05-27
+
+### Changed
+
+- Bumped npm package version from `1.3.0` to `2.0.0`.
+- Removed OAuth scope persistence from `config.json`; Lark app configuration now stores only app credentials, domain, redirect URI, and callback settings.
+- Moved dashboard writable/read-only scope selection fully into the Lark Login flow, with successful login scopes recorded in `auth.json`.
+- Removed the legacy `configure --lark-scope` option; CLI writable OAuth login should now be requested with `lark-bitable lark --login --scope="bitable:app"`.
+- Updated bootstrap guidance and dashboard/spec documentation so auth scopes are inspected from auth state instead of Lark app config.
+
+### Fixed
+
+- Fixed dashboard logout/login behavior where a writable login could be reset back to read-only by stale configured scopes.
+- Fixed dashboard auth session creation so requested login scopes are stored when Lark omits scopes from the token exchange response.
+- Stopped creating a synthetic read-only auth scope when no OAuth scope is present.
+
+### Verification
+
+Run release validation:
+
+```bash
+pnpm format:check
+pnpm test
+pnpm build
+pnpm quickstart:validate
+git diff --check
+```
+
 ## 1.3.0 - 2026-05-20
 
 ### Changed
