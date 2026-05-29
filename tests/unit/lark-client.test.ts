@@ -1,3 +1,7 @@
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -16,6 +20,9 @@ describe("LarkClient", () => {
       },
       async downloadMedia(input) {
         return { outPath: input.outPath };
+      },
+      async uploadMedia(input) {
+        return { ...input, fileToken: "boxcnuploaded" };
       },
       async getRecord() {
         return { record_id: "recA", fields: { title: "A" } };
@@ -71,6 +78,9 @@ describe("LarkClient", () => {
       },
       async downloadMedia(input) {
         return { outPath: input.outPath };
+      },
+      async uploadMedia(input) {
+        return { ...input, fileToken: "boxcnuploaded" };
       },
       async getRecord() {
         return { record_id: "recA", fields: {} };
@@ -244,6 +254,64 @@ describe("LarkClient", () => {
     expect(JSON.stringify(requests)).toContain("Bearer access-secret");
     expect(JSON.stringify(requests)).toContain("bytes=0-1024");
     expect(JSON.stringify(requests)).toContain("extra-value");
+  });
+
+  it("uploads local media to a Bitable parent through the official SDK", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "lark-client-upload-"));
+    const filePath = join(cwd, "fixed.png");
+    await writeFile(filePath, "binary", "utf8");
+    const requests: Array<{
+      options: unknown;
+      payload: {
+        data: {
+          file?: unknown;
+          file_name?: string;
+          parent_node?: string;
+          parent_type?: string;
+          size?: number;
+        };
+      };
+    }> = [];
+    const sdk = {
+      drive: {
+        media: {
+          async uploadAll(
+            payload: (typeof requests)[number]["payload"],
+            options: unknown,
+          ) {
+            requests.push({ payload, options });
+            return { file_token: "boxcnuploaded" };
+          },
+        },
+      },
+    };
+
+    const result = await new LarkClient(
+      createLarkSdkTransport(readyAuthSession, { sdk: sdk as never }),
+    ).uploadMedia({
+      fileName: "fixed.png",
+      filePath,
+      parentNode: fixtureSource.appToken,
+      parentType: "bitable_image",
+      size: 6,
+    });
+
+    expect(result).toEqual({
+      fileName: "fixed.png",
+      filePath,
+      fileToken: "boxcnuploaded",
+      parentNode: fixtureSource.appToken,
+      parentType: "bitable_image",
+      size: 6,
+    });
+    expect(requests[0].payload.data).toMatchObject({
+      file_name: "fixed.png",
+      parent_node: fixtureSource.appToken,
+      parent_type: "bitable_image",
+      size: 6,
+    });
+    expect(requests[0].payload.data.file).toBeDefined();
+    expect(JSON.stringify(requests)).toContain("Bearer access-secret");
   });
 
   it("normalizes stored Lark domains before constructing the official SDK", async () => {

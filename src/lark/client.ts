@@ -1,3 +1,5 @@
+import { createReadStream } from "node:fs";
+
 import type {
   BitableRecord,
   BitableSource,
@@ -21,6 +23,7 @@ export interface LarkClientTransport {
     outPath: string;
     range?: string;
   }): Promise<DownloadResult>;
+  uploadMedia(input: UploadMediaInput): Promise<UploadMediaResult>;
   getRecord(input: {
     appToken: string;
     tableId: string;
@@ -59,6 +62,19 @@ export interface DownloadResult {
   contentDisposition?: string;
   contentType?: string;
   outPath: string;
+}
+
+export interface UploadMediaInput {
+  extra?: string;
+  fileName: string;
+  filePath: string;
+  parentNode: string;
+  parentType: "bitable_file" | "bitable_image";
+  size: number;
+}
+
+export interface UploadMediaResult extends UploadMediaInput {
+  fileToken: string;
 }
 
 export interface LarkSdkTransportOptions {
@@ -189,6 +205,26 @@ export interface LarkBitableSdk {
         headers?: Record<string, string | string[] | undefined>;
         writeFile(filePath: string): Promise<unknown>;
       }>;
+      uploadAll(
+        payload: {
+          data: {
+            extra?: string;
+            file: NodeJS.ReadableStream;
+            file_name: string;
+            parent_node: string;
+            parent_type: "bitable_file" | "bitable_image";
+            size: number;
+          };
+        },
+        options?: unknown,
+      ): Promise<{
+        code?: number;
+        data?: {
+          file_token?: string;
+        };
+        file_token?: string;
+        msg?: string;
+      } | null>;
     };
   };
 }
@@ -299,6 +335,35 @@ export function createLarkSdkTransport(
         ),
         contentType: headerValue(response.headers?.["content-type"]),
         outPath: input.outPath,
+      };
+    },
+    async uploadMedia(input) {
+      const response = await (
+        await sdk()
+      ).drive?.media?.uploadAll(
+        {
+          data: {
+            ...(input.extra ? { extra: input.extra } : {}),
+            file: createReadStream(input.filePath),
+            file_name: input.fileName,
+            parent_node: input.parentNode,
+            parent_type: input.parentType,
+            size: input.size,
+          },
+        },
+        tokenOptions,
+      );
+      if (!response) {
+        throw new Error("Lark media upload is unavailable in the SDK");
+      }
+      assertOk(response, "media upload");
+      const fileToken = response.file_token ?? response.data?.file_token;
+      if (!fileToken) {
+        throw new Error("Lark media upload did not return a file_token");
+      }
+      return {
+        ...input,
+        fileToken,
       };
     },
     async getRecord(input) {
@@ -430,6 +495,10 @@ export class LarkClient {
     range?: string;
   }): Promise<DownloadResult> {
     return this.transport.downloadMedia(input);
+  }
+
+  async uploadMedia(input: UploadMediaInput): Promise<UploadMediaResult> {
+    return this.transport.uploadMedia(input);
   }
 
   async listFields(source: BitableSource) {

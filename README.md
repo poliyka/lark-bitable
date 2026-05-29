@@ -81,8 +81,9 @@ SETUP AND AUTH COMMANDS
     Validate whether the current setup can safely run a workflow.
     Reports ready, partial, or blocked readiness with issues,
     evidence, active mode, remediation steps, and next safe command.
-    For write, reports write-permission-unverified until a committed
-    write has proven the target app/user can write.
+    For write, reports write-permission-not-probed because valid does not
+    perform a committed write and cannot prove write permission
+    non-destructively.
 
   dashboard [--port <n>] [--no-open]
     Start a local-only web dashboard on port 48731, or the next available
@@ -177,9 +178,19 @@ WRITE COMMANDS
     Commit the previewed single-record create/update.
     Requires write-capable user auth scope:
       bitable:app
+    Attachment fields can include existing {"file_token":"..."} objects or
+    local file paths. Preview validates local files but does not upload them;
+    preview also reports attachmentPlan, requestedEffect, replacementPolicy,
+    and willReplaceExisting for attachment/photo fields.
+    --confirm uploads local files with Drive media upload_all, then writes the
+    returned [{"file_token":"..."}] values to the attachment field.
+    Confirmed replacement of existing attachment/photo values requires
+    --attachment-mode replace; default preserve mode blocks accidental
+    replacement before upload.
     Rejects unknown fields, empty field sets, duplicate fields,
     create with record id, update without record id, invalid values,
-    and missing write permission.
+    missing write permission, missing local attachment files, and direct
+    attachment uploads larger than 20MB.
     If final confirmation is uncertain, reports partial/unknown and asks
     the user to run get or inspect the table before retrying.
 
@@ -188,9 +199,9 @@ NOT SUPPORTED
     enterprise approval, or Base collaborator settings.
   - delete, batch write, upsert, schema mutation, view mutation,
     or permission management.
-  - Uploading local image files into Lark attachments.
-    write can set attachment fields only from existing Bitable/Drive file_token
-    values.
+  - Chunked attachment upload for local files larger than 20MB.
+    Upload those files separately with a chunked media flow, then write the
+    returned Bitable/Drive file_token values.
   - Treating un-downloaded images or attachments as inspected evidence.
     Use media download first, then inspect the local file.
 ```
@@ -737,9 +748,10 @@ lark-bitable valid --workflow dashboard
 Developer-oriented workflow；如果 active mode 是 `QA`，`valid --workflow research`
 會給出 warning 並引導改用 `verify`。
 
-`write` workflow 會另外檢查寫入前置條件。缺少 auth 或 source 會 blocked；
-如果尚未用一次可確認的提交寫入證明權限，`valid --workflow write` 會回報
-`partial` 和 `write-permission-unverified`。這個 partial 只代表寫入權限尚未被證明，
+`write` workflow 會另外檢查寫入前置條件。缺少 auth 或 source 會 blocked。
+`valid --workflow write` 不會做破壞性 committed write，所以無法用 non-destructive
+方式證明 write permission；在這種情況會回報 `partial` 和
+`write-permission-not-probed`。這個 partial 只代表 `valid` 沒有 probe 寫入權限，
 不會讓 `list`、`get`、`schema`、`triage`、`research`、`verify` 失效。
 
 `dashboard` workflow 只檢查本機 dashboard 是否能啟動，以及 config/auth/audit/research
@@ -944,6 +956,54 @@ lark-bitable write --op update \
   --json
 ```
 
+Attachment 欄位支援兩種值：
+
+- 已有 token：`{"附件":[{"file_token":"boxcn..."}]}`。
+- 本地檔案路徑：`{"附件":[{"file_token":"boxcnexisting"},"./evidence/fixed.png"]}`。
+
+更新既有 record 的 attachment/photo 欄位前，先跑：
+
+```bash
+lark-bitable get recxxxx --json
+```
+
+如果欄位已經有附件，預設安全寫法是把既有 `file_token` objects 和新本地檔案路徑放在
+同一個 array 裡：
+
+```bash
+lark-bitable write --op update \
+  --record-id recxxxx \
+  --fields-json '{"附件":[{"file_token":"boxcnexisting"},"./evidence/fixed.png"]}' \
+  --json
+
+lark-bitable write --op update \
+  --record-id recxxxx \
+  --fields-json '{"附件":[{"file_token":"boxcnexisting"},"./evidence/fixed.png"]}' \
+  --confirm \
+  --json
+```
+
+本地檔案在 preview 階段只會檢查路徑與大小，不會上傳。加上 `--confirm`
+後，`write` 會先呼叫 Lark Drive media upload API：
+
+```text
+POST /open-apis/drive/v1/medias/upload_all
+```
+
+成功取得 `file_token` 後，才把 attachment 欄位轉成
+`[{"file_token":"..."}]` 寫入記錄。圖片副檔名會用 `parent_type=bitable_image`，
+其他檔案用 `parent_type=bitable_file`，`parent_node` 使用目前 Base 的
+`app_token`。直接 upload 使用 Lark `upload_all`，單檔上限是 20MB。
+
+追加附件時要先 `get <record-id>`，把既有 attachment 欄位裡的
+`file_token` objects 和新的本地檔案路徑一起放入同一個 `--fields-json`。
+只傳新檔案會用新陣列取代該欄位的既有附件；preview 會在 `attachmentPlan`
+標出 `requestedEffect=replace`、`replacementPolicy=preserve`、
+`willReplaceExisting=true`，confirmed write 預設會在 upload 前阻擋。這種情況下
+`nextSafeCommands` 不會再給 `--confirm` 指令，而是引導先 `get`、保留既有
+`file_token` 後重新 preview。只有使用者明確要求替換時，才加
+`--attachment-mode replace`。
+
 輸入規則：
 
 - `--op create|update` 必填。
@@ -951,12 +1011,24 @@ lark-bitable write --op update \
 - `--op create` 不能帶 `--record-id`。
 - `--field "欄位=值"` 可重複；值若是合法 JSON scalar/object/array 會以 JSON 解析，否則當字串。
 - `--fields-json` 必須是 JSON object。
+- Attachment/photo 欄位中的本地檔案路徑必須指向存在的 regular file。
+- `--attachment-mode preserve|replace` 控制 attachment/photo confirmed write 的替換保護；
+  預設 `preserve` 會阻擋意外覆蓋既有附件。
+- `attachmentPlan.requestedEffect` 描述這次 requested field 對附件欄位的效果；
+  `attachmentPlan.replacementPolicy` 描述 CLI 目前的保護策略。舊欄位
+  `attachmentPlan.mode` 保留為 `requestedEffect` 的相容別名。
 - 同一個欄位不能同時在多個輸入裡重複出現。
 - `--client-token` 只適用於 committed create。
 
 安全邊界：
 
 - 沒有 `--confirm` 一律不會呼叫 create/update。
+- 沒有 `--confirm` 一律不會 upload 本地附件。
+- confirmed write 若會覆蓋既有 attachment/photo，必須顯式帶 `--attachment-mode replace`。
+- preview 若偵測到 `willReplaceExisting=true` 且 `replacementPolicy=preserve`，
+  `nextSafeCommands` 不會輸出 confirm 指令；先保留既有 `file_token` 重新 preview。
+- 如果 upload 成功但 record write 失敗，輸出會保留已取得的 `file_token`，並在
+  `nextSafeCommands` 提供用 token 重試 Bitable write 的命令；不要重新上傳同一個檔案。
 - 未知欄位、空 field set、missing source/auth、missing target record 會在 commit 前中止。
 - Lark 權限或欄位值拒絕會輸出 `confirmationStatus=failed`，不會宣稱表格已修改。
 - 如果寫入 response 已回來但最終狀態無法確認，輸出會是 `status=partial` 和

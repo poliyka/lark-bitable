@@ -3,6 +3,8 @@ name: lark-bitable
 description: Use the local Lark Bitable CLI to inspect bug records, run triage, and produce evidence-backed reports.
 ---
 
+<!-- lark-bitable-bootstrap-version: 2026-05-28-attachment-plan -->
+
 # Lark Bitable CLI Bootstrap
 
 Use this skill before reading Lark Bitable data for a bug-fixing workflow.
@@ -180,6 +182,9 @@ required when `get` can show the full record.
 - `lark-bitable write --op create --fields-json '{"欄位":"值"}' --confirm --json`
 - `lark-bitable write --op update --record-id <record-id> --field "<field>=<value>" --json`
 - `lark-bitable write --op update --record-id <record-id> --fields-json '{"欄位":"值"}' --confirm --json`
+- `lark-bitable get <record-id> --json`
+- `lark-bitable write --op update --record-id <record-id> --fields-json '{"附件":[{"file_token":"boxcnexisting"},"./evidence/fixed.png"]}' --json`
+- `lark-bitable write --op update --record-id <record-id> --fields-json '{"附件":[{"file_token":"boxcnexisting"},"./evidence/fixed.png"]}' --confirm --json`
 
 Rules for write operations:
 
@@ -190,6 +195,32 @@ Rules for write operations:
   visible. Do not guess current table state.
 - Use exact field names from `schema --json`; unknown fields must be fixed
   before retrying.
+- Before writing an attachment/photo field on an existing record, run
+  `get <record-id>` first. If the field already contains attachments, preserve
+  existing `{"file_token":"..."}` objects unless the user explicitly requests
+  replacement.
+- Attachment/photo fields can be written from existing
+  `{"file_token":"..."}` objects or local file paths in `--fields-json`.
+  Preview validates local attachment paths and reports not-run media evidence,
+  but does not upload. Confirmed writes upload local files through Lark Drive
+  media `POST /open-apis/drive/v1/medias/upload_all`, then write the returned
+  `file_token` objects to the attachment/photo field.
+- Preview output includes `attachmentPlan` for attachment/photo fields. Prefer
+  `requestedEffect` for the requested field effect and `replacementPolicy` for
+  CLI protection mode; `mode` is a backward-compatible alias of
+  `requestedEffect`.
+- If `willReplaceExisting=true` and `replacementPolicy=preserve`, do not run a
+  confirmed write. The preview `nextSafeCommands` must not be treated as a
+  confirm path in this case; rebuild `--fields-json` with existing
+  `file_token` objects plus new local paths, then preview again. Confirmed
+  replacement requires `--attachment-mode replace` and explicit user intent;
+  default `--attachment-mode preserve` blocks accidental replacement before
+  uploading local files.
+- Local attachment upload uses the current Base `app_token` as `parent_node`.
+  Image file extensions use `parent_type=bitable_image`; other files use
+  `parent_type=bitable_file`. Direct upload is limited to files no larger than
+  20MB. Larger files require a separate chunked media upload flow before writing
+  the returned `file_token`.
 - Before committed writes, ensure auth was obtained with
   `lark-bitable lark --login --scope="bitable:app"`. If current auth scopes are
   only `bitable:app:readonly`, ask the user to re-login with write scope before
@@ -197,10 +228,33 @@ Rules for write operations:
 - Use `--client-token` only for committed creates.
 - Missing write permission, rejected values, or unknown confirmation must be
   reported as failure/partial evidence, not as success.
+- If media upload succeeds but the record write fails, keep the returned
+  `file_token` values from command output and retry the Bitable write with those
+  tokens instead of uploading the same file again.
 - The command does not support delete, batch write, upsert, schema mutation,
   view mutation, or permission management. Do not emulate those behaviors with
   repeated `write` calls unless the user explicitly asks for separate single
   record operations and each one is previewed.
+
+### For fix evidence image upload
+
+1. Run `lark-bitable valid --workflow write --json`.
+2. Run `lark-bitable schema --json` if the exact attachment/photo field is
+   unknown.
+3. Run `lark-bitable get <record-id> --json` and inspect existing attachments.
+4. Build `--fields-json` with existing `file_token` objects plus new local file
+   paths unless replacement is explicitly requested.
+5. Run `lark-bitable write ... --json` without `--confirm`.
+6. Confirm the preview says no unintended replacement will happen. If
+   `attachmentPlan[].willReplaceExisting=true` and
+   `replacementPolicy=preserve`, stop and rebuild `--fields-json`; do not use a
+   confirm command unless replacement was explicitly requested.
+7. Repeat the same command with `--confirm --json`.
+8. Run `lark-bitable get <record-id> --json`.
+9. Download the returned file token with
+   `lark-bitable media download <file-token> --out <path> --json`.
+10. Inspect or hash the downloaded file before claiming the evidence was
+    uploaded.
 
 ## Developer Mode: Triage and Research
 
@@ -268,13 +322,14 @@ When a human or AI asks for high-risk bugs, the workflow must be:
   the verified state, failure, reproduction result, or fix confirmation.
 - Preserve existing attachments: before writing QA write media evidence, run
   `get <record-id>` and write the attachment/photo field as the existing
-  `file_token` objects plus the new related evidence `file_token` objects. Do
-  not overwrite existing attachments with only the new evidence unless the user
-  explicitly requests replacement.
-- If related media exists only as a local file and no Bitable/Drive
-  `file_token` is available, report the upload/write as unavailable instead of
-  claiming the asset was written. The current `write` command can set attachment
-  fields from file-token values; it does not upload local files by itself.
+  `file_token` objects plus the new related evidence local paths or
+  `file_token` objects. Do not overwrite existing attachments with only the new
+  evidence unless the user explicitly requests replacement.
+- If related media exists as a local file, preview the `write` with that local
+  path first, then run the same write with `--confirm` only after the requested
+  attachment/photo field and before values are explicit.
+  Avoid claiming the asset was written if media upload or the final record write
+  fails.
 - If no attachment/photo field is available, mention the media evidence and the
   write limitation in the QA report or another writable note field instead of
   inventing a field.

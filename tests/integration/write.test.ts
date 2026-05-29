@@ -261,6 +261,308 @@ describe("write command", () => {
     });
   });
 
+  it("uploads local attachment paths while preserving existing attachments before committing an update", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    const attachmentPath = join(cwd, "evidence", "fixed.png");
+    await mkdir(dirname(attachmentPath), { recursive: true });
+    await writeFile(attachmentPath, "png fixture", "utf8");
+    const uploadedRecord = {
+      ...fixtureWriteRecord,
+      fields: {
+        ...fixtureWriteRecord.fields,
+        附件: [
+          { file_token: "boxcnexisting", name: "existing.png" },
+          { file_token: "boxcnuploaded", name: "fixed.png" },
+        ],
+      },
+    };
+
+    const result = await WriteCommand.run([
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--fixture-fields",
+      JSON.stringify(fixtureWriteFields),
+      "--fixture-records",
+      JSON.stringify([fixtureWriteRecord]),
+      "--mock-upload-token",
+      "boxcnuploaded",
+      "--mock-update-record",
+      JSON.stringify(uploadedRecord),
+      "--op",
+      "update",
+      "--record-id",
+      "recWrite",
+      "--fields-json",
+      JSON.stringify({
+        附件: [{ file_token: "boxcnexisting" }, attachmentPath],
+      }),
+      "--confirm",
+      "--json",
+    ]);
+
+    expect(result.status).toBe("ok");
+    expect(result.data).toMatchObject({
+      operation: {
+        requestedFields: {
+          附件: [
+            { file_token: "boxcnexisting" },
+            { file_token: "boxcnuploaded" },
+          ],
+        },
+      },
+      attachmentPlan: [
+        expect.objectContaining({
+          existingAttachmentCount: 1,
+          fieldName: "附件",
+          localFileCount: 1,
+          mode: "append",
+          replacementPolicy: "preserve",
+          requestedEffect: "append",
+          willReplaceExisting: false,
+        }),
+      ],
+      result: {
+        confirmationStatus: "confirmed",
+        fieldChanges: [
+          expect.objectContaining({
+            fieldName: "附件",
+            requestedValue: [
+              { file_token: "boxcnexisting" },
+              { file_token: "boxcnuploaded" },
+            ],
+            resultValue: [
+              { file_token: "boxcnexisting", name: "existing.png" },
+              { file_token: "boxcnuploaded", name: "fixed.png" },
+            ],
+          }),
+        ],
+      },
+    });
+    expect(result.evidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          reference: "boxcnuploaded",
+          status: "verified",
+          type: "lark-media",
+        }),
+      ]),
+    );
+  });
+
+  it("reports attachment replacement risk in preview before local upload", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    const attachmentPath = join(cwd, "evidence", "replace-risk.png");
+    await mkdir(dirname(attachmentPath), { recursive: true });
+    await writeFile(attachmentPath, "png fixture", "utf8");
+
+    const result = await WriteCommand.run([
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--fixture-fields",
+      JSON.stringify(fixtureWriteFields),
+      "--fixture-records",
+      JSON.stringify([fixtureWriteRecord]),
+      "--op",
+      "update",
+      "--record-id",
+      "recWrite",
+      "--fields-json",
+      JSON.stringify({ 附件: attachmentPath }),
+      "--json",
+    ]);
+
+    expect(result.status).toBe("ok");
+    expect(result.data).toMatchObject({
+      attachmentPlan: [
+        expect.objectContaining({
+          existingAttachmentCount: 1,
+          existingFileTokens: ["boxcnexisting"],
+          fieldName: "附件",
+          localFileCount: 1,
+          mode: "replace",
+          replacementPolicy: "preserve",
+          requestedEffect: "replace",
+          willReplaceExisting: true,
+        }),
+      ],
+      preview: {
+        attachmentPlan: [
+          expect.objectContaining({
+            localFiles: [
+              expect.objectContaining({
+                name: "replace-risk.png",
+                parentType: "bitable_image",
+                path: attachmentPath,
+              }),
+            ],
+          }),
+        ],
+        warnings: [
+          expect.stringContaining("will replace attachment/photo field 附件"),
+        ],
+      },
+      result: {
+        nextActions: [
+          expect.stringContaining("lark-bitable get recWrite --json"),
+          expect.stringContaining("preserving existing"),
+          expect.stringContaining("--attachment-mode replace"),
+        ],
+      },
+      nextSafeCommands: [
+        expect.stringContaining("lark-bitable get recWrite --json"),
+        expect.stringContaining("preserving existing"),
+        expect.stringContaining("--attachment-mode replace"),
+      ],
+    });
+    const data = result.data as {
+      nextSafeCommands: string[];
+      result: { nextActions: string[] };
+    };
+    expect(JSON.stringify(data.nextSafeCommands)).not.toContain("--confirm");
+    expect(JSON.stringify(data.result.nextActions)).not.toContain("--confirm");
+  });
+
+  it("blocks confirmed attachment replacement unless replacement is explicit", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    const attachmentPath = join(cwd, "evidence", "replace-risk.png");
+    await mkdir(dirname(attachmentPath), { recursive: true });
+    await writeFile(attachmentPath, "png fixture", "utf8");
+
+    await expect(
+      WriteCommand.run([
+        "--config-cwd",
+        cwd,
+        "--auth-path",
+        authPath,
+        "--fixture-fields",
+        JSON.stringify(fixtureWriteFields),
+        "--fixture-records",
+        JSON.stringify([fixtureWriteRecord]),
+        "--mock-upload-error",
+        "upload mock must not be called",
+        "--op",
+        "update",
+        "--record-id",
+        "recWrite",
+        "--fields-json",
+        JSON.stringify({ 附件: attachmentPath }),
+        "--confirm",
+        "--json",
+      ]),
+    ).rejects.toThrow("--attachment-mode replace");
+  });
+
+  it("validates local attachment paths during preview without uploading", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    const attachmentPath = join(cwd, "evidence", "preview.png");
+    await mkdir(dirname(attachmentPath), { recursive: true });
+    await writeFile(attachmentPath, "png fixture", "utf8");
+
+    const result = await WriteCommand.run([
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--fixture-fields",
+      JSON.stringify(fixtureWriteFields),
+      "--fixture-records",
+      JSON.stringify([fixtureWriteRecord]),
+      "--mock-upload-error",
+      "upload mock must not be called",
+      "--op",
+      "update",
+      "--record-id",
+      "recWrite",
+      "--fields-json",
+      JSON.stringify({ 附件: attachmentPath }),
+      "--json",
+    ]);
+
+    expect(result.status).toBe("ok");
+    expect(result.data).toMatchObject({
+      operation: {
+        requestedFields: {
+          附件: attachmentPath,
+        },
+      },
+      result: {
+        confirmationStatus: "not-written",
+      },
+    });
+    expect(result.evidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          reference: attachmentPath,
+          status: "not-run",
+          type: "lark-media",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps uploaded file tokens in failed write retry guidance", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    const attachmentPath = join(cwd, "evidence", "retry.png");
+    await mkdir(dirname(attachmentPath), { recursive: true });
+    await writeFile(attachmentPath, "png fixture", "utf8");
+
+    const result = await WriteCommand.run([
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--fixture-fields",
+      JSON.stringify(fixtureWriteFields),
+      "--fixture-records",
+      JSON.stringify([fixtureWriteRecord]),
+      "--mock-upload-token",
+      "boxcnuploaded",
+      "--mock-update-error",
+      "Lark invalid field value",
+      "--op",
+      "update",
+      "--record-id",
+      "recWrite",
+      "--fields-json",
+      JSON.stringify({
+        附件: [{ file_token: "boxcnexisting" }, attachmentPath],
+      }),
+      "--confirm",
+      "--json",
+    ]);
+
+    expect(result.status).toBe("error");
+    expect(result.data).toMatchObject({
+      operation: {
+        requestedFields: {
+          附件: [
+            { file_token: "boxcnexisting" },
+            { file_token: "boxcnuploaded" },
+          ],
+        },
+      },
+      result: {
+        confirmationStatus: "failed",
+        nextActions: expect.arrayContaining([
+          expect.stringContaining("boxcnuploaded"),
+        ]),
+      },
+    });
+    expect(result.evidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          reference: "boxcnuploaded",
+          status: "verified",
+          type: "lark-media",
+        }),
+      ]),
+    );
+  });
+
   it("keeps preview-only requests from reaching commit mocks and shows next safe action", async () => {
     const { authPath, cwd } = await configuredWriteContext();
 

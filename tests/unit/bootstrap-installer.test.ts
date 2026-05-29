@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -36,6 +36,18 @@ describe("bootstrap installer", () => {
     expect((await inspectBootstrapSkill({ targetDir })).installed).toBe(false);
     await installBootstrapSkill({ targetDir });
     expect((await inspectBootstrapSkill({ targetDir })).installed).toBe(true);
+  });
+
+  it("marks installed bootstrap guidance stale when the shipped marker is missing", async () => {
+    const targetDir = await mkdtemp(join(tmpdir(), "skill-"));
+    const skillPath = join(targetDir, "lark-bitable", "SKILL.md");
+    await mkdir(join(targetDir, "lark-bitable"), { recursive: true });
+    await writeFile(skillPath, "legacy skill with lark-bitable valid", "utf8");
+
+    expect(await inspectBootstrapSkill({ targetDir })).toMatchObject({
+      installed: true,
+      stale: true,
+    });
   });
 
   it("installs skill guidance into both Codex and Claude Code target directories", async () => {

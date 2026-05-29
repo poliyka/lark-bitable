@@ -92,10 +92,11 @@ export function evaluateWriteReadiness(
     input.writePermissionStatus === "unknown"
   ) {
     partialIssues.push({
-      code: "write-permission-unverified",
-      message: "Write permission has not been verified by a committed write.",
+      code: "write-permission-not-probed",
+      message:
+        "valid --workflow write does not perform a committed write, so it cannot prove write permission non-destructively.",
       remediation:
-        "Preview first. Commit only against a known writable disposable table or after confirming write-capable Lark permissions.",
+        "Run preview first, then commit only against an explicit target after confirming write-capable Lark permissions.",
     });
   }
 

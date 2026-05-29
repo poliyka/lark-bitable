@@ -25,6 +25,8 @@ export interface BootstrapInstallGroupResult extends BootstrapSkillGroupState {
 }
 
 const DEFAULT_SKILL_TARGET_DIRS = [".agents/skills", ".claude/skills"] as const;
+const BOOTSTRAP_SKILL_MARKER =
+  "lark-bitable-bootstrap-version: 2026-05-28-attachment-plan";
 
 export function defaultSkillTargetDirs(): string[] {
   return [...DEFAULT_SKILL_TARGET_DIRS];
@@ -49,7 +51,7 @@ export async function inspectBootstrapSkill(input: {
       installed: true,
       skillPath,
       targetDir: input.targetDir,
-      stale: !content.includes("lark-bitable valid"),
+      stale: !content.includes(BOOTSTRAP_SKILL_MARKER),
     };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {

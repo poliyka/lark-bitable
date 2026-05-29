@@ -7,9 +7,20 @@ import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
 import type {
   BitableRecord,
+  ResearchEvidence,
   WriteOperation,
   WritePreview,
 } from "../../config/schema.js";
+import type {
+  LarkClient,
+  UploadMediaInput,
+  UploadMediaResult,
+} from "../../lark/client.js";
+import {
+  prepareAttachmentFieldUploads,
+  type AttachmentPlan,
+  type AttachmentWriteMode,
+} from "../../write/attachments.js";
 import { parseFieldInput } from "../../write/field-input.js";
 import { createWriteOperation } from "../../write/operation.js";
 import {
@@ -64,6 +75,14 @@ export default class WriteCommand extends BaseCommand {
     "mock-create-record": Flags.string({ hidden: true }),
     "mock-update-error": Flags.string({ hidden: true }),
     "mock-update-record": Flags.string({ hidden: true }),
+    "mock-upload-error": Flags.string({ hidden: true }),
+    "mock-upload-token": Flags.string({ hidden: true, multiple: true }),
+    "attachment-mode": Flags.string({
+      default: "preserve",
+      description:
+        "Attachment/photo replacement handling for confirmed writes.",
+      options: ["preserve", "replace"],
+    }),
     op: Flags.string({
       description: "Write operation.",
       options: ["create", "update"],
@@ -93,21 +112,53 @@ export default class WriteCommand extends BaseCommand {
       recordId: flags["record-id"],
       requireRecord: op === "update",
     });
+    const attachmentPreparation = await prepareAttachmentFieldUploads({
+      attachmentMode: flags["attachment-mode"] as AttachmentWriteMode,
+      confirm: Boolean(flags.confirm),
+      currentRecord: context.targetRecord,
+      fields,
+      source: context.source,
+      tableFields: context.fields,
+      uploadMedia: uploadMediaHandler(context.client, {
+        mockUploadError: flags["mock-upload-error"],
+        mockUploadTokens: flags["mock-upload-token"],
+      }),
+    });
 
     const operation = createWriteOperation({
       clientToken,
       confirm: Boolean(flags.confirm),
       currentRecord: context.targetRecord,
-      fields,
+      fields: attachmentPreparation.fields,
       recordId: flags["record-id"],
       source: context.source,
       tableFields: context.fields,
       type: op,
     });
-    const preview = buildWritePreview(operation, context.targetRecord);
+    const preview = buildWritePreview(operation, context.targetRecord, {
+      attachmentPlan: attachmentPreparation.attachmentPlan,
+      warnings: attachmentPreparation.warnings,
+    });
 
     if (!flags.confirm) {
-      const result = buildPreviewWriteResult(operation);
+      const previewResult = buildPreviewWriteResult(operation);
+      const nextActions = nextActionsForPreview(operation, {
+        attachmentMode: flags["attachment-mode"] as AttachmentWriteMode,
+        attachmentPlan: attachmentPreparation.attachmentPlan,
+        defaultNextActions: previewResult.nextActions,
+      });
+      const result = {
+        ...previewResult,
+        evidence: [
+          ...attachmentPreparation.evidence,
+          ...previewResult.evidence,
+        ],
+        warnings: [
+          ...previewResult.warnings,
+          ...attachmentPreparation.warnings,
+        ],
+        nextActions,
+      };
       const output: CommandOutput = {
         command: "write",
         status: "ok",
@@ -119,6 +170,7 @@ export default class WriteCommand extends BaseCommand {
           source: context.mode.source,
         },
         data: {
+          attachmentPlan: attachmentPreparation.attachmentPlan,
           operation,
           preview,
           result,
@@ -145,6 +197,8 @@ export default class WriteCommand extends BaseCommand {
           input.recordId,
           input.fields,
         ),
+      attachmentMode: flags["attachment-mode"] as AttachmentWriteMode,
+      uploadEvidence: attachmentPreparation.evidence,
     });
     const output: CommandOutput = {
       command: "write",
@@ -163,6 +217,7 @@ export default class WriteCommand extends BaseCommand {
         source: context.mode.source,
       },
       data: {
+        attachmentPlan: attachmentPreparation.attachmentPlan,
         operation,
         preview,
         result,
@@ -181,6 +236,8 @@ export default class WriteCommand extends BaseCommand {
       mockCreateRecord?: string;
       mockUpdateError?: string;
       mockUpdateRecord?: string;
+      attachmentMode?: AttachmentWriteMode;
+      uploadEvidence?: ResearchEvidence[];
       runCreate: (input: {
         clientToken?: string;
         fields: Record<string, unknown>;
@@ -206,6 +263,7 @@ export default class WriteCommand extends BaseCommand {
             {
               message: input.mockConfirmError,
               evidence: [
+                ...(input.uploadEvidence ?? []),
                 writeEvidence({
                   reference: record.recordId,
                   excerpt:
@@ -216,7 +274,10 @@ export default class WriteCommand extends BaseCommand {
             },
           );
         }
-        return buildConfirmedWriteResult(operation, { record });
+        return buildConfirmedWriteResult(operation, {
+          evidence: input.uploadEvidence,
+          record,
+        });
       }
 
       if (input.mockUpdateError) throw new Error(input.mockUpdateError);
@@ -234,6 +295,7 @@ export default class WriteCommand extends BaseCommand {
         return buildUnknownWriteResult(operation, {
           message: input.mockConfirmError,
           evidence: [
+            ...(input.uploadEvidence ?? []),
             writeEvidence({
               reference: record.recordId,
               excerpt: "Update response returned before confirmation failed.",
@@ -242,9 +304,26 @@ export default class WriteCommand extends BaseCommand {
           ],
         });
       }
-      return buildConfirmedWriteResult(operation, { record });
+      return buildConfirmedWriteResult(operation, {
+        evidence: input.uploadEvidence,
+        record,
+      });
     } catch (error) {
-      return buildFailedWriteResult(operation, issueFromWriteError(error));
+      const result = buildFailedWriteResult(
+        operation,
+        issueFromWriteError(error),
+      );
+      const retryCommand = retryUploadedAttachmentCommand(operation, {
+        attachmentMode: input.attachmentMode,
+        uploadEvidence: input.uploadEvidence,
+      });
+      return {
+        ...result,
+        evidence: [...(input.uploadEvidence ?? []), ...result.evidence],
+        nextActions: retryCommand
+          ? [retryCommand, ...result.nextActions]
+          : result.nextActions,
+      };
     }
   }
 }
@@ -252,16 +331,79 @@ export default class WriteCommand extends BaseCommand {
 function buildWritePreview(
   operation: WriteOperation,
   targetRecord: BitableRecord | undefined,
+  options: { attachmentPlan?: AttachmentPlan[]; warnings?: string[] } = {},
 ): WritePreview {
   return {
+    attachmentPlan: options.attachmentPlan ?? [],
     operation,
     source: operation.source,
     targetRecord,
     fieldChanges: operation.fieldChanges,
-    warnings: [],
+    warnings: options.warnings ?? [],
     commitRequired: true,
     wouldWrite: true,
   };
+}
+
+function retryUploadedAttachmentCommand(
+  operation: WriteOperation,
+  input: {
+    attachmentMode?: AttachmentWriteMode;
+    uploadEvidence?: ResearchEvidence[];
+  },
+): string | undefined {
+  const hasUploadedMedia = input.uploadEvidence?.some(
+    (item) => item.type === "lark-media" && item.status === "verified",
+  );
+  if (!hasUploadedMedia) return undefined;
+
+  const fieldJson = JSON.stringify(operation.requestedFields);
+  const base =
+    operation.type === "update"
+      ? `lark-bitable write --op update --record-id ${operation.targetRecordId} --fields-json '${fieldJson}' --confirm --json`
+      : `lark-bitable write --op create --fields-json '${fieldJson}' --confirm --json`;
+  return input.attachmentMode === "replace"
+    ? `${base} --attachment-mode replace`
+    : base;
+}
+
+function nextActionsForPreview(
+  operation: WriteOperation,
+  input: {
+    attachmentMode: AttachmentWriteMode;
+    attachmentPlan: AttachmentPlan[];
+    defaultNextActions: string[];
+  },
+): string[] {
+  const riskyPreservePlans = input.attachmentPlan.filter(
+    (plan) => plan.willReplaceExisting && plan.replacementPolicy !== "replace",
+  );
+  if (riskyPreservePlans.length > 0) {
+    const fieldNames = riskyPreservePlans
+      .map((plan) => plan.fieldName)
+      .join(", ");
+    return [
+      operation.targetRecordId
+        ? `lark-bitable get ${operation.targetRecordId} --json`
+        : "Run lark-bitable get <record-id> --json before retrying this attachment write.",
+      `Rebuild --fields-json for attachment/photo field(s) ${fieldNames} by preserving existing {"file_token":"..."} objects and adding the new local file path, then run preview again.`,
+      "Use --attachment-mode replace only when the user explicitly requested attachment replacement.",
+    ];
+  }
+
+  if (
+    input.attachmentMode === "replace" &&
+    input.attachmentPlan.some((plan) => plan.willReplaceExisting)
+  ) {
+    return input.defaultNextActions.map((action) =>
+      action.startsWith("lark-bitable write") &&
+      !action.includes("--attachment-mode")
+        ? `${action} --attachment-mode replace`
+        : action,
+    );
+  }
+
+  return input.defaultNextActions;
 }
 
 function withTargetRecordId(
@@ -271,5 +413,30 @@ function withTargetRecordId(
   return {
     ...operation,
     targetRecordId,
+  };
+}
+
+function uploadMediaHandler(
+  client: LarkClient,
+  input: {
+    mockUploadError?: string;
+    mockUploadTokens?: string[];
+  },
+): (upload: UploadMediaInput) => Promise<UploadMediaResult> {
+  const mockTokens = input.mockUploadTokens ?? [];
+  let mockIndex = 0;
+
+  return async (upload) => {
+    if (input.mockUploadError) throw new Error(input.mockUploadError);
+    if (mockTokens.length > 0) {
+      const fileToken = mockTokens[Math.min(mockIndex, mockTokens.length - 1)];
+      if (!fileToken) throw new Error("Mock upload token is missing.");
+      mockIndex += 1;
+      return {
+        ...upload,
+        fileToken,
+      };
+    }
+    return client.uploadMedia(upload);
   };
 }

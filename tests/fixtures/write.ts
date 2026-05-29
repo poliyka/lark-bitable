@@ -17,6 +17,7 @@ export const fixtureWriteFields: BitableFieldInfo[] = [
   },
   { fieldName: "優先級", type: 3, uiType: "SingleSelect" },
   { fieldName: "備註", type: 1, uiType: "Text" },
+  { fieldName: "附件", type: 17, uiType: "Attachment" },
 ];
 
 export const fixtureWriteRecord: BitableRecord = {
@@ -26,6 +27,7 @@ export const fixtureWriteRecord: BitableRecord = {
     狀態: "待處理",
     優先級: "P1",
     備註: "Existing note",
+    附件: [{ file_token: "boxcnexisting", name: "existing.png" }],
   },
   source: {
     appToken: fixtureSource.appToken,

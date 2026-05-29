@@ -1,5 +1,39 @@
 # Change Log
 
+## 2.0.1 - 2026-05-28
+
+### Changed
+
+- Bumped npm package version from `2.0.0` to `2.0.1`.
+- Added confirmed `write` support for local file paths in Bitable attachment/photo fields.
+- Local attachment writes now upload files through Lark Drive media `upload_all`, then write the returned `file_token` objects to the target record.
+- Added structured `attachmentPlan` output for preview and confirmed writes, including existing token counts, local file details, append/replace mode, and `willReplaceExisting`.
+- Added `--attachment-mode preserve|replace`; the default `preserve` mode blocks accidental attachment/photo replacement before local files are uploaded.
+- Clarified attachment preview output with `requestedEffect` and `replacementPolicy`; the existing `mode` field remains as a compatibility alias for `requestedEffect`.
+- Updated `write` help, README guidance, and bootstrap workflow instructions with the safe append flow, evidence image upload runbook, and upload/write failure recovery steps.
+- Renamed the conservative write readiness diagnostic from `write-permission-unverified` to `write-permission-not-probed` so agents do not mistake a non-mutating readiness check for a failed committed write.
+
+### Fixed
+
+- Fixed the previous `AttachFieldConvFail` path by converting local files to Bitable media `file_token` values before committing the record update.
+- Kept preview mode non-mutating for attachments: local files are validated and reported as not-run media evidence, but are not uploaded without `--confirm`.
+- Made the preserve-existing-attachments flow the default guidance so appending evidence includes existing `file_token` objects instead of replacing the field by accident.
+- Removed high-risk attachment replacement confirm commands from preview `nextSafeCommands` when the current replacement policy is `preserve`; output now points agents to `get`, rebuild fields JSON with existing tokens, or use `--attachment-mode replace` only for explicit replacement.
+- Preserved uploaded `file_token` values in failed write output and added a retry command that reuses those tokens instead of uploading the same local files again.
+- Strengthened bootstrap stale detection with a shipped guidance marker so older installed skills are flagged for reinstall.
+
+### Verification
+
+Run release validation:
+
+```bash
+pnpm format:check
+pnpm test
+pnpm build
+pnpm quickstart:validate
+git diff --check
+```
+
 ## 2.0.0 - 2026-05-27
 
 ### Changed

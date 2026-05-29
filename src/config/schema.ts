@@ -253,7 +253,29 @@ export const writeOperationSchema = z.object({
   requestedBy: z.enum(["human", "agent", "unknown"]).optional(),
 });
 
+export const attachmentLocalFilePlanSchema = z.object({
+  name: z.string().min(1),
+  parentType: z.enum(["bitable_file", "bitable_image"]),
+  path: z.string().min(1),
+  size: z.number().int().nonnegative(),
+});
+
+export const attachmentPlanSchema = z.object({
+  existingAttachmentCount: z.number().int().nonnegative(),
+  existingFileTokens: z.array(z.string().min(1)),
+  fieldName: z.string().min(1),
+  localFileCount: z.number().int().nonnegative(),
+  localFiles: z.array(attachmentLocalFilePlanSchema),
+  mode: z.enum(["append", "replace"]),
+  requestedAttachmentCount: z.number().int().nonnegative(),
+  requestedEffect: z.enum(["append", "replace"]),
+  preservedExistingAttachmentCount: z.number().int().nonnegative(),
+  replacementPolicy: z.enum(["preserve", "replace"]),
+  willReplaceExisting: z.boolean(),
+});
+
 export const writePreviewSchema = z.object({
+  attachmentPlan: z.array(attachmentPlanSchema).default([]),
   operation: writeOperationSchema,
   source: sourceMetadataSchema,
   targetRecord: bitableRecordSchema.optional(),
@@ -436,6 +458,10 @@ export type SkippedQaCheck = z.infer<typeof skippedQaCheckSchema>;
 export type QaVerificationResult = z.infer<typeof qaVerificationResultSchema>;
 export type WriteFieldChange = z.infer<typeof writeFieldChangeSchema>;
 export type WriteOperation = z.infer<typeof writeOperationSchema>;
+export type AttachmentLocalFilePlan = z.infer<
+  typeof attachmentLocalFilePlanSchema
+>;
+export type AttachmentPlan = z.infer<typeof attachmentPlanSchema>;
 export type WritePreview = z.infer<typeof writePreviewSchema>;
 export type WriteResult = z.infer<typeof writeResultSchema>;
 export type WriteReadiness = z.infer<typeof writeReadinessSchema>;

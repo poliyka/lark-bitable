@@ -92,7 +92,12 @@ describe("valid command", () => {
     expect(result.data).toMatchObject({
       workflow: "write",
       partialIssues: [
-        expect.objectContaining({ code: "write-permission-unverified" }),
+        expect.objectContaining({
+          code: "write-permission-not-probed",
+          message: expect.stringContaining(
+            "does not perform a committed write",
+          ),
+        }),
       ],
       nextSafeCommand: expect.stringContaining("lark-bitable write"),
     });

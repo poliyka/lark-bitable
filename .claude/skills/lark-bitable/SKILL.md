@@ -3,6 +3,8 @@ name: lark-bitable
 description: Use the local Lark Bitable CLI to inspect bug records, run triage, and produce evidence-backed reports.
 ---
 
+<!-- lark-bitable-bootstrap-version: 2026-05-28-attachment-plan -->
+
 # Lark Bitable CLI Bootstrap
 
 Use this skill before reading Lark Bitable data for a bug-fixing workflow.
@@ -17,8 +19,10 @@ Use this skill before reading Lark Bitable data for a bug-fixing workflow.
 5. Run `lark-bitable valid --workflow verify` before `verify` in QA mode.
 6. Run `lark-bitable valid --workflow write` before committed `write`
    operations.
-7. Run `lark-bitable schema` first when you only need field headers.
-8. Run `lark-bitable schema --json` before querying or writing when the table schema,
+7. Run `lark-bitable valid --workflow dashboard` before relying on dashboard
+   readiness details.
+8. Run `lark-bitable schema` first when you only need field headers.
+9. Run `lark-bitable schema --json` before querying or writing when the table schema,
    field mappings, exact status values, owner field, or field types are not
    already known from current context.
 
@@ -56,6 +60,13 @@ version conflicts, or inconclusive live access.
   without `--confirm` first, inspect the preview, and only repeat with
   `--confirm` after the requested source, target record, and field changes are
   explicit.
+- `lark-bitable dashboard` is a local-only no-dashboard-login UI. It can start
+  even when Lark auth or source configuration is missing; Lark-backed pages
+  should be interpreted as partial/blocked until the dashboard config and Lark
+  login pages fix those prerequisites.
+- Dashboard language preference is browser web cache only. Do not treat it as
+  CLI config, and do not translate source data, audit snapshots, command output,
+  file paths, or research report contents.
 
 ## Audit Log
 
@@ -74,6 +85,29 @@ version conflicts, or inconclusive live access.
 - For tests or isolated automation, pass hidden `--audit-path <path>` or set
   `LARK_BITABLE_AUDIT_PATH=<path>` so audit logs do not mix with the user's
   normal local history.
+- The dashboard Audit Log page reads active and rotated audit logs and reports
+  malformed or unreadable files as skipped evidence. Use it for browsing, but
+  keep command JSON output as the source of truth for a just-executed command.
+
+## Dashboard
+
+- Start the local dashboard with `lark-bitable dashboard`; default port is
+  `48731`, and the command increments to the next available port when occupied.
+- Use `lark-bitable dashboard --no-open --json` in automation to retrieve
+  `data.binding.origin` without opening a browser.
+- The dashboard provides live configure, live Lark login/logout, audit log
+  search, playground runs, research report browsing, table context, and
+  Traditional Chinese/English UI language switching.
+- When the dashboard service is running, CLI commands and dashboard actions
+  emit redacted live activity and state invalidation over the local WebSocket
+  channel so open tabs refresh without manual reload.
+- If the dashboard service is absent, stale, or unreachable, CLI commands still
+  complete normally and must not be interpreted as failed because live delivery
+  was skipped.
+- Playground write requests remain preview-first. Do not request or interpret a
+  committed write unless the user explicitly confirms mutation.
+- No database is used for dashboard state. Temporary UI state, including
+  language selection and playground drafts, belongs in browser web cache only.
 
 ## Login and Configure
 
@@ -103,11 +137,11 @@ version conflicts, or inconclusive live access.
   app credentials exist; the CLI can refresh with the stored refresh token and
   app secret. Only fall back to `lark-bitable lark --login` when refresh is not
   possible or still leaves auth unusable.
-- Inspect the stored scopes before fallback login. Check the current auth scopes
-  in `~/.lark-bitable/auth.json` and the configured `larkApp.scopes` in
-  `~/.lark-bitable/config.json`, then preserve the required scope set when
-  logging in again. Use `lark-bitable lark --login --scope="<scope>"` for each
-  required scope; for write-capable Bitable access this normally means
+- Inspect the stored auth scopes before fallback login. Check the current auth
+  scopes in `~/.lark-bitable/auth.json`, then request the required scope set
+  explicitly when logging in again. Use
+  `lark-bitable lark --login --scope="<scope>"` for each required scope; for
+  write-capable Bitable access this normally means
   `lark-bitable lark --login --scope="bitable:app"`. Do not replace an expired
   write-capable token with a fresh readonly token.
 - For committed Bitable writes, the user access token must be requested with
@@ -148,6 +182,9 @@ required when `get` can show the full record.
 - `lark-bitable write --op create --fields-json '{"欄位":"值"}' --confirm --json`
 - `lark-bitable write --op update --record-id <record-id> --field "<field>=<value>" --json`
 - `lark-bitable write --op update --record-id <record-id> --fields-json '{"欄位":"值"}' --confirm --json`
+- `lark-bitable get <record-id> --json`
+- `lark-bitable write --op update --record-id <record-id> --fields-json '{"附件":[{"file_token":"boxcnexisting"},"./evidence/fixed.png"]}' --json`
+- `lark-bitable write --op update --record-id <record-id> --fields-json '{"附件":[{"file_token":"boxcnexisting"},"./evidence/fixed.png"]}' --confirm --json`
 
 Rules for write operations:
 
@@ -158,6 +195,32 @@ Rules for write operations:
   visible. Do not guess current table state.
 - Use exact field names from `schema --json`; unknown fields must be fixed
   before retrying.
+- Before writing an attachment/photo field on an existing record, run
+  `get <record-id>` first. If the field already contains attachments, preserve
+  existing `{"file_token":"..."}` objects unless the user explicitly requests
+  replacement.
+- Attachment/photo fields can be written from existing
+  `{"file_token":"..."}` objects or local file paths in `--fields-json`.
+  Preview validates local attachment paths and reports not-run media evidence,
+  but does not upload. Confirmed writes upload local files through Lark Drive
+  media `POST /open-apis/drive/v1/medias/upload_all`, then write the returned
+  `file_token` objects to the attachment/photo field.
+- Preview output includes `attachmentPlan` for attachment/photo fields. Prefer
+  `requestedEffect` for the requested field effect and `replacementPolicy` for
+  CLI protection mode; `mode` is a backward-compatible alias of
+  `requestedEffect`.
+- If `willReplaceExisting=true` and `replacementPolicy=preserve`, do not run a
+  confirmed write. The preview `nextSafeCommands` must not be treated as a
+  confirm path in this case; rebuild `--fields-json` with existing
+  `file_token` objects plus new local paths, then preview again. Confirmed
+  replacement requires `--attachment-mode replace` and explicit user intent;
+  default `--attachment-mode preserve` blocks accidental replacement before
+  uploading local files.
+- Local attachment upload uses the current Base `app_token` as `parent_node`.
+  Image file extensions use `parent_type=bitable_image`; other files use
+  `parent_type=bitable_file`. Direct upload is limited to files no larger than
+  20MB. Larger files require a separate chunked media upload flow before writing
+  the returned `file_token`.
 - Before committed writes, ensure auth was obtained with
   `lark-bitable lark --login --scope="bitable:app"`. If current auth scopes are
   only `bitable:app:readonly`, ask the user to re-login with write scope before
@@ -165,15 +228,47 @@ Rules for write operations:
 - Use `--client-token` only for committed creates.
 - Missing write permission, rejected values, or unknown confirmation must be
   reported as failure/partial evidence, not as success.
+- If media upload succeeds but the record write fails, keep the returned
+  `file_token` values from command output and retry the Bitable write with those
+  tokens instead of uploading the same file again.
 - The command does not support delete, batch write, upsert, schema mutation,
   view mutation, or permission management. Do not emulate those behaviors with
   repeated `write` calls unless the user explicitly asks for separate single
   record operations and each one is previewed.
 
+### For fix evidence image upload
+
+1. Run `lark-bitable valid --workflow write --json`.
+2. Run `lark-bitable schema --json` if the exact attachment/photo field is
+   unknown.
+3. Run `lark-bitable get <record-id> --json` and inspect existing attachments.
+4. Build `--fields-json` with existing `file_token` objects plus new local file
+   paths unless replacement is explicitly requested.
+5. Run `lark-bitable write ... --json` without `--confirm`.
+6. Confirm the preview says no unintended replacement will happen. If
+   `attachmentPlan[].willReplaceExisting=true` and
+   `replacementPolicy=preserve`, stop and rebuild `--fields-json`; do not use a
+   confirm command unless replacement was explicitly requested.
+7. Repeat the same command with `--confirm --json`.
+8. Run `lark-bitable get <record-id> --json`.
+9. Download the returned file token with
+   `lark-bitable media download <file-token> --out <path> --json`.
+10. Inspect or hash the downloaded file before claiming the evidence was
+    uploaded.
+
 ## Developer Mode: Triage and Research
 
 - Use `lark-bitable triage` to select actionable bug records.
 - Use `lark-bitable research` to create the first report for the selected bug.
+  Do not rely on the empty section defaults: pass repeatable
+  `--assumption`, `--likely-cause`, `--recommended-fix`, `--risk`, and
+  `--next-action` flags when those sections are known, and cite evidence in
+  concrete claims.
+- Every `research` invocation writes canonical JSON under
+  `~/.lark-bitable/research/{name}-{datetime}.json`.
+- `lark-bitable research -o <path>` or `--out <path>` creates a symbolic link to
+  the canonical JSON when safe. Do not assume `<path>` is an independent report
+  copy.
 
 ### Required bug-investigation flow
 
@@ -227,13 +322,14 @@ When a human or AI asks for high-risk bugs, the workflow must be:
   the verified state, failure, reproduction result, or fix confirmation.
 - Preserve existing attachments: before writing QA write media evidence, run
   `get <record-id>` and write the attachment/photo field as the existing
-  `file_token` objects plus the new related evidence `file_token` objects. Do
-  not overwrite existing attachments with only the new evidence unless the user
-  explicitly requests replacement.
-- If related media exists only as a local file and no Bitable/Drive
-  `file_token` is available, report the upload/write as unavailable instead of
-  claiming the asset was written. The current `write` command can set attachment
-  fields from file-token values; it does not upload local files by itself.
+  `file_token` objects plus the new related evidence local paths or
+  `file_token` objects. Do not overwrite existing attachments with only the new
+  evidence unless the user explicitly requests replacement.
+- If related media exists as a local file, preview the `write` with that local
+  path first, then run the same write with `--confirm` only after the requested
+  attachment/photo field and before values are explicit.
+  Avoid claiming the asset was written if media upload or the final record write
+  fails.
 - If no attachment/photo field is available, mention the media evidence and the
   write limitation in the QA report or another writable note field instead of
   inventing a field.

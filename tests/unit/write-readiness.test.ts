@@ -25,7 +25,7 @@ describe("write readiness", () => {
     });
   });
 
-  it("reports unknown write permission as partial", () => {
+  it("reports write permission as not probed by non-mutating readiness checks", () => {
     expect(
       evaluateWriteReadiness({
         authReady: true,
@@ -35,7 +35,12 @@ describe("write readiness", () => {
     ).toMatchObject({
       status: "partial",
       partialIssues: [
-        expect.objectContaining({ code: "write-permission-unverified" }),
+        expect.objectContaining({
+          code: "write-permission-not-probed",
+          message: expect.stringContaining(
+            "does not perform a committed write",
+          ),
+        }),
       ],
     });
   });

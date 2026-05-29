@@ -45,6 +45,14 @@ describe("bootstrap skill contract", () => {
     expect(skill).toContain("not limited to");
     expect(skill).toContain("one photo");
     expect(skill).toContain("Preserve existing attachments");
+    expect(skill).toContain("For fix evidence image upload");
+    expect(skill).toContain("requestedEffect");
+    expect(skill).toContain("replacementPolicy");
+    expect(skill).toContain("nextSafeCommands");
+    expect(skill).toContain(
+      "Confirm the preview says no unintended replacement",
+    );
+    expect(skill).toContain("hash the downloaded file");
     expect(skill).toContain("A list result is only a candidate summary");
     expect(skill).toContain("Every factual claim");
     expect(skill).toContain("Stop");
