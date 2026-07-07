@@ -29,18 +29,13 @@ describe("doctor bootstrap status", () => {
     expect(JSON.stringify(installed)).toContain("true");
   });
 
-  it("reports incomplete configure mappings when source exists without required bug fields", async () => {
+  it("does not require configure mappings when source exists", async () => {
     const skillDir = await mkdtemp(join(tmpdir(), "doctor-skill-"));
     const cwd = await mkdtemp(join(tmpdir(), "doctor-config-"));
     const authPath = join(cwd, "auth.json");
     const store = new ConfigStore({ cwd });
 
-    store.setSource({
-      ...fixtureSource,
-      fieldAliases: {},
-      priorityField: undefined,
-      statusField: undefined,
-    });
+    store.setSource(fixtureSource);
 
     const result = await DoctorCommand.run([
       "--skill-dir",
@@ -57,7 +52,6 @@ describe("doctor bootstrap status", () => {
       activeMode: "Developer",
       authPath,
       configPath: store.path,
-      configureMappingsReady: false,
       modeSource: "defaulted",
       sourceConfigured: true,
     });
@@ -65,9 +59,8 @@ describe("doctor bootstrap status", () => {
       active: "Developer",
       source: "defaulted",
     });
-    expect(result.data?.missingConfigureMappings).toEqual(
-      expect.arrayContaining(["status-field", "priority-field", "title-field"]),
-    );
-    expect(JSON.stringify(result)).toContain("incomplete-configure");
+    expect(result.data).not.toHaveProperty("missingConfigureMappings");
+    expect(result.data).not.toHaveProperty("configureMappingsReady");
+    expect(JSON.stringify(result)).not.toContain("incomplete-configure");
   });
 });

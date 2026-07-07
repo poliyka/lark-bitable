@@ -30,10 +30,3 @@ export function resolveWorkflowMode(store: ConfigStore): ResolvedMode {
     source: "explicit",
   };
 }
-
-export function defaultOwnerForMode(
-  config: WorkflowConfig | undefined,
-  mode: WorkflowMode,
-): string | undefined {
-  return config?.modeConfigs?.[mode]?.defaultOwner;
-}

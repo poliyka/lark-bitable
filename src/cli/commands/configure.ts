@@ -6,7 +6,6 @@ import {
 } from "@inquirer/prompts";
 
 import { BaseCommand } from "../base-command.js";
-import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import {
   bitableSourceSchema,
@@ -17,21 +16,7 @@ import {
   normalizeWorkflowMode,
   resolveWorkflowMode,
 } from "../../mode/mode-config.js";
-
-import {
-  discoverBitableFieldsWithAppCredentials,
-  discoverBitableFieldValuesWithAppCredentials,
-  type BitableFieldInfo,
-} from "../../lark/field-discovery.js";
 import { parseBitableUrl } from "../../lark/url-parser.js";
-
-interface FieldDiscoverySummary {
-  actionableValuesReturned?: number;
-  fieldsReturned?: number;
-  reason?: string;
-  remediation?: string;
-  status: "ready" | "partial" | "skipped";
-}
 
 export default class ConfigureCommand extends BaseCommand {
   static args = {
@@ -77,33 +62,12 @@ export default class ConfigureCommand extends BaseCommand {
         "Registered Lark OAuth redirect URI used by browser-based SSO login.",
       env: "LARK_REDIRECT_URI",
     }),
-    "actionable-status": Flags.string({
-      description: "Status value treated as actionable.",
-    }),
-    "default-owner": Flags.string({
-      description: "Default owner for the active workflow mode.",
-    }),
     mode: Flags.string({
       description: "Workflow mode to activate.",
       options: ["QA", "Developer"],
     }),
     name: Flags.string({
       description: "Optional source name.",
-    }),
-    "owner-field": Flags.string({
-      description: "Optional field name used as owner/assignee.",
-    }),
-    "priority-field": Flags.string({
-      description: "Field name used for priority sorting.",
-    }),
-    "priority-order": Flags.string({
-      description: "Comma-separated priority labels from highest to lowest.",
-    }),
-    "status-field": Flags.string({
-      description: "Field name used for actionable status filtering.",
-    }),
-    "title-field": Flags.string({
-      description: "Field name used as bug title.",
     }),
   };
 
@@ -183,122 +147,12 @@ export default class ConfigureCommand extends BaseCommand {
         : previousMode.active);
     const activeMode = normalizeWorkflowMode(requestedMode);
 
-    const mappingNeedsFieldDiscovery =
-      interactive &&
-      larkAppId &&
-      larkAppSecret &&
-      (!flags["status-field"] ||
-        !flags["priority-field"] ||
-        !flags["title-field"] ||
-        flags["owner-field"] === undefined);
-    const discovery = mappingNeedsFieldDiscovery
-      ? await discoverFieldsForInteractiveConfigure({
-          appId: larkAppId,
-          appSecret: larkAppSecret,
-          appToken: parsedUrl.appToken,
-          domain: larkDomain,
-          tableId: parsedUrl.tableId,
-        })
-      : {
-          summary: {
-            reason:
-              interactive && (!larkAppId || !larkAppSecret)
-                ? "Lark app credentials were not provided."
-                : "Field mapping flags were provided or configure is running non-interactively.",
-            status: "skipped",
-          } satisfies FieldDiscoverySummary,
-        };
-    const discoveredFields = discovery.fields ?? [];
-    const statusField =
-      flags["status-field"] ??
-      (interactive && discoveredFields.length > 0
-        ? await promptFieldChoice(
-            "Choose the bug status field",
-            discoveredFields,
-            previous?.statusField,
-          )
-        : interactive
-          ? requireDiscoveredFields(discovery.summary)
-          : undefined);
-    const priorityField =
-      flags["priority-field"] ??
-      (interactive && discoveredFields.length > 0
-        ? await promptFieldChoice(
-            "Choose the bug priority field",
-            discoveredFields,
-            previous?.priorityField,
-          )
-        : interactive
-          ? requireDiscoveredFields(discovery.summary)
-          : undefined);
-    const titleField =
-      flags["title-field"] ??
-      (interactive && discoveredFields.length > 0
-        ? await promptFieldChoice(
-            "Choose the bug title field",
-            discoveredFields,
-            previous?.fieldAliases.title,
-          )
-        : interactive
-          ? requireDiscoveredFields(discovery.summary)
-          : undefined);
-    const ownerField =
-      flags["owner-field"] ??
-      (interactive && discoveredFields.length > 0
-        ? await promptOptionalFieldChoice(
-            "Choose the optional owner field",
-            discoveredFields,
-            previous?.fieldAliases.owner,
-          )
-        : undefined);
-    const actionableStatusValues =
-      interactive && !flags["actionable-status"] && statusField
-        ? await discoverActionableStatusValues({
-            appId: larkAppId,
-            appSecret: larkAppSecret,
-            appToken: parsedUrl.appToken,
-            defaultValue: previous?.actionableStatus ?? "待處理",
-            domain: larkDomain,
-            fields: discoveredFields,
-            statusField,
-            summary: discovery.summary,
-            tableId: parsedUrl.tableId,
-            viewId: parsedUrl.viewId,
-          })
-        : [];
-    if (actionableStatusValues.length > 0) {
-      discovery.summary.actionableValuesReturned =
-        actionableStatusValues.length;
-    }
-    const actionableStatus =
-      flags["actionable-status"] ??
-      (interactive && statusField
-        ? await promptValueChoice(
-            "Actionable status value",
-            actionableStatusValues,
-            previous?.actionableStatus ?? "待處理",
-          )
-        : undefined);
-
     const source = bitableSourceSchema.parse({
       sourceUrl: parsedUrl.sourceUrl,
       appToken: parsedUrl.appToken,
       tableId: parsedUrl.tableId,
       viewId: parsedUrl.viewId,
       name: flags.name ?? previous?.name,
-      statusField: statusField ?? previous?.statusField,
-      actionableStatus: actionableStatus ?? previous?.actionableStatus,
-      priorityField: priorityField ?? previous?.priorityField,
-      priorityOrder:
-        flags["priority-order"]
-          ?.split(",")
-          .map((part) => part.trim())
-          .filter(Boolean) ?? previous?.priorityOrder,
-      fieldAliases: {
-        ...previous?.fieldAliases,
-        title: titleField ?? previous?.fieldAliases.title,
-        owner: ownerField ?? previous?.fieldAliases.owner,
-      },
       updatedAt: new Date().toISOString(),
     });
 
@@ -307,15 +161,6 @@ export default class ConfigureCommand extends BaseCommand {
       configuredBy: "configure",
       mode: activeMode,
     });
-    const defaultOwner = flags["default-owner"];
-    const workflowWithOwner =
-      defaultOwner !== undefined
-        ? store.setModeDefaultOwner({
-            mode: activeMode,
-            owner: defaultOwner,
-          })
-        : store.getWorkflowConfig();
-
     const larkApp =
       larkAppId && larkAppSecret
         ? store.setLarkApp(
@@ -353,15 +198,9 @@ export default class ConfigureCommand extends BaseCommand {
           appToken: source.appToken,
           tableId: source.tableId,
           viewId: source.viewId,
-          statusField: source.statusField,
-          actionableStatus: source.actionableStatus,
-          priorityField: source.priorityField,
-          fieldAliases: source.fieldAliases,
         },
         mode: {
           active: activeMode,
-          defaultOwner:
-            workflowWithOwner?.modeConfigs?.[activeMode]?.defaultOwner ?? null,
         },
         larkApp: larkApp
           ? {
@@ -372,7 +211,6 @@ export default class ConfigureCommand extends BaseCommand {
               secretState: "stored",
             }
           : null,
-        fieldDiscovery: discovery.summary,
       },
     };
 
@@ -390,178 +228,6 @@ async function promptWorkflowMode(defaultValue: "QA" | "Developer") {
     default: defaultValue,
     message: "Choose workflow mode",
   });
-}
-
-async function discoverFieldsForInteractiveConfigure(input: {
-  appId: string;
-  appSecret: string;
-  appToken: string;
-  domain?: string;
-  tableId: string;
-}): Promise<{
-  fields?: BitableFieldInfo[];
-  summary: FieldDiscoverySummary;
-}> {
-  try {
-    const fields = await discoverBitableFieldsWithAppCredentials(input);
-    if (fields.length === 0) {
-      return {
-        summary: {
-          reason: "Lark returned no visible fields for this table.",
-          remediation: fieldDiscoveryPermissionRemediation(),
-          status: "partial",
-        },
-      };
-    }
-    return {
-      fields,
-      summary: {
-        fieldsReturned: fields.length,
-        status: "ready",
-      },
-    };
-  } catch (error) {
-    return {
-      summary: {
-        reason: sanitizeDiscoveryFailure(error),
-        remediation: fieldDiscoveryPermissionRemediation(),
-        status: "partial",
-      },
-    };
-  }
-}
-
-async function discoverActionableStatusValues(input: {
-  appId?: string;
-  appSecret?: string;
-  appToken: string;
-  defaultValue: string;
-  domain?: string;
-  fields: BitableFieldInfo[];
-  statusField: string;
-  summary: FieldDiscoverySummary;
-  tableId: string;
-  viewId?: string;
-}): Promise<string[]> {
-  const fromOptions = input.fields.find(
-    (field) => field.fieldName === input.statusField,
-  )?.options;
-  if (fromOptions?.length) {
-    return ensureValueChoice(
-      fromOptions.map((option) => option.name),
-      {
-        defaultValue: input.defaultValue,
-        preferredValue: input.defaultValue,
-      },
-    );
-  }
-
-  if (!input.appId || !input.appSecret) {
-    return ensureValueChoice([], {
-      defaultValue: input.defaultValue,
-      preferredValue: input.defaultValue,
-    });
-  }
-
-  try {
-    const fromRecords = await discoverBitableFieldValuesWithAppCredentials({
-      appId: input.appId,
-      appSecret: input.appSecret,
-      appToken: input.appToken,
-      domain: input.domain,
-      fieldName: input.statusField,
-      tableId: input.tableId,
-      viewId: input.viewId,
-    });
-    return ensureValueChoice(fromRecords, {
-      defaultValue: input.defaultValue,
-      preferredValue: input.defaultValue,
-    });
-  } catch (error) {
-    input.summary.status =
-      input.summary.status === "skipped" ? "partial" : input.summary.status;
-    input.summary.reason = [
-      input.summary.reason,
-      `Actionable status values could not be read: ${sanitizeDiscoveryFailure(error)}`,
-    ]
-      .filter(Boolean)
-      .join(" ");
-    return ensureValueChoice([], {
-      defaultValue: input.defaultValue,
-      preferredValue: input.defaultValue,
-    });
-  }
-}
-
-async function promptFieldChoice(
-  message: string,
-  fields: BitableFieldInfo[],
-  defaultValue?: string,
-): Promise<string> {
-  return await promptRawlist({
-    choices: fields.map((field) => ({
-      name: field.fieldName,
-      value: field.fieldName,
-    })),
-    default: defaultValue,
-    message,
-  });
-}
-
-async function promptOptionalFieldChoice(
-  message: string,
-  fields: BitableFieldInfo[],
-  defaultValue?: string,
-): Promise<string | undefined> {
-  const noneValue = "__none__";
-  const selected = await promptRawlist({
-    choices: [
-      { name: "(leave blank)", value: noneValue },
-      ...fields.map((field) => ({
-        name: field.fieldName,
-        value: field.fieldName,
-      })),
-    ],
-    default: defaultValue ?? noneValue,
-    message,
-  });
-  return selected === noneValue ? undefined : selected;
-}
-
-async function promptValueChoice(
-  message: string,
-  values: string[],
-  defaultValue: string,
-): Promise<string> {
-  return await promptRawlist({
-    choices: values.map((value) => ({
-      name: value,
-      value,
-    })),
-    default: values.includes(defaultValue) ? defaultValue : values[0],
-    message,
-  });
-}
-
-function requireDiscoveredFields(summary: FieldDiscoverySummary): never {
-  throw new CliError({
-    code: "field-discovery-required",
-    message:
-      "Interactive configure could not load Bitable fields, so it cannot show numbered field choices.",
-    remediation: [summary.reason, summary.remediation]
-      .filter(Boolean)
-      .join(" "),
-  });
-}
-
-function fieldDiscoveryPermissionRemediation(): string {
-  return [
-    "Interactive configure reads Bitable field metadata with the Lark app tenant_access_token.",
-    "Open Lark Developer Console > Permissions and add the application-identity permissions needed by configure: base:field:read for field metadata and application-identity bitable:app:readonly for Bitable record reads used when deriving existing status values.",
-    "Publish a new app version and wait for enterprise approval if the console marks the permission as requiring review.",
-    "User-identity bitable:app:readonly is also required for browser login and user-token table reads, but it does not satisfy application-identity configure calls.",
-    "Also confirm the app id/secret are correct and the app can access the target Base.",
-  ].join(" ");
 }
 
 async function promptRequiredInput(
@@ -605,32 +271,4 @@ async function promptSecret(
   });
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : existingSecret;
-}
-
-function sanitizeDiscoveryFailure(error: unknown): string {
-  if (!(error instanceof Error)) {
-    return "Lark field discovery failed.";
-  }
-  return error.message.replace(
-    /(secret|token)\s*[:=]\s*[^,\s]+/gi,
-    "$1=[REDACTED]",
-  );
-}
-
-function ensureValueChoice(
-  values: string[],
-  input: {
-    defaultValue: string;
-    preferredValue: string;
-  },
-): string[] {
-  const seen = new Set<string>();
-  const choices: string[] = [];
-  for (const value of [input.preferredValue, ...values, input.defaultValue]) {
-    const trimmed = value.trim();
-    if (!trimmed || seen.has(trimmed)) continue;
-    seen.add(trimmed);
-    choices.push(trimmed);
-  }
-  return choices;
 }

@@ -1,6 +1,6 @@
 {
   "name": "lark-bitable",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "type": "module",
   "description": "AI-facing Lark Bitable CLI for bug triage and evidence-backed reports.",
   "license": "MIT",

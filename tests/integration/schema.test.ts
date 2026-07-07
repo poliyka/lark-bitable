@@ -22,10 +22,6 @@ describe("schema command", () => {
     });
     new ConfigStore({ cwd }).setSource({
       ...fixtureSource,
-      fieldAliases: {
-        ...fixtureSource.fieldAliases,
-        owner: "負責人",
-      },
     });
 
     const records = [
@@ -76,20 +72,14 @@ describe("schema command", () => {
     ]);
   });
 
-  it("returns field metadata summary and configured mappings", async () => {
+  it("returns field metadata summary and sample counts", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "schema-"));
     const authPath = join(cwd, "auth.json");
     await new AuthStore(authPath).write({
       ...readyAuthSession,
       storagePath: authPath,
     });
-    new ConfigStore({ cwd }).setSource({
-      ...fixtureSource,
-      fieldAliases: {
-        ...fixtureSource.fieldAliases,
-        owner: "負責人",
-      },
-    });
+    new ConfigStore({ cwd }).setSource(fixtureSource);
 
     const records = [
       {
@@ -113,12 +103,7 @@ describe("schema command", () => {
       "--json",
     ]);
 
-    expect(result.data?.mappings).toMatchObject({
-      statusField: "狀態",
-      priorityField: "優先級",
-      titleField: "標題",
-      ownerField: "負責人",
-    });
+    expect(result.data).not.toHaveProperty("mappings");
     expect(result.data?.sample).toMatchObject({
       limit: 5,
       sampledRecords: 1,

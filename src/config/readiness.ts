@@ -116,22 +116,6 @@ export async function checkReadiness(
     remediationSteps.push("Run lark-bitable configure <url>");
   }
 
-  if (
-    workflow === "triage" &&
-    source &&
-    (!source.statusField || !source.priorityField)
-  ) {
-    blockingIssues.push({
-      code: "missing-field-mapping",
-      message: "Triage requires status and priority field mappings.",
-      remediation:
-        "Run lark-bitable configure with --status-field and --priority-field",
-    });
-    remediationSteps.push(
-      "Run lark-bitable configure with --status-field and --priority-field",
-    );
-  }
-
   if (workflow === "research" && !context.configStore?.getSelection()) {
     blockingIssues.push({
       code: "missing-selection",

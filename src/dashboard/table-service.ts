@@ -15,7 +15,6 @@ export async function getDashboardSchema(input: {
     return {
       fields: [],
       issues: blocked,
-      mappings: {},
       status: "blocked" as const,
     };
   }
@@ -49,13 +48,6 @@ export async function getDashboardSchema(input: {
       ].slice(0, 10),
     })),
     issues: [],
-    mappings: {
-      actionableStatus: source?.actionableStatus,
-      ownerField: source?.fieldAliases.owner ?? null,
-      priorityField: source?.priorityField ?? null,
-      statusField: source?.statusField ?? null,
-      titleField: source?.fieldAliases.title ?? null,
-    },
     status: "ready" as const,
   });
 }

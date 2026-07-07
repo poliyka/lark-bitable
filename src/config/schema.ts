@@ -45,7 +45,6 @@ export const workflowModeSchema = z.enum(["QA", "Developer"]);
 
 export const modeConfigSchema = z.object({
   checkPolicy: z.enum(["auto", "manual-only", "report-only"]).optional(),
-  defaultOwner: z.string().min(1).optional(),
   updatedAt: isoTimestampSchema,
 });
 
@@ -67,22 +66,6 @@ export const bitableSourceSchema = z.object({
   appToken: z.string().min(1),
   tableId: z.string().min(1),
   viewId: z.string().min(1).optional(),
-  statusField: z.string().min(1).optional(),
-  actionableStatus: z.string().min(1).default("待處理"),
-  priorityField: z.string().min(1).optional(),
-  priorityOrder: z.array(z.string().min(1)).optional(),
-  fieldAliases: z
-    .object({
-      title: z.string().min(1).optional(),
-      owner: z.string().min(1).optional(),
-      originalDescription: z.string().min(1).optional(),
-      reproductionSteps: z.string().min(1).optional(),
-      expectedBehavior: z.string().min(1).optional(),
-      actualBehavior: z.string().min(1).optional(),
-      links: z.string().min(1).optional(),
-      notes: z.string().min(1).optional(),
-    })
-    .default({}),
   updatedAt: isoTimestampSchema,
 });
 
@@ -153,19 +136,23 @@ export const triageSelectionSchema = z.object({
   candidateSnapshot: z.record(z.string(), z.unknown()),
 });
 
+const ownerNotAppliedReasonSchema = z.preprocess(
+  (value) => (value === "default-owner-disabled" ? "empty-owner-value" : value),
+  z.enum(["missing-owner-field", "empty-owner-value"]).optional(),
+);
+
+const ownerCriteriaSourceSchema = z.preprocess(
+  (value) => (value === "mode-default" ? "command" : value),
+  z.enum(["command", "none"]),
+);
+
 export const ownerCriteriaSchema = z.object({
   applied: z.boolean(),
   field: z.string().min(1).nullable(),
   matchedRecords: z.number().int().min(0).default(0),
   mode: workflowModeSchema,
-  notAppliedReason: z
-    .enum([
-      "missing-owner-field",
-      "empty-owner-value",
-      "default-owner-disabled",
-    ])
-    .optional(),
-  source: z.enum(["command", "mode-default", "none"]),
+  notAppliedReason: ownerNotAppliedReasonSchema,
+  source: ownerCriteriaSourceSchema,
   totalRecordsBeforeFilter: z.number().int().min(0).default(0),
   value: z.string().min(1).optional(),
 });

@@ -523,7 +523,6 @@ export class LarkClient {
       const page = await this.transport.listRecords({
         appToken: source.appToken,
         tableId: source.tableId,
-        viewId: source.viewId,
         pageSize,
         pageToken,
       });

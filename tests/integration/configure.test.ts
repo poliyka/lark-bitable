@@ -35,12 +35,6 @@ describe("configure command", () => {
       cwd,
       "--name",
       "bugs",
-      "--status-field",
-      "狀態",
-      "--priority-field",
-      "優先級",
-      "--title-field",
-      "標題",
       "--json",
     ]);
 
@@ -49,9 +43,15 @@ describe("configure command", () => {
       new ConfigStore({ cwd, projectName: "lark-bitable" }).getSource(),
     ).toMatchObject({
       name: "bugs",
-      statusField: "狀態",
-      priorityField: "優先級",
+      tableId: "tblp8ig36Itp0yOU",
+      viewId: "vewb6FrjBe",
     });
+    expect(result.data?.active).not.toHaveProperty("statusField");
+    expect(result.data?.active).not.toHaveProperty("actionableStatus");
+    expect(result.data?.active).not.toHaveProperty("priorityField");
+    expect(
+      new ConfigStore({ cwd, projectName: "lark-bitable" }).getSource(),
+    ).not.toHaveProperty("actionableStatus");
   });
 
   it("does not mutate previous config when the URL is invalid", async () => {
@@ -138,7 +138,7 @@ describe("configure command", () => {
     expect(JSON.stringify(entries)).not.toContain("cli-secret");
   });
 
-  it("guides humans through source, Lark app, and numbered field mapping choices", async () => {
+  it("guides humans through source and Lark app without bug field mapping choices", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "lark-configure-"));
     const rawlistPrompts: Array<{
       choices: Array<{ name?: string; value: string }>;
@@ -177,28 +177,16 @@ describe("configure command", () => {
         }) => {
           rawlistPrompts.push({ choices, default: defaultValue, message });
           if (message.includes("workflow mode")) return "Developer";
-          if (message.includes("status field")) return "狀態";
-          if (message.includes("priority")) return "優先級";
-          if (message.includes("title")) return "標題";
-          if (message.includes("owner field")) return "__none__";
-          if (message.includes("Actionable status")) return "待處理";
           throw new Error(`unexpected rawlist prompt: ${message}`);
         },
       ),
     }));
     vi.doMock("../../src/lark/field-discovery.js", () => ({
-      discoverBitableFieldsWithAppCredentials: vi.fn(async () => [
-        { fieldName: "標題", type: 1 },
-        {
-          fieldName: "狀態",
-          options: [{ name: "待處理" }, { name: "處理中" }, { name: "已完成" }],
-          type: 3,
-        },
-        { fieldName: "優先級", type: 3 },
-        { fieldName: "描述", type: 1 },
-      ]),
+      discoverBitableFieldsWithAppCredentials: vi.fn(async () => {
+        throw new Error("configure should not discover bug field mappings");
+      }),
       discoverBitableFieldValuesWithAppCredentials: vi.fn(async () => {
-        throw new Error("record values should not be read when options exist");
+        throw new Error("configure should not discover actionable values");
       }),
     }));
 
@@ -213,57 +201,36 @@ describe("configure command", () => {
     });
 
     expect(store.getSource()).toMatchObject({
-      statusField: "狀態",
-      priorityField: "優先級",
-      actionableStatus: "待處理",
-      fieldAliases: {
-        title: "標題",
-      },
+      tableId: "tblp8ig36Itp0yOU",
+      viewId: "vewb6FrjBe",
     });
+    expect(store.getSource()).not.toHaveProperty("statusField");
+    expect(store.getSource()).not.toHaveProperty("actionableStatus");
+    expect(store.getSource()).not.toHaveProperty("priorityField");
+    expect(store.getSource()).not.toHaveProperty("fieldAliases");
     expect(store.getLarkApp()).toMatchObject({
       appId: "cli-app",
       appSecret: "cli-secret",
       redirectUri: "http://127.0.0.1:14543/callback",
     });
-    expect(rawlistPrompts).toHaveLength(6);
+    expect(rawlistPrompts).toHaveLength(1);
     expect(rawlistPrompts.map((prompt) => prompt.message)).toEqual([
       "Choose workflow mode",
-      "Choose the bug status field",
-      "Choose the bug priority field",
-      "Choose the bug title field",
-      "Choose the optional owner field",
-      "Actionable status value",
-    ]);
-    for (const prompt of rawlistPrompts.slice(1, 4)) {
-      expect(prompt.choices.map((choice) => choice.name)).toEqual([
-        "標題",
-        "狀態",
-        "優先級",
-        "描述",
-      ]);
-    }
-    expect(rawlistPrompts[5]?.choices.map((choice) => choice.name)).toEqual([
-      "待處理",
-      "處理中",
-      "已完成",
     ]);
     expect(inputPrompts).not.toContain("Actionable status value");
     expect(
       inputPrompts.some((message) => message.includes("Default owner")),
     ).toBe(false);
-    expect(result.data).toMatchObject({
-      fieldDiscovery: {
-        actionableValuesReturned: 3,
-        fieldsReturned: 4,
-        status: "ready",
-      },
-    });
+    expect(result.data).not.toHaveProperty("fieldDiscovery");
     expect(JSON.stringify(result)).not.toContain("cli-secret");
   });
 
-  it("stops interactive field mapping when Lark field discovery fails instead of asking humans to type field names", async () => {
+  it("does not call field discovery during interactive configure", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "lark-configure-"));
     const inputPrompts: string[] = [];
+    const fieldDiscovery = vi.fn(async () => {
+      throw new Error("field discovery should not be called");
+    });
 
     Object.defineProperty(process.stdin, "isTTY", {
       configurable: true,
@@ -288,42 +255,23 @@ describe("configure command", () => {
       }),
     }));
     vi.doMock("../../src/lark/field-discovery.js", () => ({
-      discoverBitableFieldsWithAppCredentials: vi.fn(async () => {
-        throw new Error(
-          "Lark field list failed with HTTP 400: code=99991672 msg=Access denied. One of the following scopes is required: [bitable:app:readonly, bitable:app, base:field:read]",
-        );
-      }),
+      discoverBitableFieldsWithAppCredentials: fieldDiscovery,
       discoverBitableFieldValuesWithAppCredentials: vi.fn(async () => []),
     }));
 
     const { default: InteractiveConfigureCommand } =
       await import("../../src/cli/commands/configure.js");
 
-    let caughtError: unknown;
-    try {
-      await InteractiveConfigureCommand.run(["--config-cwd", cwd]);
-    } catch (error) {
-      caughtError = error;
-    }
+    const result = await InteractiveConfigureCommand.run(["--config-cwd", cwd]);
 
-    expect(caughtError).toMatchObject({
-      code: "field-discovery-required",
-      remediation: expect.stringContaining("base:field:read"),
-    });
-    expect(caughtError).toMatchObject({
-      remediation: expect.stringContaining("application-identity"),
-    });
-    expect(caughtError).toMatchObject({
-      remediation: expect.stringContaining("tenant_access_token"),
-    });
-    expect(caughtError).toMatchObject({
-      remediation: expect.stringContaining(
-        "User-identity bitable:app:readonly",
-      ),
-    });
+    expect(result.status).toBe("ok");
+    expect(fieldDiscovery).not.toHaveBeenCalled();
     expect(
       new ConfigStore({ cwd, projectName: "lark-bitable" }).getSource(),
-    ).toBeUndefined();
+    ).toMatchObject({
+      tableId: "tblp8ig36Itp0yOU",
+      viewId: "vewb6FrjBe",
+    });
     expect(inputPrompts).not.toContain("Bug status field");
     expect(inputPrompts).not.toContain("Bug priority field");
     expect(inputPrompts).not.toContain("Bug title field");
@@ -340,12 +288,6 @@ describe("configure command", () => {
       appToken: "TypDbjKBfaJcaSsoEI1lZjHsgIY",
       tableId: "tblp8ig36Itp0yOU",
       viewId: "vewb6FrjBe",
-      statusField: "既有狀態",
-      actionableStatus: "既有待處理",
-      priorityField: "既有優先級",
-      fieldAliases: {
-        title: "既有標題",
-      },
       updatedAt: new Date().toISOString(),
     });
     store.setLarkApp({
@@ -408,20 +350,9 @@ describe("configure command", () => {
       ),
     }));
     vi.doMock("../../src/lark/field-discovery.js", () => ({
-      discoverBitableFieldsWithAppCredentials: vi.fn(async () => [
-        {
-          fieldName: "既有狀態",
-          options: [
-            { name: "既有待處理" },
-            { name: "處理中" },
-            { name: "已完成" },
-          ],
-          type: 3,
-        },
-        { fieldName: "既有優先級", type: 3 },
-        { fieldName: "既有標題", type: 1 },
-        { fieldName: "描述", type: 1 },
-      ]),
+      discoverBitableFieldsWithAppCredentials: vi.fn(async () => {
+        throw new Error("field discovery should not be called");
+      }),
       discoverBitableFieldValuesWithAppCredentials: vi.fn(async () => {
         throw new Error("record values should not be read when options exist");
       }),
@@ -435,13 +366,13 @@ describe("configure command", () => {
     const storedApp = store.getLarkApp();
 
     expect(storedSource).toMatchObject({
-      actionableStatus: "既有待處理",
-      fieldAliases: {
-        title: "既有標題",
-      },
-      priorityField: "既有優先級",
-      statusField: "既有狀態",
+      tableId: "tblp8ig36Itp0yOU",
+      viewId: "vewb6FrjBe",
     });
+    expect(storedSource).not.toHaveProperty("actionableStatus");
+    expect(storedSource).not.toHaveProperty("fieldAliases");
+    expect(storedSource).not.toHaveProperty("priorityField");
+    expect(storedSource).not.toHaveProperty("statusField");
     expect(storedApp).toMatchObject({
       appId: "cli-app",
       appSecret: "cli-secret",
@@ -466,26 +397,12 @@ describe("configure command", () => {
         }),
       ]),
     );
-    expect(rawlistPrompts).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          default: "既有狀態",
-          message: "Choose the bug status field",
-        }),
-        expect.objectContaining({
-          default: "既有優先級",
-          message: "Choose the bug priority field",
-        }),
-        expect.objectContaining({
-          default: "既有標題",
-          message: "Choose the bug title field",
-        }),
-        expect.objectContaining({
-          default: "既有待處理",
-          message: "Actionable status value",
-        }),
-      ]),
-    );
+    expect(rawlistPrompts).toEqual([
+      expect.objectContaining({
+        default: "Developer",
+        message: "Choose workflow mode",
+      }),
+    ]);
     expect(passwordPrompts).toHaveLength(1);
     expect(passwordPrompts[0]).toMatchObject({
       message:

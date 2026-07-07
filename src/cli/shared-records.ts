@@ -55,18 +55,14 @@ export async function loadRecordCommandData(context: RecordCommandContext) {
 export function applyOwnerCriteria(
   input: {
     commandOwner?: string;
-    ignoreDefaultOwner?: boolean;
   } & Pick<
     Awaited<ReturnType<typeof loadRecordCommandData>>,
-    "configStore" | "mode" | "records" | "source"
+    "mode" | "records"
   >,
 ): OwnerFilterResult {
   const criteria = resolveOwnerCriteria({
     commandOwner: input.commandOwner,
-    ignoreDefaultOwner: input.ignoreDefaultOwner,
     mode: input.mode.active,
-    source: input.source,
-    workflowConfig: input.configStore.getWorkflowConfig(),
   });
   return applyOwnerFilter(input.records, criteria);
 }

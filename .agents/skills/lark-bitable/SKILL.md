@@ -23,13 +23,13 @@ Use this skill before reading Lark Bitable data for a bug-fixing workflow.
    readiness details.
 8. Run `lark-bitable schema` first when you only need field headers.
 9. Run `lark-bitable schema --json` before querying or writing when the table schema,
-   field mappings, exact status values, owner field, or field types are not
+   exact status values, owner field, or field types are not
    already known from current context.
 
 Stop when `doctor` or `valid` reports missing CLI, missing bootstrap guidance,
 missing config, missing Lark login, expired or invalid auth, missing
-authorization, incomplete configure mappings, missing selected bug context,
-version conflicts, or inconclusive live access.
+authorization, missing selected bug context, version conflicts, or
+inconclusive live access.
 
 ## Mode-Aware Workflow
 
@@ -44,18 +44,17 @@ version conflicts, or inconclusive live access.
   `lark-bitable configure --mode Developer`. Human setup should use guided
   `configure`; AI setup should pass explicit flags.
 - `doctor` should verify whether configure is actually complete, including
-  required bug mappings, Lark app settings, and the real config/auth paths.
+  source identity, Lark app settings, and the real config/auth paths.
 - Owner filtering is optional. Use `--owner <name>` only when the user asks to
-  focus records by owner or when a default owner is configured. Missing owner
-  field must not block record discovery; report `ownerCriteria.applied=false`
-  and continue with the returned records.
+  focus records by owner. Missing owner field must not block record discovery;
+  report `ownerCriteria.applied=false` and continue with the returned records.
 - Query commands support `--limit <positive-integer>`. Use limits when listing
   candidate records for a human. Invalid limits must be fixed instead of
   retried with a guessed value.
 - Do not guess field names, status values, or owner field names across
   languages. If the current context does not show the exact table shape, run
-  `lark-bitable schema --json` first and use its `fields`, `mappings`, and
-  sampled observed values.
+  `lark-bitable schema --json` first and use its `fields` and sampled observed
+  values.
 - Do not commit Bitable writes by default. Always run `lark-bitable write`
   without `--confirm` first, inspect the preview, and only repeat with
   `--confirm` after the requested source, target record, and field changes are
@@ -112,20 +111,12 @@ version conflicts, or inconclusive live access.
 ## Login and Configure
 
 - For human setup, run `lark-bitable configure` first so the user can provide
-  the Lark Base URL, Lark app id/secret, OAuth redirect URI, and field mappings
-  through prompts. Configure tries to load table fields and shows numbered
-  choices when Lark app credentials can read the table metadata.
-- Configure field discovery uses app credentials and `tenant_access_token`.
-  If it fails after app id/secret are entered, check that application identity
-  has both `base:field:read` for field metadata and
-  `bitable:app:readonly` for Bitable record reads used when deriving existing
-  status values. These are not replacements for the user-identity
-  `bitable:app:readonly` permission used by browser login. All required
-  permissions must be published and approved before configure can load numbered
-  field choices and status values reliably.
-- If configure reports Lark code `99991672` with required scopes such as
-  `[bitable:app:readonly, bitable:app, base:field:read]`, treat it as a missing
-  or inactive application-identity permission, not as a field-name problem.
+  the Lark Base URL, Lark app id/secret, OAuth redirect URI, and workflow mode
+  through prompts. Configure does not store bug field settings, owner fields,
+  priority fields, or actionable status defaults.
+- If schema/list/valid reports Lark code `99991672` with required scopes such
+  as `[bitable:app:readonly, bitable:app]`, treat it as a missing or inactive
+  user-identity permission, not as a field-name problem.
 - For AI setup, run `lark-bitable configure <Lark Base URL> --lark-app-id <id> --lark-app-secret <secret> --lark-redirect-uri <registered-redirect-uri>`
   with explicit values provided by the user or environment.
 - Run `lark-bitable lark --login` when auth is missing, invalid, or
@@ -275,8 +266,7 @@ Rules for write operations:
 When a human or AI asks for high-risk bugs, the workflow must be:
 
 1. If you only need field headers, run `lark-bitable schema`.
-2. If the exact table schema or configured mappings are not known, run
-   `lark-bitable schema --json`.
+2. If the exact table schema is not known, run `lark-bitable schema --json`.
 3. Use `triage`, `list`, `search`, or `filter` to produce a candidate list.
 4. Return a numbered candidate summary that includes the record id and the
    minimum fields needed to choose a record.

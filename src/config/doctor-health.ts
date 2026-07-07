@@ -45,10 +45,8 @@ export interface DoctorHealthData {
     version: string;
   };
   configPath: string;
-  configureMappingsReady: boolean;
   installSkillRequested: boolean;
   larkAppConfigured: boolean;
-  missingConfigureMappings: string[];
   modeSource: ReturnType<typeof resolveWorkflowMode>["source"];
   sourceConfigured: boolean;
 }
@@ -75,13 +73,6 @@ export async function inspectDoctorHealth(
   const source = store.getSource();
   const larkApp = store.getLarkApp();
   const mode = resolveWorkflowMode(store);
-  const missingMappings = source
-    ? [
-        source.statusField ? null : "status-field",
-        source.priorityField ? null : "priority-field",
-        source.fieldAliases.title ? null : "title-field",
-      ].filter((value): value is string => Boolean(value))
-    : [];
   const bootstrap = await inspectOrInstallBootstrap(input);
   const data: DoctorHealthData = {
     ...(input.cli ? { cli: input.cli } : {}),
@@ -99,10 +90,8 @@ export async function inspectDoctorHealth(
         ? bootstrap.targets.map((target) => targetSnapshot(target))
         : [targetSnapshot(bootstrap)],
     configPath: store.path,
-    configureMappingsReady: Boolean(source) && missingMappings.length === 0,
     installSkillRequested: Boolean(input.installSkill),
     larkAppConfigured: Boolean(larkApp),
-    missingConfigureMappings: missingMappings,
     modeSource: mode.source,
     sourceConfigured: Boolean(source),
   };
@@ -110,7 +99,6 @@ export async function inspectDoctorHealth(
     authReady: Boolean(auth),
     bootstrapInstalled: bootstrap.installed,
     larkAppConfigured: Boolean(larkApp),
-    missingMappings,
     sourceConfigured: Boolean(source),
   });
 
@@ -167,7 +155,6 @@ function doctorHealthIssues(input: {
   authReady: boolean;
   bootstrapInstalled: boolean;
   larkAppConfigured: boolean;
-  missingMappings: string[];
   sourceConfigured: boolean;
 }): Issue[] {
   const issues: Issue[] = [];
@@ -185,20 +172,11 @@ function doctorHealthIssues(input: {
       remediation: "Run lark-bitable configure <url>",
     });
   }
-  if (input.sourceConfigured && input.missingMappings.length > 0) {
-    issues.push({
-      code: "incomplete-configure",
-      message:
-        "Active source exists, but required bug mappings are incomplete.",
-      remediation:
-        "Run lark-bitable configure and choose status, priority, and title fields.",
-    });
-  }
   if (!input.larkAppConfigured) {
     issues.push({
       code: "missing-lark-app-config",
       message:
-        "Lark app settings are not stored, so refresh and interactive field discovery may fail.",
+        "Lark app settings are not stored, so login and token refresh may fail.",
       remediation:
         "Run lark-bitable configure and provide Lark app id, app secret, and redirect URI.",
     });

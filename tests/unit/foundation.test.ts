@@ -33,7 +33,7 @@ describe("foundation schemas", () => {
       tableId: "tblp8ig36Itp0yOU",
     });
 
-    expect(parsed.actionableStatus).toBe("待處理");
+    expect(parsed).not.toHaveProperty("actionableStatus");
     expect(parsed.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
@@ -77,7 +77,7 @@ describe("foundation schemas", () => {
     const validation = validationResultSchema.parse({
       workflow: "triage",
       status: "blocked",
-      checkedPrerequisites: ["auth", "source", "field-mapping"],
+      checkedPrerequisites: ["auth", "source"],
       blockingIssues: [
         {
           code: "missing-auth",
@@ -116,6 +116,16 @@ describe("foundation schemas", () => {
         value: "openclaw",
       }).notAppliedReason,
     ).toBe("missing-owner-field");
+    expect(
+      ownerCriteriaSchema.parse({
+        applied: true,
+        field: "負責人",
+        matchedRecords: 1,
+        mode: "Developer",
+        source: "mode-default",
+        value: "openclaw",
+      }).source,
+    ).toBe("command");
 
     expect(
       queryLimitSchema.parse({

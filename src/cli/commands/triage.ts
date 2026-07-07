@@ -26,7 +26,8 @@ export default class TriageCommand extends BaseCommand {
   static flags = {
     ...BaseCommand.baseFlags,
     "actionable-status": Flags.string({
-      description: "Override actionable status value.",
+      description:
+        "Exact status value to filter for this run. Omit to inspect all inferred bug candidates.",
     }),
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
     "config-cwd": Flags.string({ hidden: true }),
@@ -34,12 +35,8 @@ export default class TriageCommand extends BaseCommand {
     limit: Flags.integer({
       description: "Maximum candidates to return after sorting.",
     }),
-    "no-default-owner": Flags.boolean({
-      description: "Ignore the stored default owner for this run.",
-    }),
     owner: Flags.string({
-      description:
-        "Filter candidates by owner when an owner field is configured.",
+      description: "Filter candidates by owner using an inferred owner field.",
     }),
     select: Flags.integer({
       description: "Select candidate index without an interactive prompt.",
@@ -55,19 +52,15 @@ export default class TriageCommand extends BaseCommand {
       configCwd: flags["config-cwd"],
       fixture: flags.fixture,
     });
-    const { source } = context;
     const ownerResult = applyOwnerCriteria({
       ...context,
       commandOwner: flags.owner,
-      ignoreDefaultOwner: flags["no-default-owner"],
     });
 
-    const actionableStatus =
-      flags["actionable-status"] ?? source.actionableStatus;
-    const allCandidates = extractBugCandidates(ownerResult.records, source);
+    const actionableStatus = flags["actionable-status"];
+    const allCandidates = extractBugCandidates(ownerResult.records);
     const candidates = sortCandidatesByPriority(
       filterActionableCandidates(allCandidates, actionableStatus),
-      source.priorityOrder,
     );
     const limit = parsePositiveLimit({
       defaultLimit: 20,
@@ -85,9 +78,11 @@ export default class TriageCommand extends BaseCommand {
         issues: [
           {
             code: "no-actionable-records",
-            message: "No actionable bug records matched the configured status.",
+            message: actionableStatus
+              ? "No bug records matched the requested actionable status."
+              : "No bug records were available for triage.",
             remediation:
-              "Run lark-bitable configure and choose the actionable status from discovered table values, or pass --actionable-status with the exact current table value.",
+              "Run lark-bitable schema --json to inspect current status values, then pass --actionable-status with the exact table value when status filtering is needed.",
           },
         ],
         mode: {
@@ -101,7 +96,6 @@ export default class TriageCommand extends BaseCommand {
           criteria: {
             actionableStatus,
             observedStatusValues: observedStatusValues(allCandidates),
-            priorityOrder: source.priorityOrder ?? [],
           },
         },
       };
@@ -118,11 +112,13 @@ export default class TriageCommand extends BaseCommand {
         selectedAt: new Date().toISOString(),
         mode: context.mode.active,
         selectionEvidence: {
-          filter: `${source.statusField} equals ${actionableStatus}`,
+          filter: actionableStatus
+            ? `status equals ${actionableStatus}`
+            : "no actionable-status filter",
           mode: context.mode.active,
           ownerCriteria: ownerResult.criteria,
           queryLimit: limitedResult.queryLimit,
-          sort: `${source.priorityField} by configured priority order`,
+          sort: "inferred priority order",
           displayedRecordIds: limitedResult.items.map(
             (candidate) => candidate.record.recordId,
           ),
@@ -147,9 +143,9 @@ export default class TriageCommand extends BaseCommand {
       command: "triage",
       status: "ok",
       source: {
-        appToken: source.appToken,
-        tableId: source.tableId,
-        viewId: source.viewId,
+        appToken: context.source.appToken,
+        tableId: context.source.tableId,
+        viewId: context.source.viewId,
         retrievedAt: new Date().toISOString(),
       },
       mode: {
@@ -161,7 +157,6 @@ export default class TriageCommand extends BaseCommand {
       data: {
         criteria: {
           actionableStatus,
-          priorityOrder: source.priorityOrder ?? [],
         },
         candidates: limitedResult.items,
         selectedRecordId: selected?.record.recordId ?? null,

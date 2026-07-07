@@ -35,11 +35,8 @@ export default class SearchCommand extends BaseCommand {
     limit: Flags.integer({
       description: "Maximum matching records to return.",
     }),
-    "no-default-owner": Flags.boolean({
-      description: "Ignore the stored default owner for this run.",
-    }),
     owner: Flags.string({
-      description: "Filter records by owner when an owner field is configured.",
+      description: "Filter records by owner using an inferred owner field.",
     }),
   };
 
@@ -68,7 +65,6 @@ export default class SearchCommand extends BaseCommand {
     const ownerResult = applyOwnerCriteria({
       ...context,
       commandOwner: flags.owner,
-      ignoreDefaultOwner: flags["no-default-owner"],
     });
     const matches = searchRecords(ownerResult.records, query, flags.field);
     const limit = parsePositiveLimit({

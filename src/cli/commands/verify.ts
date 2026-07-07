@@ -46,15 +46,12 @@ export default class VerifyCommand extends BaseCommand {
       description:
         "Maximum table records to inspect when validating the requested task.",
     }),
-    "no-default-owner": Flags.boolean({
-      description: "Ignore the stored default owner for this run.",
-    }),
     out: Flags.string({
       description: "Path to write the Markdown QA verification report.",
     }),
     owner: Flags.string({
       description:
-        "Validate the task against an owner filter when an owner field is configured.",
+        "Validate the task against an owner filter using an inferred owner field.",
     }),
   };
 
@@ -76,7 +73,6 @@ export default class VerifyCommand extends BaseCommand {
     const ownerResult = applyOwnerCriteria({
       ...context,
       commandOwner: flags.owner,
-      ignoreDefaultOwner: flags["no-default-owner"],
     });
     const limit = parsePositiveLimit({
       defaultLimit: 20,
@@ -112,7 +108,7 @@ export default class VerifyCommand extends BaseCommand {
         code: "owner-record-mismatch",
         message: "Selected task record does not match the active owner filter.",
         remediation:
-          "Run lark-bitable verify <record-id> --no-default-owner, choose a record from the owner-filtered list, or configure the correct default owner.",
+          "Run lark-bitable verify <record-id> without --owner, choose a record from the owner-filtered list, or pass the correct --owner value.",
       });
     }
 

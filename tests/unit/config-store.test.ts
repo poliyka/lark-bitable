@@ -87,7 +87,7 @@ describe("ConfigStore", () => {
     expect(store.getSource()).toBeUndefined();
   });
 
-  it("persists field mappings and actionable defaults", async () => {
+  it("drops legacy field mapping settings from active source config", async () => {
     const store = new ConfigStore({
       cwd: await mkdtemp(join(tmpdir(), "lark-config-")),
       projectName: "test-config",
@@ -100,16 +100,16 @@ describe("ConfigStore", () => {
       fieldAliases: {
         title: "Title",
       },
-    });
+    } as never);
 
     expect(store.getSource()).toMatchObject({
-      actionableStatus: "待處理",
-      statusField: "Status",
-      priorityField: "Priority",
-      fieldAliases: {
-        title: "Title",
-      },
+      tableId: fixtureSource.tableId,
+      viewId: fixtureSource.viewId,
     });
+    expect(store.getSource()).not.toHaveProperty("statusField");
+    expect(store.getSource()).not.toHaveProperty("priorityField");
+    expect(store.getSource()).not.toHaveProperty("fieldAliases");
+    expect(store.getSource()).not.toHaveProperty("actionableStatus");
   });
 
   it("stores Lark app OAuth configuration separately from the active source", async () => {

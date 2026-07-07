@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
-  defaultOwnerForMode,
   normalizeWorkflowMode,
   resolveWorkflowMode,
 } from "../../src/mode/mode-config.js";
@@ -52,18 +51,5 @@ describe("workflow mode config", () => {
       active: "Developer",
       source: "explicit",
     });
-  });
-
-  it("reads mode-specific default owners without making owner required", async () => {
-    const store = new ConfigStore({
-      cwd: await mkdtemp(join(tmpdir(), "mode-config-")),
-    });
-    store.setActiveMode({ mode: "Developer" });
-    store.setModeDefaultOwner({ mode: "Developer", owner: "openclaw" });
-
-    const config = store.getWorkflowConfig();
-
-    expect(defaultOwnerForMode(config, "Developer")).toBe("openclaw");
-    expect(defaultOwnerForMode(config, "QA")).toBeUndefined();
   });
 });

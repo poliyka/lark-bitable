@@ -1,20 +1,14 @@
 import type {
   BitableRecord,
-  BitableSource,
   OwnerCriteria,
   QueryLimit,
-  WorkflowConfig,
   WorkflowMode,
 } from "../config/schema.js";
 import { CliError } from "../cli/errors.js";
-import { defaultOwnerForMode } from "./mode-config.js";
 
 export interface OwnerResolutionInput {
   commandOwner?: string;
-  ignoreDefaultOwner?: boolean;
   mode: WorkflowMode;
-  source: BitableSource;
-  workflowConfig?: WorkflowConfig;
 }
 
 export interface OwnerFilterResult {
@@ -25,23 +19,13 @@ export interface OwnerFilterResult {
 export function resolveOwnerCriteria(
   input: OwnerResolutionInput,
 ): OwnerCriteria {
-  const commandOwner = input.commandOwner?.trim();
-  const defaultOwner =
-    input.ignoreDefaultOwner || commandOwner
-      ? undefined
-      : defaultOwnerForMode(input.workflowConfig, input.mode)?.trim();
-  const value = commandOwner || defaultOwner || undefined;
-  const valueSource = commandOwner
-    ? "command"
-    : defaultOwner
-      ? "mode-default"
-      : "none";
-  const field = input.source.fieldAliases?.owner ?? null;
+  const value = input.commandOwner?.trim() || undefined;
+  const valueSource = value ? "command" : "none";
 
   if (!value) {
     return {
       applied: false,
-      field,
+      field: null,
       matchedRecords: 0,
       mode: input.mode,
       source: "none",
@@ -49,22 +33,9 @@ export function resolveOwnerCriteria(
     };
   }
 
-  if (!field) {
-    return {
-      applied: false,
-      field: null,
-      matchedRecords: 0,
-      mode: input.mode,
-      notAppliedReason: "missing-owner-field",
-      source: valueSource,
-      totalRecordsBeforeFilter: 0,
-      value,
-    };
-  }
-
   return {
     applied: true,
-    field,
+    field: null,
     matchedRecords: 0,
     mode: input.mode,
     source: valueSource,
@@ -78,7 +49,7 @@ export function applyOwnerFilter(
   criteria: OwnerCriteria,
 ): OwnerFilterResult {
   const totalRecordsBeforeFilter = records.length;
-  if (!criteria.value || !criteria.field || !criteria.applied) {
+  if (!criteria.value || !criteria.applied) {
     return {
       criteria: {
         ...criteria,
@@ -89,19 +60,50 @@ export function applyOwnerFilter(
     };
   }
 
+  const field = criteria.field ?? inferOwnerField(records);
+  if (!field) {
+    return {
+      criteria: {
+        ...criteria,
+        applied: false,
+        field: null,
+        matchedRecords: records.length,
+        notAppliedReason: "missing-owner-field",
+        totalRecordsBeforeFilter,
+      },
+      records,
+    };
+  }
+
   const filtered = records.filter((record) =>
-    extractVisibleOwnerValues(record.fields[criteria.field!]).includes(
-      criteria.value!,
-    ),
+    extractVisibleOwnerValues(record.fields[field]).includes(criteria.value!),
   );
   return {
     criteria: {
       ...criteria,
+      field,
       matchedRecords: filtered.length,
       totalRecordsBeforeFilter,
     },
     records: filtered,
   };
+}
+
+function inferOwnerField(records: BitableRecord[]): string | null {
+  const candidates = [
+    "處理人",
+    "处理人",
+    "負責人",
+    "负责人",
+    "owner",
+    "assignee",
+  ];
+  for (const field of candidates) {
+    if (records.some((record) => Object.hasOwn(record.fields, field))) {
+      return field;
+    }
+  }
+  return null;
 }
 
 export function extractVisibleOwnerValues(value: unknown): string[] {

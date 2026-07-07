@@ -454,7 +454,7 @@ async function routeDashboardRequest(
       sendJson(
         response,
         dashboardPartial(
-          { fields: [], issues: [], mappings: {}, status: "blocked" },
+          { fields: [], issues: [], status: "blocked" },
           [
             testFaultIssue(
               "dashboard-table-schema-test-fault",

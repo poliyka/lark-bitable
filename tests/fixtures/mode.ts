@@ -3,13 +3,6 @@ import { fixtureRecords, fixtureSource } from "./lark.js";
 
 export const modeFixtureSource: BitableSource = {
   ...fixtureSource,
-  actionableStatus: "待处理",
-  fieldAliases: {
-    ...fixtureSource.fieldAliases,
-    owner: "处理人",
-  },
-  priorityField: "优先级",
-  statusField: "当前状态",
 };
 
 export const localizedStatusValues = ["待处理", "修复中", "验收通过", "待處理"];

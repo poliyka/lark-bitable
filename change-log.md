@@ -1,5 +1,32 @@
 # Change Log
 
+## 2.0.2 - 2026-07-07
+
+### Changed
+
+- Bumped npm package version from `2.0.1` to `2.0.2`.
+- Simplified `configure` so it stores only the active Base/Bitable source, Lark app settings, and workflow mode.
+- Removed persisted bug field settings from source config, dashboard config, readiness, doctor output, schema output, and bootstrap guidance.
+- Kept `triage --actionable-status` as a per-run exact status filter instead of a configured default.
+- Updated owner filtering to use per-run `--owner` with runtime owner-field inference instead of configured owner fields or mode default owners.
+
+### Fixed
+
+- Fixed record listing so active source URLs containing `view=<viewId>` no longer scope normal `list`, `filter`, `search`, `schema`, `triage`, or dashboard table reads to that view.
+- Preserved `viewId` as source metadata while removing it from default record-list API requests.
+- Added legacy normalization for old owner criteria values such as `mode-default` so existing audit/research records remain readable.
+
+### Verification
+
+Run release validation:
+
+```bash
+pnpm format:check
+pnpm test
+pnpm build
+git diff --check
+```
+
 ## 2.0.1 - 2026-05-28
 
 ### Changed
@@ -69,7 +96,7 @@ git diff --check
 - Bumped npm package version from `1.2.0` to `1.3.0`.
 - Reworked non-`--json` CLI output so command `data` renders as readable sections and tables instead of one-line JSON blobs.
 - Added table-backed human rendering for common output shapes, including records, search matches, schema fields, candidates, field changes, issues, and evidence.
-- Updated `schema` human output to use the shared renderer and show field metadata, mappings, sample counts, and next commands while preserving the machine-readable `--json` contract.
+- Updated `schema` human output to use the shared renderer and show field metadata, sample counts, and next commands while preserving the machine-readable `--json` contract.
 - Added `cli-table3` for terminal table formatting and updated command-specific help to distinguish readable human output from machine-readable JSON.
 - Expanded regression coverage for human output formatting, schema output, command help, dashboard state watching, and live dashboard audit refresh behavior.
 

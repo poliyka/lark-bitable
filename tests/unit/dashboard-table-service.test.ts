@@ -24,7 +24,7 @@ describe("dashboard table service", () => {
     );
   });
 
-  it("projects schema mappings and fixture records when setup is ready", async () => {
+  it("projects schema fields and fixture records when setup is ready", async () => {
     const paths = await createDashboardTestPaths("dashboard-table-");
     const authStore = new AuthStore(paths.authPath);
     const configStore = new ConfigStore({ cwd: paths.configCwd });
@@ -43,7 +43,8 @@ describe("dashboard table service", () => {
     });
 
     expect(schema.status).toBe("ready");
-    expect(schema.mappings.statusField).toBe("狀態");
+    expect(schema).not.toHaveProperty("mappings");
+    expect(schema.fields.map((field) => field.fieldName)).toContain("標題");
     expect(records.records[0]?.recordId).toBe("recLogin");
   });
 });

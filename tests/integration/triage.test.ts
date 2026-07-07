@@ -18,10 +18,7 @@ describe("triage command", () => {
       ...readyAuthSession,
       storagePath: authPath,
     });
-    new ConfigStore({ cwd }).setSource({
-      ...fixtureSource,
-      priorityOrder: ["P0", "P1", "P2"],
-    });
+    new ConfigStore({ cwd }).setSource(fixtureSource);
 
     const result = await TriageCommand.run([
       "--config-cwd",
@@ -30,6 +27,8 @@ describe("triage command", () => {
       authPath,
       "--fixture",
       JSON.stringify(fixtureRecords),
+      "--actionable-status",
+      "待處理",
       "--select",
       "0",
       "--json",
@@ -59,13 +58,15 @@ describe("triage command", () => {
       authPath,
       "--fixture",
       JSON.stringify([fixtureRecords[1]]),
+      "--actionable-status",
+      "待處理",
       "--json",
     ]);
 
     expect(JSON.stringify(result)).toContain("no-actionable-records");
   });
 
-  it("applies default owner before actionable filtering and post-sort limit", async () => {
+  it("applies command owner before actionable filtering and post-sort limit", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "triage-"));
     const authPath = join(cwd, "auth.json");
     await new AuthStore(authPath).write({
@@ -73,15 +74,7 @@ describe("triage command", () => {
       storagePath: authPath,
     });
     const store = new ConfigStore({ cwd });
-    store.setSource({
-      ...fixtureSource,
-      fieldAliases: {
-        ...fixtureSource.fieldAliases,
-        owner: "負責人",
-      },
-      priorityOrder: ["P0", "P1", "P2"],
-    });
-    store.setModeDefaultOwner({ mode: "Developer", owner: "openclaw" });
+    store.setSource(fixtureSource);
     const records = [
       {
         ...fixtureRecords[0],
@@ -108,6 +101,10 @@ describe("triage command", () => {
       authPath,
       "--fixture",
       JSON.stringify(records),
+      "--actionable-status",
+      "待處理",
+      "--owner",
+      "openclaw",
       "--limit",
       "1",
       "--json",
@@ -115,7 +112,7 @@ describe("triage command", () => {
 
     expect(result.ownerCriteria).toMatchObject({
       applied: true,
-      source: "mode-default",
+      source: "command",
       value: "openclaw",
     });
     expect(result.queryLimit).toMatchObject({
@@ -141,10 +138,7 @@ describe("triage command", () => {
       ...readyAuthSession,
       storagePath: authPath,
     });
-    new ConfigStore({ cwd }).setSource({
-      ...fixtureSource,
-      priorityOrder: ["P0", "P1", "P2"],
-    });
+    new ConfigStore({ cwd }).setSource(fixtureSource);
 
     const result = await TriageCommand.run([
       "--config-cwd",
@@ -153,6 +147,8 @@ describe("triage command", () => {
       authPath,
       "--fixture",
       JSON.stringify(fixtureRecords),
+      "--actionable-status",
+      "待處理",
       "--owner",
       "openclaw",
       "--limit",

@@ -6,12 +6,6 @@ export const fixtureSource: BitableSource = {
   appToken: "TypDbjKBfaJcaSsoEI1lZjHsgIY",
   tableId: "tblp8ig36Itp0yOU",
   viewId: "vewb6FrjBe",
-  statusField: "狀態",
-  actionableStatus: "待處理",
-  priorityField: "優先級",
-  fieldAliases: {
-    title: "標題",
-  },
   updatedAt: "2026-05-07T10:00:00.000Z",
 };
 

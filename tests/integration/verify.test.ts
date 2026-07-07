@@ -18,13 +18,7 @@ async function createVerifyFixture() {
     storagePath: authPath,
   });
   const store = new ConfigStore({ cwd });
-  store.setSource({
-    ...fixtureSource,
-    fieldAliases: {
-      ...fixtureSource.fieldAliases,
-      owner: "負責人",
-    },
-  });
+  store.setSource(fixtureSource);
   store.setActiveMode({ mode: "QA" });
   return { authPath, cwd, store };
 }

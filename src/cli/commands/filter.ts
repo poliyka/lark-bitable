@@ -44,11 +44,8 @@ export default class FilterCommand extends BaseCommand {
     limit: Flags.integer({
       description: "Maximum matching records to return.",
     }),
-    "no-default-owner": Flags.boolean({
-      description: "Ignore the stored default owner for this run.",
-    }),
     owner: Flags.string({
-      description: "Filter records by owner when an owner field is configured.",
+      description: "Filter records by owner using an inferred owner field.",
     }),
     where: Flags.string({
       description:
@@ -67,7 +64,6 @@ export default class FilterCommand extends BaseCommand {
     const ownerResult = applyOwnerCriteria({
       ...context,
       commandOwner: flags.owner,
-      ignoreDefaultOwner: flags["no-default-owner"],
     });
     const criteria =
       flags.where?.map(parseWhereCriterion) ??

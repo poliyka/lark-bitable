@@ -356,7 +356,6 @@ function createAuthDashboardClientHarness(
     "mode-pill",
     "mode-kv",
     "recent-activity",
-    "mapping-list",
   ]) {
     document.getElementById(id);
   }
@@ -418,20 +417,7 @@ function createConfigDashboardClientHarness(
     formEntries: Array<[string, string]>;
   };
 
-  for (const id of [
-    "config-output",
-    "schema-discovery",
-    "statusField",
-    "priorityField",
-    "titleField",
-    "ownerField",
-  ]) {
-    const element = document.getElementById(id);
-    if (id !== "config-output" && id !== "schema-discovery") {
-      element.dataset.schemaField = id;
-      document.schemaFieldSelects.push(element);
-    }
-  }
+  document.getElementById("config-output");
 
   configForm.formEntries = [];
   configForm.elements = {
@@ -443,7 +429,7 @@ function createConfigDashboardClientHarness(
   expect(initIndex).toBeGreaterThan(0);
   const testableScript =
     script.slice(0, initIndex) +
-    "globalThis.__dashboardTestHooks={state,discoverSchema,handleLiveEnvelope};";
+    "globalThis.__dashboardTestHooks={state,handleLiveEnvelope};";
   const context = createContext({
     FormData: class {
       constructor(
@@ -465,7 +451,6 @@ function createConfigDashboardClientHarness(
   const hooks = (
     context.globalThis as {
       __dashboardTestHooks: {
-        discoverSchema: () => Promise<void>;
         handleLiveEnvelope: (envelope: unknown) => Promise<void>;
         state: {
           configDirty: boolean;
@@ -501,7 +486,6 @@ function createLiveDashboardClientHarness(
     "mode-pill",
     "mode-kv",
     "recent-activity",
-    "mapping-list",
     "audit-count",
     "audit-entry-count",
     "audit-entries",
@@ -718,12 +702,6 @@ describe("dashboard design assets", () => {
       "redirectUri",
       "callbackPort",
       "larkDomain",
-      "statusField",
-      "actionableStatus",
-      "priorityField",
-      "titleField",
-      "ownerField",
-      "defaultOwner",
     ]) {
       expect(html).toContain(`for="${id}"`);
       expect(html).toContain(`id="${id}"`);
@@ -837,11 +815,10 @@ describe("dashboard design assets", () => {
 
     const recentIndex = html.indexOf('<div class="card overview-recent-card">');
     const sourceIndex = html.indexOf("<h3>Source · Base</h3>");
-    const fieldMappingsIndex = html.indexOf("<h3>Field Mappings</h3>");
 
     expect(recentIndex).toBeGreaterThan(0);
     expect(sourceIndex).toBeGreaterThan(recentIndex);
-    expect(fieldMappingsIndex).toBeGreaterThan(sourceIndex);
+    expect(html).not.toContain("<h3>Field Mappings</h3>");
     expect(html).not.toContain('class="grid-2-3"');
   });
 
@@ -1195,18 +1172,17 @@ describe("dashboard design assets", () => {
     );
   });
 
-  it("renders selectable field mapping controls and visible schema discovery remediation", () => {
+  it("does not render persistent bug field mapping controls", () => {
     const html = dashboardHtml();
     const script = dashboardAppScript();
 
-    expect(html).toContain('name="statusField"');
-    expect(html).toContain('data-schema-field="statusField"');
-    expect(html).toContain(
-      '<select class="select" id="statusField" name="statusField"',
-    );
-    expect(script).toContain("function updateSchemaFieldOptions");
-    expect(script).toContain("renderIssues");
-    expect(script).toContain("schema-discovery");
+    expect(html).not.toContain('name="statusField"');
+    expect(html).not.toContain('name="actionableStatus"');
+    expect(html).not.toContain('name="priorityField"');
+    expect(html).not.toContain('name="titleField"');
+    expect(html).not.toContain('name="ownerField"');
+    expect(script).not.toContain("function updateSchemaFieldOptions");
+    expect(script).not.toContain("schema-discovery");
   });
 
   it("clears stale detail panes and preserves lists on audit/research errors", () => {
@@ -1736,7 +1712,7 @@ describe("dashboard design assets", () => {
     );
   });
 
-  it("surfaces blocked schema discovery remediation and replaces stale config output", async () => {
+  it("does not expose config-page schema discovery hooks", async () => {
     const { document, hooks } = createConfigDashboardClientHarness(
       async (path) => {
         if (path === "/api/table/schema") {
@@ -1754,7 +1730,6 @@ describe("dashboard design assets", () => {
               status: "blocked",
               fields: [],
               issues: [],
-              mappings: {},
             },
           });
         }
@@ -1765,20 +1740,7 @@ describe("dashboard design assets", () => {
     document.getElementById("config-output").textContent =
       '{"status":"ok","data":"config draft"}';
 
-    await hooks.discoverSchema();
-
-    expect(document.getElementById("config-output").textContent).toContain(
-      '"status": "partial"',
-    );
-    expect(document.getElementById("schema-discovery").innerHTML).toContain(
-      "schema-discovery",
-    );
-    expect(document.getElementById("schema-discovery").innerHTML).toContain(
-      "missing-auth",
-    );
-    expect(document.getElementById("schema-discovery").innerHTML).toContain(
-      "Complete Lark login from the dashboard auth page.",
-    );
+    expect(hooks).not.toHaveProperty("discoverSchema");
   });
 
   it("does not retain submitted app secret values in the form after save", () => {

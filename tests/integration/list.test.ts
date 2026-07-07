@@ -40,7 +40,7 @@ describe("list command", () => {
     expect(serialized).not.toContain("優先級");
   });
 
-  it("applies command owner, default owner, no-default-owner, and limit metadata", async () => {
+  it("applies command owner and limit metadata without stored owner defaults", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "list-"));
     const authPath = join(cwd, "auth.json");
     await new AuthStore(authPath).write({
@@ -48,14 +48,7 @@ describe("list command", () => {
       storagePath: authPath,
     });
     const store = new ConfigStore({ cwd });
-    store.setSource({
-      ...fixtureSource,
-      fieldAliases: {
-        ...fixtureSource.fieldAliases,
-        owner: "負責人",
-      },
-    });
-    store.setModeDefaultOwner({ mode: "Developer", owner: "openclaw" });
+    store.setSource(fixtureSource);
     const records = [
       {
         ...fixtureRecords[0],
@@ -99,7 +92,7 @@ describe("list command", () => {
       source: "command",
     });
 
-    const defaultOwnerResult = await ListCommand.run([
+    const unownedResult = await ListCommand.run([
       "--config-cwd",
       cwd,
       "--auth-path",
@@ -108,28 +101,11 @@ describe("list command", () => {
       JSON.stringify(records),
       "--json",
     ]);
-    expect(defaultOwnerResult.ownerCriteria).toMatchObject({
-      applied: true,
-      source: "mode-default",
-      value: "openclaw",
-    });
-    expect(JSON.stringify(defaultOwnerResult.data)).not.toContain("recDone");
-
-    const noDefaultOwnerResult = await ListCommand.run([
-      "--config-cwd",
-      cwd,
-      "--auth-path",
-      authPath,
-      "--fixture",
-      JSON.stringify(records),
-      "--no-default-owner",
-      "--json",
-    ]);
-    expect(noDefaultOwnerResult.ownerCriteria).toMatchObject({
+    expect(unownedResult.ownerCriteria).toMatchObject({
       applied: false,
       source: "none",
     });
-    expect(JSON.stringify(noDefaultOwnerResult.data)).toContain("recDone");
+    expect(JSON.stringify(unownedResult.data)).toContain("recDone");
   });
 
   it("does not block list when an owner value is provided but no owner field is configured", async () => {

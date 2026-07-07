@@ -55,10 +55,4 @@ export const configDraftFixture: ConfigDraftInput = {
   larkDomain: "larksuite.com",
   redirectUri: "http://127.0.0.1:14543/callback",
   callbackPort: 14543,
-  statusField: "狀態",
-  priorityField: "優先級",
-  titleField: "標題",
-  ownerField: "負責人",
-  actionableStatus: "待處理",
-  defaultOwner: "openclaw",
 };

@@ -44,13 +44,7 @@ describe("search command", () => {
       ...readyAuthSession,
       storagePath: authPath,
     });
-    new ConfigStore({ cwd }).setSource({
-      ...fixtureSource,
-      fieldAliases: {
-        ...fixtureSource.fieldAliases,
-        owner: "負責人",
-      },
-    });
+    new ConfigStore({ cwd }).setSource(fixtureSource);
     const records = [
       {
         ...fixtureRecords[0],

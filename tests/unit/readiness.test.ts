@@ -25,17 +25,13 @@ describe("checkReadiness", () => {
     ]);
   });
 
-  it("blocks triage when field mappings are missing", async () => {
+  it("does not require configured field mappings for triage readiness", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "readiness-"));
     const authPath = join(cwd, "auth.json");
     const authStore = new AuthStore(authPath);
     const configStore = new ConfigStore({ cwd });
     await authStore.write({ ...readyAuthSession, storagePath: authPath });
-    configStore.setSource({
-      ...fixtureSource,
-      statusField: undefined,
-      priorityField: undefined,
-    });
+    configStore.setSource(fixtureSource);
 
     const result = await checkReadiness("triage", {
       authStore,
@@ -43,8 +39,8 @@ describe("checkReadiness", () => {
       configStore,
     });
 
-    expect(result.status).toBe("blocked");
-    expect(result.blockingIssues.map((issue) => issue.code)).toContain(
+    expect(result.status).toBe("ready");
+    expect(result.blockingIssues.map((issue) => issue.code)).not.toContain(
       "missing-field-mapping",
     );
   });

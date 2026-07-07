@@ -18,10 +18,9 @@
 - [Lark Developer Console 設定](#lark-developer-console-設定)
   - [1. 建立或打開自建應用](#1-建立或打開自建應用)
   - [2. 設定 OAuth Redirect URL](#2-設定-oauth-redirect-url)
-  - [3. 開通應用身份權限](#3-開通應用身份權限)
-  - [4. 開通使用者身份權限](#4-開通使用者身份權限)
-  - [5. 發布版本並等待審核](#5-發布版本並等待審核)
-  - [6. 確認 app 可以讀取目標 Base](#6-確認-app-可以讀取目標-base)
+  - [3. 開通使用者身份權限](#3-開通使用者身份權限)
+  - [4. 發布版本並等待審核](#4-發布版本並等待審核)
+  - [5. 確認 app 可以讀取目標 Base](#5-確認-app-可以讀取目標-base)
 - [多維表格準備](#多維表格準備)
 - [Workflow Mode](#workflow-mode)
 - [第一次設定 CLI](#第一次設定-cli)
@@ -60,18 +59,15 @@ SETUP AND AUTH COMMANDS
     Store the active Base/Bitable source for this repo.
     Parses appToken, tableId, and viewId from the Base URL.
     Stores Lark app id, app secret, OAuth redirect URI, domain,
-    workflow mode, field mappings, actionable status, owner field,
-    and optional mode-specific default owner.
-    Interactive mode discovers Bitable fields with application identity
-    credentials, then lets the user choose fields by number.
-    If field discovery is blocked, reports the missing Lark permissions
-    instead of asking the user to guess field names.
+    and workflow mode.
+    It does not store bug field settings, owner fields, priority fields,
+    or actionable status defaults.
 
   doctor [--install-skill]
     Check local CLI health and setup completeness.
     Reports CLI bin/version, config path, auth path, active mode,
-    source configuration, Lark app configuration, required field mappings,
-    and bootstrap skill install/staleness.
+    source configuration, Lark app configuration, and bootstrap skill
+    install/staleness.
     With --install-skill, installs the shipped AI bootstrap skill to Codex
     and Claude Code project skill directories:
       .agents/skills/lark-bitable/SKILL.md
@@ -109,7 +105,7 @@ READ COMMANDS
     Inspect the active table schema.
     Default output lists field headers for humans.
     JSON output includes field names, field/UI types, options,
-    configured mappings, sample non-empty counts, and observed values.
+    sample non-empty counts, and observed values.
 
   list [--limit <n>] [--field <name>] [--owner <name>]
     List records from the active source.
@@ -139,9 +135,9 @@ MEDIA COMMANDS
 
 DEVELOPER WORKFLOW
   triage [--owner <name>] [--limit <n>] [--actionable-status <value>]
-    Select actionable bug/task candidates by owner, status, priority order,
-    and limit. Stores selected record id and selection evidence for
-    follow-up research or QA verification.
+    Select bug/task candidates by optional owner, optional exact status,
+    inferred priority order, and limit. Stores selected record id and
+    selection evidence for follow-up research or QA verification.
 
   research [--evidence type:reference:excerpt] [-o|--out <path>]
     Produce a first evidence-backed research report from the latest
@@ -221,9 +217,9 @@ Lark 端需要：
 - Lark app 的 `App ID`
 - Lark app 的 `App Secret`
 - Lark app 已設定 OAuth Redirect URL
-- Lark app 已開通並發布 application identity 和 user identity 兩類必要 API 權限
-- 目標多維表格允許這個應用讀取欄位與記錄
-- 如果要使用 `write --confirm`，目標多維表格也要允許這個應用和登入使用者新增或更新記錄
+- Lark app 已開通並發布 user identity 必要 API 權限
+- 目標多維表格允許登入使用者讀取欄位與記錄
+- 如果要使用 `write --confirm`，目標多維表格也要允許登入使用者新增或更新記錄
 
 ## 安裝 CLI
 
@@ -319,10 +315,7 @@ CLI 的設定和 auth 都放在同一個私有目錄，但檔案是平行存放�
 - Lark app id
 - Lark app secret
 - OAuth redirect URI
-- 欄位對應，例如狀態、優先級、問題名稱
-- actionable status，例如 `待处理`
 - active workflow mode：`QA` 或 `Developer`
-- mode-specific default owner（僅在你有設定 `--default-owner` 時）
 - 最近一次 triage 選擇
 
 `auth.json` 儲存：
@@ -387,7 +380,7 @@ Dashboard 的 Audit Log 頁面會讀取 active `audit.json` 和 rotated
 3. 建立一個自建應用，或打開既有自建應用。
 4. 記下 `App ID` 和 `App Secret`。
 
-`App ID` 和 `App Secret` 不是你的個人帳密。它們用來讓 CLI 代表這個 Lark app 做 OAuth token exchange 和 application identity API 呼叫。
+`App ID` 和 `App Secret` 不是你的個人帳密。它們用來讓 CLI 透過這個 Lark app 做 OAuth token exchange 和 token refresh。
 
 ### 2. 設定 OAuth Redirect URL
 
@@ -405,37 +398,11 @@ http://127.0.0.1:14543/callback
 - 不要把 `/event?tab=callback` 的 event callback URL 當成 OAuth redirect URL。
 - Event callback 是 Lark 事件推送設定；這個 CLI 登入使用的是 OAuth redirect URL。
 
-### 3. 開通應用身份權限
+### 3. 開通使用者身份權限
 
-`lark-bitable configure` 需要用 app id/secret 去讀取多維表格欄位，讓人類可以用數字選欄位，而不是手打欄位名稱。
-
-這一步使用的是 application identity，也就是 `tenant_access_token`。
-
-請在 Lark Developer Console 的權限管理中加入 application identity 權限。最低建議開齊：
-
-```text
-base:field:read
-bitable:app:readonly
-```
-
-如果這個 app 要支援 `write --confirm`，或你想避免 write workflow 在 Lark app
-權限檢查時缺少寫入 scope，也要加入 application identity 的多維表格讀寫權限：
-
-```text
-bitable:app
-```
-
-這些權限不要理解成二選一。它們覆蓋的是不同能力面：
-
-- `base:field:read`：讓 configure 讀取欄位 metadata，顯示可選欄位。
-- application identity `bitable:app:readonly`：讓 app 身份讀取多維表格資料；configure 在需要從既有記錄推導狀態值時會用到記錄讀取能力。
-- application identity `bitable:app`：讓 app 身份具備多維表格讀寫能力；使用 write-capable app 時應開通，避免 Lark 回報缺少 `bitable:app` scope。
-
-如果你只開 `base:field:read`，欄位選擇可能能跑，但 configure 需要讀取記錄值時仍可能失敗。如果你只開 application identity `bitable:app:readonly`，部分 Lark 權限策略下也可能能列欄位，但語義上缺少明確的欄位讀取授權。若要使用 write，application identity 還要開通 `bitable:app`。
-
-注意：application identity 的 `bitable:app` 不會自動讓使用者 OAuth token 升權。實際提交 `write --confirm` 時，下一節的 user identity `bitable:app` 和 `lark-bitable lark --login --scope="bitable:app"` 仍然必須完成。
-
-### 4. 開通使用者身份權限
+`configure` 只儲存 Base URL、Lark app 設定和 workflow mode；讀取 schema、
+records、triage、verify、write 會使用 `lark-bitable lark --login` 取得的使用者
+OAuth token。
 
 `lark-bitable lark --login` 使用瀏覽器 SSO/OAuth 登入，登入後用 user access token 讀取多維表格記錄。
 
@@ -464,7 +431,8 @@ lark-bitable lark --logout --yes
 lark-bitable lark --login --scope="bitable:app"
 ```
 
-注意：這裡的 user identity `bitable:app:readonly` 和上一節的 application identity `bitable:app:readonly` 是不同授權上下文。名稱看起來一樣，但一個給 app/tenant token 用，一個給使用者 OAuth token 用。完整 CLI 流程需要兩類身份的權限都生效。
+注意：`App ID` / `App Secret` 用於 OAuth token exchange 和 refresh，不代表
+CLI 會在 configure 階段用 app 身份讀表或保存 bug 欄位設定。
 
 如果登入時看到：
 
@@ -476,15 +444,15 @@ bitable:app:readonly
 
 代表 OAuth 登入需要的 user identity 權限沒有正式生效。這通常不是 redirect URI 問題。
 
-### 5. 發布版本並等待審核
+### 4. 發布版本並等待審核
 
 新增或修改權限後，必須發布新的 app version。
 
 如果 Lark 顯示該權限需要企業審核，必須等審核通過後才會生效。只在 Console 裡看到權限被選中，不代表 API 已經可以用了。
 
-### 6. 確認 app 可以讀取目標 Base
+### 5. 確認 app 可以讀取目標 Base
 
-即使權限已發布，目標多維表格本身仍然可能不允許這個 app 讀取。
+即使權限已發布，目標多維表格本身仍然可能不允許登入使用者或這個 app 讀取。
 
 請到目標 Base/Bitable 裡確認：
 
@@ -495,8 +463,8 @@ bitable:app:readonly
 如果 CLI 回傳 Lark `403` 或 `91403 Forbidden`，常見原因是：
 
 - app 權限沒有發布或審核未通過
-- application identity 權限和 user identity 權限只開了其中一種
-- 目標 Base 沒有授權該 app 讀取，或 write 場景沒有授權新增/更新
+- user identity 權限沒有發布或審核未通過
+- 目標 Base 沒有授權登入使用者讀取，或 write 場景沒有授權新增/更新
 - app id/app secret 填錯
 - 使用了錯誤 tenant 或錯誤 Lark domain
 
@@ -526,7 +494,8 @@ bitable:app:readonly
 已完成
 ```
 
-`待处理` 和 `待處理` 對程式來說是不同字串。若表格資料是簡體 `待处理`，`configure` 或 `triage --actionable-status` 也要使用 `待处理`。
+`待处理` 和 `待處理` 對程式來說是不同字串。若表格資料是簡體 `待处理`，
+`triage --actionable-status` 也要使用 `待处理`。
 
 ## Workflow Mode
 
@@ -542,18 +511,13 @@ lark-bitable configure --mode Developer
 lark-bitable configure --mode QA
 ```
 
-切換 mode 不會清掉 Base URL、Lark app 設定、欄位對應或最近一次 selection。
+切換 mode 不會清掉 Base URL、Lark app 設定或最近一次 selection。
 
-負責人欄位是可選欄位。若你的表格有負責人欄位，可以在 configure 時指定：
-
-```bash
-lark-bitable configure --owner-field "負責人"
-```
-
-如果你真的需要 mode-specific default owner，再用參數設定：
+負責人篩選是單次查詢參數。若你的表格有常見負責人欄位，例如 `負責人`、
+`负责人`、`處理人`、`处理人`、`owner` 或 `assignee`，可以在查詢時指定：
 
 ```bash
-lark-bitable configure --default-owner "openclaw"
+lark-bitable list --owner "openclaw"
 ```
 
 如果沒有負責人欄位，可以不填。`list`、`search`、`filter`、`triage`、`verify`
@@ -579,18 +543,12 @@ CLI 會依序要求：
    http://127.0.0.1:14543/callback
    ```
 
-5. CLI 用 app id/secret 嘗試讀取表格欄位。
-6. 如果讀取成功，CLI 會用編號讓你選：
+5. 選擇 workflow mode：`Developer` 或 `QA`。
 
-   ```text
-   1. 当前状态
-   2. 优先级
-   3. 问题名称
-   ```
-
-7. 你只需要輸入數字，不需要手打欄位名稱。
-8. CLI 會讓你選 actionable status，例如 `待处理`。
-9. 互動式 configure 不會再詢問 default owner；只有你明確傳 `--default-owner` 才會更新。
+`configure` 不會詢問或儲存 bug 欄位設定、owner 欄位、priority 欄位或
+actionable status。需要查欄位與狀態值時，請在登入後執行
+`lark-bitable schema --json`；需要狀態篩選時，對該次 `triage` 傳
+`--actionable-status`。
 
 如果你之前已設定過，互動式 prompt 會顯示既有值：
 
@@ -608,11 +566,6 @@ lark-bitable configure "$LARK_BASE_URL" \
   --lark-app-id "$LARK_APP_ID" \
   --lark-app-secret "$LARK_APP_SECRET" \
   --lark-redirect-uri "http://127.0.0.1:14543/callback" \
-  --status-field "当前状态" \
-  --priority-field "优先级" \
-  --title-field "问题名称" \
-  --owner-field "负责人" \
-  --actionable-status "待处理" \
   --json
 ```
 
@@ -620,12 +573,6 @@ QA mode 的非互動式切換：
 
 ```bash
 lark-bitable configure --mode QA --json
-```
-
-QA mode 也可以設定預設負責人；如果你不需要負責人篩選，可以省略：
-
-```bash
-lark-bitable configure --mode QA --owner-field "负责人" --default-owner "qa-user" --json
 ```
 
 清除目前 Base 設定：
@@ -797,12 +744,12 @@ status、issues、evidence 或 audit entry。
 
 Dashboard v1 提供：
 
-- Live Configure：直接修正 Base URL、Lark app 設定、mode、欄位 mapping、actionable status 與 default owner，儲存後即時重新跑 readiness。
+- Live Configure：直接修正 Base URL、Lark app 設定與 mode，儲存後即時重新跑 readiness。
 - Live Lark Login：啟動 Lark OAuth URL、查詢登入 flow 狀態、登出本機 auth，不顯示 access token、refresh token、OAuth code 或 app secret。
 - Audit Log：查詢 active/rotated audit entries，檢視 sanitized detail，並顯示 malformed/skipped files。
 - Playground：從 UI 執行支援的 CLI workflow。`write` 預設保持 preview-first，除非明確確認，否則不提交 mutation。
 - Research Library：瀏覽 `~/.lark-bitable/research/` 的 canonical JSON reports，保留 observed facts、assumptions、analysis、risks、next actions 與 evidence 分段。
-- Table Context：顯示目前 source/mode/auth/readiness、schema mapping、sampled values 和 recent records；缺少 auth/source 時顯示 blocked/partial remediation。
+- Table Context：顯示目前 source/mode/auth/readiness、field metadata、sampled values 和 recent records；缺少 auth/source 時顯示 blocked/partial remediation。
 - Language Switcher：dashboard-owned UI 文字支援繁體中文與英文切換，偏好只存 browser web cache。Lark 欄位名、record values、audit snapshots、command output、檔案路徑和 research report 內容不會被翻譯。
 
 Live update 行為補充：
@@ -834,7 +781,6 @@ lark-bitable schema --json
 - 欄位名稱
 - 欄位 type / UI type
 - 單選或多選選項
-- 目前 configure 的欄位 mapping，例如 status、priority、title、owner
 - 少量 sample records 中的非空統計與 observed values
 
 當 AI Agent 不確定欄位名稱、狀態值、owner 欄位或表格語系時，必須先跑
@@ -1063,9 +1009,9 @@ repo 做 root cause research。
 `triage` 會：
 
 1. 讀取目前 Base 的 records。
-2. 使用 configure 裡的 status field。
-3. 只保留 actionable status，例如 `待处理`。
-4. 使用 priority field 和 priority order 排序。
+2. 從常見欄位名稱推斷 title、status、priority、owner。
+3. 如果有傳 `--actionable-status`，只保留完全相等的狀態值。
+4. 使用內建 priority order 排序。
 5. 顯示候選 bug 給使用者選。
 6. 把選到的 bug snapshot 存到 config，供 `research` 使用。
 
@@ -1082,7 +1028,7 @@ lark-bitable triage --owner "openclaw" --limit 10
 ```
 
 如果 triage 顯示沒有 actionable records，先看輸出中的
-`observedStatusValues`，使用表格實際出現的狀態值重新 configure 或明確傳入
+`observedStatusValues`，使用表格實際出現的狀態值明確傳入
 `--actionable-status`。不要用繁簡或語意猜測狀態值。
 
 ## QA Verification 工作流
@@ -1198,21 +1144,7 @@ lark-bitable help doctor
 
 ## 常見問題
 
-### configure 顯示 field-discovery-required
-
-代表互動式 configure 無法讀取欄位，因此不能提供數字選欄位。
-
-請檢查：
-
-- app id/app secret 是否正確
-- application identity 是否有 `base:field:read`
-- application identity 是否也有 `bitable:app:readonly`
-- 如果錯誤訊息要求 `bitable:app`，application identity 是否也開了 `bitable:app`
-- 權限是否已發布
-- 企業審核是否已通過
-- 目標 Base 是否授權 app 讀取
-
-### configure 顯示 code=99991672
+### schema、list 或 valid 顯示 code=99991672
 
 常見訊息：
 
@@ -1224,16 +1156,16 @@ Access denied. One of the following scopes is required:
 處理方式：
 
 1. 到 Lark Developer Console > Permissions。
-2. 新增 application identity `base:field:read`。
-3. 同時新增 application identity `bitable:app:readonly`，避免 configure 後續讀取既有記錄值時再次缺權限。
-4. 如果會使用 write，或錯誤訊息明確列出 `bitable:app`，也新增 application identity `bitable:app`。
-5. 發布新版。
-6. 等企業審核通過。
-7. 確認 Base 允許 app 讀取；write 場景也要確認 app 和登入使用者可新增或更新記錄。
-8. 重新執行：
+2. 新增 user identity `bitable:app:readonly`。
+3. 如果會使用 write，或錯誤訊息明確列出 `bitable:app`，也新增對應的 user identity 寫入權限。
+4. 發布新版。
+5. 等企業審核通過。
+6. 確認 Base 允許登入使用者讀取；write 場景也要確認登入使用者可新增或更新記錄。
+7. 重新登入後再執行原命令：
 
    ```bash
-   lark-bitable configure
+   lark-bitable lark --logout --yes
+   lark-bitable lark --login
    ```
 
 ### login 顯示錯誤碼 20027
@@ -1273,9 +1205,7 @@ https://open.larksuite.com/app/<app-id>/event?tab=callback
 請檢查：
 
 - app 權限是否已發布並審核通過
-- Base 是否允許 app 讀取
-- application identity 是否同時開了 `base:field:read` 和 `bitable:app:readonly`
-- 如果是 write-capable app，application identity 是否也開了 `bitable:app`
+- Base 是否允許登入使用者讀取
 - user identity 是否開了 `bitable:app:readonly`
 - 如果是 `write --confirm`，user identity 是否也有可新增/更新記錄的多維表格寫入權限
 - 如果是 `write --confirm`，是否已用 `lark-bitable lark --login --scope="bitable:app"`
@@ -1293,13 +1223,13 @@ https://open.larksuite.com/app/<app-id>/event?tab=callback
 待处理
 ```
 
-但 configure 是：
+但這次傳入的是：
 
 ```text
 待處理
 ```
 
-這會篩不到資料。重新 configure，或臨時指定：
+這會篩不到資料。請使用表格裡實際存在的值：
 
 ```bash
 lark-bitable triage --actionable-status "待处理"

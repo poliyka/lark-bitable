@@ -10,7 +10,7 @@ import { loadRecordCommandData } from "../shared-records.js";
 
 export default class SchemaCommand extends BaseCommand {
   static description =
-    "Inspect the configured Lark Bitable table schema and configured field mappings.";
+    "Inspect the configured Lark Bitable table schema and sampled field values.";
   static flags = {
     ...BaseCommand.baseFlags,
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
@@ -43,21 +43,6 @@ export default class SchemaCommand extends BaseCommand {
           context.source,
         );
     const sampledRecords = context.records.slice(0, sampleLimit);
-    const mappings = {
-      statusField: context.source.statusField ?? null,
-      actionableStatus: context.source.actionableStatus,
-      priorityField: context.source.priorityField ?? null,
-      priorityOrder: context.source.priorityOrder ?? [],
-      titleField: context.source.fieldAliases.title ?? null,
-      ownerField: context.source.fieldAliases.owner ?? null,
-      reproductionStepsField:
-        context.source.fieldAliases.reproductionSteps ?? null,
-      expectedBehaviorField:
-        context.source.fieldAliases.expectedBehavior ?? null,
-      actualBehaviorField: context.source.fieldAliases.actualBehavior ?? null,
-      linksField: context.source.fieldAliases.links ?? null,
-      notesField: context.source.fieldAliases.notes ?? null,
-    };
     const fieldSummaries = fields.map((field) =>
       summarizeField(field, sampledRecords),
     );
@@ -77,7 +62,6 @@ export default class SchemaCommand extends BaseCommand {
       },
       data: {
         fields: fieldSummaries,
-        mappings,
         sample: {
           limit: sampleLimit,
           recordsRead: context.records.length,

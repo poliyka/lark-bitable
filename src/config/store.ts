@@ -178,29 +178,6 @@ export class ConfigStore {
     });
   }
 
-  setModeDefaultOwner(input: {
-    mode: WorkflowMode;
-    owner?: string;
-  }): WorkflowConfig {
-    const previous = this.getWorkflowConfig() ?? {
-      activeMode: input.mode,
-      configuredAt: new Date().toISOString(),
-      modeConfigs: {},
-    };
-    const trimmedOwner = input.owner?.trim();
-    return this.setWorkflowConfig({
-      ...previous,
-      modeConfigs: {
-        ...previous.modeConfigs,
-        [input.mode]: {
-          ...previous.modeConfigs[input.mode],
-          ...(trimmedOwner ? { defaultOwner: trimmedOwner } : {}),
-          updatedAt: new Date().toISOString(),
-        },
-      },
-    });
-  }
-
   getSelection(): TriageSelection | undefined {
     const selection = this.conf.get("lastSelection");
     return selection ? triageSelectionSchema.parse(selection) : undefined;

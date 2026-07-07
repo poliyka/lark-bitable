@@ -38,7 +38,6 @@ describe("owner filtering", () => {
     const criteria = resolveOwnerCriteria({
       commandOwner: "openclaw",
       mode: "Developer",
-      source: fixtureSource,
     });
     const result = applyOwnerFilter(fixtureRecords, criteria);
 
@@ -50,11 +49,7 @@ describe("owner filtering", () => {
     expect(result.records).toHaveLength(fixtureRecords.length);
   });
 
-  it("applies exact visible-label matching when owner field is configured", () => {
-    const source = {
-      ...fixtureSource,
-      fieldAliases: { ...fixtureSource.fieldAliases, owner: "負責人" },
-    };
+  it("applies exact visible-label matching when owner field is inferred", () => {
     const records = [
       {
         ...fixtureRecords[0],
@@ -71,7 +66,6 @@ describe("owner filtering", () => {
       resolveOwnerCriteria({
         commandOwner: "openclaw",
         mode: "Developer",
-        source,
       }),
     );
 

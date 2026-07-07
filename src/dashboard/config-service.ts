@@ -23,7 +23,6 @@ export async function loadConfigDraft(input: {
   const larkApp = input.configStore.getLarkApp();
   const workflow = input.configStore.getWorkflowConfig();
   const mode = workflow?.activeMode ?? "Developer";
-  const defaultOwner = workflow?.modeConfigs?.[mode]?.defaultOwner;
   const readiness = await checkReadiness("dashboard", {
     authStore: input.authStore,
     bootstrapInstalled: true,
@@ -40,12 +39,6 @@ export async function loadConfigDraft(input: {
       larkDomain: larkApp?.domain ?? "larksuite.com",
       redirectUri: larkApp?.redirectUri,
       callbackPort: larkApp?.callbackPort ?? 14543,
-      statusField: source?.statusField,
-      priorityField: source?.priorityField,
-      titleField: source?.fieldAliases.title,
-      ownerField: source?.fieldAliases.owner,
-      actionableStatus: source?.actionableStatus ?? "待處理",
-      defaultOwner,
       validation: readiness,
     },
     readiness,
@@ -75,25 +68,12 @@ export async function saveConfigDraft(input: {
       tableId: parsedUrl.tableId,
       viewId: parsedUrl.viewId,
       name: draft.sourceName ?? previousSource?.name,
-      statusField: draft.statusField ?? previousSource?.statusField,
-      actionableStatus:
-        draft.actionableStatus ?? previousSource?.actionableStatus,
-      priorityField: draft.priorityField ?? previousSource?.priorityField,
-      priorityOrder: previousSource?.priorityOrder,
-      fieldAliases: {
-        ...previousSource?.fieldAliases,
-        title: draft.titleField ?? previousSource?.fieldAliases.title,
-        owner: draft.ownerField ?? previousSource?.fieldAliases.owner,
-      },
       updatedAt: new Date().toISOString(),
     }),
   );
 
   const mode = normalizeWorkflowMode(draft.mode);
   input.configStore.setActiveMode({ configuredBy: "dashboard", mode });
-  if (draft.defaultOwner !== undefined) {
-    input.configStore.setModeDefaultOwner({ mode, owner: draft.defaultOwner });
-  }
 
   const previousLarkApp = input.configStore.getLarkApp();
   const appSecret = draft.larkAppSecret ?? previousLarkApp?.appSecret;

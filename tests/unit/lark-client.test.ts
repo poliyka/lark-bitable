@@ -14,6 +14,9 @@ import { fixtureSource } from "../fixtures/lark.js";
 
 describe("LarkClient", () => {
   it("lists fields and paginated records through the transport seam", async () => {
+    const recordListInputs: Array<
+      Parameters<LarkClientTransport["listRecords"]>[0]
+    > = [];
     const transport: LarkClientTransport = {
       async createRecord(input) {
         return { record_id: "recCreated", fields: input.fields };
@@ -31,6 +34,7 @@ describe("LarkClient", () => {
         return [{ field_name: "title", type: 1 }];
       },
       async listRecords(input) {
+        recordListInputs.push(input);
         if (!input.pageToken) {
           return {
             items: [{ record_id: "recA", fields: { title: "A" } }],
@@ -60,6 +64,10 @@ describe("LarkClient", () => {
     });
     expect(await client.listFields(fixtureSource)).toHaveLength(1);
     expect(await client.listRecords(fixtureSource)).toHaveLength(2);
+    expect(recordListInputs).toEqual([
+      expect.not.objectContaining({ viewId: expect.any(String) }),
+      expect.not.objectContaining({ viewId: expect.any(String) }),
+    ]);
     expect((await client.getRecord(fixtureSource, "recA")).recordId).toBe(
       "recA",
     );

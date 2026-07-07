@@ -81,15 +81,10 @@ describe("dashboard HTTP server", () => {
     }
   });
 
-  it("keeps overview readiness partial when doctor-level configuration is incomplete", async () => {
+  it("keeps overview readiness partial when auth or Lark app configuration is incomplete", async () => {
     const paths = await createDashboardTestPaths("dashboard-http-");
     const configStore = new ConfigStore({ cwd: paths.configCwd });
-    configStore.setSource({
-      ...fixtureSource,
-      fieldAliases: {},
-      priorityField: undefined,
-      statusField: undefined,
-    });
+    configStore.setSource(fixtureSource);
     const server = await startDashboardServer({
       auditPath: paths.auditPath,
       authPath: paths.authPath,
@@ -104,9 +99,7 @@ describe("dashboard HTTP server", () => {
         data: {
           overview: {
             configuration: {
-              configureMappingsReady: boolean;
               larkAppConfigured: boolean;
-              missingConfigureMappings: string[];
               sourceConfigured: boolean;
             };
             readiness: {
@@ -118,28 +111,19 @@ describe("dashboard HTTP server", () => {
       }>(server.binding.origin, "/api/status");
 
       expect(status.data.overview.configuration).toMatchObject({
-        configureMappingsReady: false,
         larkAppConfigured: false,
         sourceConfigured: true,
       });
-      expect(
-        status.data.overview.configuration.missingConfigureMappings,
-      ).toEqual(
-        expect.arrayContaining([
-          "status-field",
-          "priority-field",
-          "title-field",
-        ]),
+      expect(status.data.overview.configuration).not.toHaveProperty(
+        "configureMappingsReady",
+      );
+      expect(status.data.overview.configuration).not.toHaveProperty(
+        "missingConfigureMappings",
       );
       expect(status.data.overview.readiness.status).toBe("partial");
       expect(
         status.data.overview.readiness.partialIssues.map((issue) => issue.code),
-      ).toEqual(
-        expect.arrayContaining([
-          "incomplete-configure",
-          "missing-lark-app-config",
-        ]),
-      );
+      ).toEqual(expect.arrayContaining(["missing-lark-app-config"]));
     } finally {
       await server.stop();
     }

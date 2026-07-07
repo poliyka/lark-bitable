@@ -34,11 +34,8 @@ export default class ListCommand extends BaseCommand {
     limit: Flags.integer({
       description: "Maximum records to return.",
     }),
-    "no-default-owner": Flags.boolean({
-      description: "Ignore the stored default owner for this run.",
-    }),
     owner: Flags.string({
-      description: "Filter records by owner when an owner field is configured.",
+      description: "Filter records by owner using an inferred owner field.",
     }),
   };
 
@@ -52,7 +49,6 @@ export default class ListCommand extends BaseCommand {
     const { criteria, records } = applyOwnerCriteria({
       ...context,
       commandOwner: flags.owner,
-      ignoreDefaultOwner: flags["no-default-owner"],
     });
     const limit = parsePositiveLimit({
       defaultLimit: 20,

@@ -33,7 +33,7 @@ describe("dashboard config service", () => {
     expect(JSON.stringify(draft)).not.toContain("stored-secret");
   });
 
-  it("saves source, workflow, mappings, and preserves stored app secret", async () => {
+  it("saves source and workflow without bug mappings, and preserves stored app secret", async () => {
     const paths = await createDashboardTestPaths("dashboard-config-");
     const store = new ConfigStore({ cwd: paths.configCwd });
     store.setLarkApp({
@@ -54,6 +54,10 @@ describe("dashboard config service", () => {
     });
 
     expect(store.getSource()?.tableId).toBe(fixtureSource.tableId);
+    expect(store.getSource()).not.toHaveProperty("statusField");
+    expect(store.getSource()).not.toHaveProperty("actionableStatus");
+    expect(store.getSource()).not.toHaveProperty("priorityField");
+    expect(store.getSource()).not.toHaveProperty("fieldAliases");
     expect(store.getLarkApp()?.appSecret).toBe("stored-secret");
     expect(store.getLarkApp()).not.toHaveProperty("scopes");
     expect(
@@ -61,6 +65,8 @@ describe("dashboard config service", () => {
     ).not.toHaveProperty("scopes");
     expect(saved.readiness.workflow).toBe("dashboard");
     expect(saved.draft).not.toHaveProperty("scopes");
+    expect(saved.draft).not.toHaveProperty("statusField");
+    expect(saved.draft).not.toHaveProperty("actionableStatus");
     expect(JSON.stringify(saved)).not.toContain("stored-secret");
   });
 
