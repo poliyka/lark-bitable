@@ -2,11 +2,12 @@ import { mkdir, mkdtemp, readdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import WriteCommand from "../../src/cli/commands/write.js";
 import { AuthStore } from "../../src/config/auth-store.js";
 import { ConfigStore } from "../../src/config/store.js";
+import * as larkClient from "../../src/lark/client.js";
 import { readAuditEntries } from "../fixtures/audit.js";
 import { readyAuthSession } from "../fixtures/auth.js";
 import { fixtureSource } from "../fixtures/lark.js";
@@ -34,6 +35,123 @@ async function configuredWriteContext(
 }
 
 describe("write command", () => {
+  it("rejects invalid create client tokens before any Lark API call or attachment upload", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    const attachmentPath = join(cwd, "evidence.png");
+    await writeFile(attachmentPath, "fixture");
+    const transport = {
+      createRecord: vi.fn().mockResolvedValue({
+        record_id: "recCreatedWrite",
+        fields: { 標題: "Invalid token" },
+      }),
+      uploadMedia: vi
+        .fn()
+        .mockImplementation(async (input: larkClient.UploadMediaInput) => ({
+          ...input,
+          fileToken: "boxcnb01",
+        })),
+      listFields: vi.fn().mockResolvedValue([]),
+      getRecord: vi.fn(),
+      updateRecord: vi.fn(),
+      listRecords: vi.fn(),
+      downloadMedia: vi.fn(),
+    };
+    const factory = vi
+      .spyOn(larkClient, "createLarkSdkTransport")
+      .mockReturnValue(transport);
+    try {
+      await expect(
+        WriteCommand.run([
+          "--config-cwd",
+          cwd,
+          "--auth-path",
+          authPath,
+          "--fixture-fields",
+          JSON.stringify(fixtureWriteFields),
+          "--op",
+          "create",
+          "--fields-json",
+          JSON.stringify({ 標題: "Invalid token", 附件: attachmentPath }),
+          "--client-token",
+          "abc",
+          "--confirm",
+          "--json",
+        ]),
+      ).rejects.toMatchObject({
+        code: "invalid-client-token",
+        remediation:
+          "Omit --client-token to auto-generate one, or pass a UUID.",
+      });
+      expect(transport.createRecord).toHaveBeenCalledTimes(0);
+      expect(transport.uploadMedia).toHaveBeenCalledTimes(0);
+      expect(transport.listFields).toHaveBeenCalledTimes(0);
+      expect(factory).not.toHaveBeenCalled();
+    } finally {
+      factory.mockRestore();
+    }
+  });
+
+  it("auto-generates a UUID for confirmed creates without a client token", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    const result = await WriteCommand.run([
+      "--config-cwd",
+      cwd,
+      "--auth-path",
+      authPath,
+      "--fixture-fields",
+      JSON.stringify(fixtureWriteFields),
+      "--mock-create-record",
+      JSON.stringify(fixtureCreatedWriteRecord),
+      "--op",
+      "create",
+      "--field",
+      "標題=Generated token",
+      "--confirm",
+      "--json",
+    ]);
+    expect(result).toMatchObject({
+      status: "ok",
+      data: {
+        result: {
+          confirmationStatus: "confirmed",
+          clientToken: expect.stringMatching(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+          ),
+        },
+      },
+    });
+  });
+
+  it("preserves the existing rejection of client tokens for confirmed updates", async () => {
+    const { authPath, cwd } = await configuredWriteContext();
+    await expect(
+      WriteCommand.run([
+        "--config-cwd",
+        cwd,
+        "--auth-path",
+        authPath,
+        "--fixture-fields",
+        JSON.stringify(fixtureWriteFields),
+        "--fixture-records",
+        JSON.stringify([fixtureWriteRecord]),
+        "--op",
+        "update",
+        "--record-id",
+        "recWrite",
+        "--field",
+        "狀態=待處理",
+        "--client-token",
+        "abc",
+        "--confirm",
+        "--json",
+      ]),
+    ).rejects.toMatchObject({
+      code: "invalid-client-token",
+      message: "Client token is only valid for create writes.",
+      remediation: "Use --client-token only with --op create --confirm.",
+    });
+  });
+
   it("previews a create without committing table content", async () => {
     const { authPath, cwd } = await configuredWriteContext();
     const auditPath = join(cwd, "logs", "audit.json");
@@ -96,7 +214,7 @@ describe("write command", () => {
       "--fields-json",
       '{"標題":"Write command live create","狀態":"待處理"}',
       "--client-token",
-      "manual-write-create-001",
+      "A7A412D8-19BE-4DC0-903F-81C8495B9C84",
       "--confirm",
       "--json",
     ]);
@@ -104,7 +222,7 @@ describe("write command", () => {
     expect(result.status).toBe("ok");
     expect(result.data).toMatchObject({
       result: {
-        clientToken: "manual-write-create-001",
+        clientToken: "A7A412D8-19BE-4DC0-903F-81C8495B9C84",
         confirmationStatus: "confirmed",
         targetRecordId: "recCreatedWrite",
       },
@@ -122,7 +240,7 @@ describe("write command", () => {
       },
     });
     expect(JSON.stringify(auditEntries)).not.toContain(
-      "manual-write-create-001",
+      "A7A412D8-19BE-4DC0-903F-81C8495B9C84",
     );
   });
 

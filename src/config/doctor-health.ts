@@ -11,6 +11,7 @@ import {
   type BootstrapSkillTargetState,
 } from "../bootstrap/installer.js";
 import { resolveWorkflowMode } from "../mode/mode-config.js";
+import { authStatusFor } from "../lark/auth.js";
 import type { CommandOutput } from "../cli/output.js";
 import { AuthStore, defaultAuthPath } from "./auth-store.js";
 import type { Issue } from "./schema.js";
@@ -104,7 +105,7 @@ export async function inspectDoctorHealth(
 
   return {
     auth: {
-      status: auth?.status ?? "missing",
+      status: authStatusFor(auth).status,
       storagePath: authStore.path,
       domain: auth?.domain,
       accountLabel: auth?.accountLabel,
