@@ -2,6 +2,7 @@ import { Args, Flags } from "@oclif/core";
 import { select as promptSelect } from "@inquirer/prompts";
 
 import { BaseCommand } from "../base-command.js";
+import { tableSelectionFlags } from "../source-selection.js";
 import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
@@ -19,6 +20,7 @@ export default class GetCommand extends BaseCommand {
   static description = "Retrieve one record by stable record id.";
   static flags = {
     ...BaseCommand.baseFlags,
+    ...tableSelectionFlags,
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
     "config-cwd": Flags.string({ hidden: true }),
     fixture: Flags.string({ hidden: true }),
@@ -29,6 +31,8 @@ export default class GetCommand extends BaseCommand {
     const { auth, mode, records, source } = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
+      table: flags.table,
+      tableProfile: flags["table-profile"],
       fixture: flags.fixture,
       loadRecords: !args.recordId,
     });

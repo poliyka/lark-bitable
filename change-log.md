@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add named table profiles managed by `configure`, plus shared `--table-profile` and `--table` selection for list, get, filter, search, schema, and write; keep active settings and shared auth unchanged, and retain view IDs as metadata only.
 - Fetch explicit record ids directly and report missing records without masking other Lark errors.
 - Use record-list pages of up to 500 records and keep reading the whole table regardless of configured view.
 - Correct doctor auth expiry status and report token refresh failures with safe retry/login guidance.

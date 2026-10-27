@@ -497,6 +497,28 @@ bitable:app:readonly
 `待处理` 和 `待處理` 對程式來說是不同字串。若表格資料是簡體 `待处理`，
 `triage --actionable-status` 也要使用 `待处理`。
 
+## 多表與 Table Profile
+
+同一份登入授權可供多張表共用。先用完整 Lark Base URL 儲存具名 profile；這個操作不會改動 activeSource、Lark app 或 workflow，也不會進入互動設定：
+
+```bash
+lark-bitable configure "https://example.larksuite.com/base/appXXX?table=tblRequirements&view=vewXXX" --table-profile req
+lark-bitable configure --list-table-profiles
+lark-bitable get recXXX --table-profile req --json
+lark-bitable filter --table-profile req --field "狀態" --equals "待處理" --json
+lark-bitable write --op update --record-id recXXX --table-profile req --field "標題=新需求" --json
+lark-bitable configure --table-profile req --remove
+```
+
+`list`、`get`、`filter`、`search`、`schema`、`write` 都支援 `--table-profile <name>` 與一次性的 `--table`。profile 名稱須符合 `^[a-z][a-z0-9_-]{0,31}$`；同名儲存會覆寫該 profile。`--table` 可使用 table token（例如 `--table tblRequirements`，沿用 activeSource 的 appToken 並清除 viewId），或完整 Lark Base URL：
+
+```bash
+lark-bitable list --table tblRequirements --json
+lark-bitable filter --table "https://example.larksuite.com/base/appXXX?table=tblRequirements&view=vewXXX" --field "狀態" --equals "待處理" --json
+```
+
+兩個選表旗標不可同時使用；都省略時沿用 activeSource，單次選表不會更改預設來源。URL 裡的 viewId 僅作紀錄，`list`、`filter`、`search` 一律讀整張表。所有 profile 共用既有 auth.json，沒有各自的 workflow 或欄位對應；`write` 未帶 `--confirm` 時只會預覽。
+
 ## Workflow Mode
 
 CLI 有兩個 mode：

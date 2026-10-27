@@ -13,6 +13,10 @@ import { LarkClient, createLarkSdkTransport } from "../lark/client.js";
 import type { BitableFieldInfo } from "../lark/field-discovery.js";
 import { resolveWorkflowMode } from "../mode/mode-config.js";
 import { CliError } from "../cli/errors.js";
+import {
+  resolveCommandSource,
+  type CommandSourceSelection,
+} from "../cli/source-selection.js";
 
 export interface EvaluateWriteReadinessInput {
   authReady: boolean;
@@ -22,7 +26,7 @@ export interface EvaluateWriteReadinessInput {
   writePermissionStatus?: WriteReadiness["writePermissionStatus"];
 }
 
-export interface WriteCommandContextInput {
+export interface WriteCommandContextInput extends CommandSourceSelection {
   authPath: string;
   configCwd?: string;
   fixtureFields?: string;
@@ -132,14 +136,7 @@ export async function loadWriteCommandContext(input: WriteCommandContextInput) {
   }
   const configStore = new ConfigStore({ cwd: input.configCwd });
   const readyAuth = await ensureReadyAuth(auth, authStore, configStore);
-  const source = configStore.getSource();
-  if (!source) {
-    throw new CliError({
-      code: "missing-source",
-      message: "No active Lark Bitable source is configured.",
-      remediation: "Run lark-bitable configure <url>",
-    });
-  }
+  const source = resolveCommandSource(configStore, input);
 
   const client = new LarkClient(createLarkSdkTransport(readyAuth));
   const fields = input.fixtureFields

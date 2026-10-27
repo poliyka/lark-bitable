@@ -6,6 +6,7 @@ import {
 import { z } from "zod";
 
 import { BaseCommand } from "../base-command.js";
+import { tableSelectionFlags } from "../source-selection.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
 import {
@@ -27,6 +28,7 @@ export default class FilterCommand extends BaseCommand {
   static description = "Return records matching field criteria.";
   static flags = {
     ...BaseCommand.baseFlags,
+    ...tableSelectionFlags,
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
     "config-cwd": Flags.string({ hidden: true }),
     contains: Flags.string({
@@ -59,6 +61,8 @@ export default class FilterCommand extends BaseCommand {
     const context = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
+      table: flags.table,
+      tableProfile: flags["table-profile"],
       fixture: flags.fixture,
     });
     const ownerResult = applyOwnerCriteria({

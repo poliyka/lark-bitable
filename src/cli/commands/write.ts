@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../base-command.js";
+import { tableSelectionFlags } from "../source-selection.js";
 import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
@@ -51,6 +52,7 @@ export default class WriteCommand extends BaseCommand {
   ];
   static flags = {
     ...BaseCommand.baseFlags,
+    ...tableSelectionFlags,
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
     "client-token": Flags.string({
       description: "Idempotency token for committed create writes.",
@@ -123,6 +125,8 @@ export default class WriteCommand extends BaseCommand {
     const context = await loadWriteCommandContext({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
+      table: flags.table,
+      tableProfile: flags["table-profile"],
       fixtureFields: flags["fixture-fields"],
       fixtureRecords: flags["fixture-records"],
       recordId: flags["record-id"],

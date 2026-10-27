@@ -2,6 +2,7 @@ import { Args, Flags } from "@oclif/core";
 import { input as promptInput } from "@inquirer/prompts";
 
 import { BaseCommand } from "../base-command.js";
+import { tableSelectionFlags } from "../source-selection.js";
 import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
@@ -25,6 +26,7 @@ export default class SearchCommand extends BaseCommand {
   static description = "Search visible text-like fields.";
   static flags = {
     ...BaseCommand.baseFlags,
+    ...tableSelectionFlags,
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
     "config-cwd": Flags.string({ hidden: true }),
     field: Flags.string({
@@ -60,6 +62,8 @@ export default class SearchCommand extends BaseCommand {
     const context = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
+      table: flags.table,
+      tableProfile: flags["table-profile"],
       fixture: flags.fixture,
     });
     const ownerResult = applyOwnerCriteria({
