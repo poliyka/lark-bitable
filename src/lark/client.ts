@@ -523,12 +523,12 @@ export class LarkClient {
     const pageSize = options.pageSize ?? Math.min(options.limit ?? 500, 500);
 
     do {
+      // Intentionally read the whole table; the configured view is informational only.
       const page = await this.transport.listRecords({
         appToken: source.appToken,
         tableId: source.tableId,
         pageSize,
         pageToken,
-        viewId: source.viewId,
       });
       const retrievedAt = new Date().toISOString();
       records.push(

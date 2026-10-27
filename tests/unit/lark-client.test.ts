@@ -65,8 +65,8 @@ describe("LarkClient", () => {
     expect(await client.listFields(fixtureSource)).toHaveLength(1);
     expect(await client.listRecords(fixtureSource)).toHaveLength(2);
     expect(recordListInputs).toEqual([
-      expect.objectContaining({ viewId: fixtureSource.viewId }),
-      expect.objectContaining({ viewId: fixtureSource.viewId }),
+      expect.not.objectContaining({ viewId: expect.any(String) }),
+      expect.not.objectContaining({ viewId: expect.any(String) }),
     ]);
     expect((await client.getRecord(fixtureSource, "recA")).recordId).toBe(
       "recA",
@@ -99,7 +99,7 @@ describe("LarkClient", () => {
     },
   );
 
-  it("passes the source viewId to every listRecords page", async () => {
+  it("omits the configured viewId from every listRecords page", async () => {
     const listRecords = vi
       .fn()
       .mockResolvedValueOnce({ items: [], pageToken: "next" })
@@ -112,7 +112,7 @@ describe("LarkClient", () => {
 
     expect(listRecords).toHaveBeenCalledTimes(2);
     for (const [input] of listRecords.mock.calls) {
-      expect(input.viewId).toBe(fixtureSource.viewId);
+      expect(input.viewId).toBeUndefined();
     }
   });
 
