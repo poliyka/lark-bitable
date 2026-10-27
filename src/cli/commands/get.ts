@@ -60,8 +60,8 @@ export default class GetCommand extends BaseCommand {
               // Lark's RecordIdNotFound response; other failures must propagate.
               if (
                 error instanceof Error &&
-                "code" in error &&
-                error.code === 1254043
+                "larkCode" in error &&
+                error.larkCode === 1254043
               ) {
                 return undefined;
               }

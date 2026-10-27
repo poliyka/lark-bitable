@@ -257,6 +257,33 @@ describe("LarkClient", () => {
     );
   });
 
+  it("keeps non-get Lark error codes off the generic error.code", async () => {
+    const sdk = {
+      bitable: {
+        appTableRecord: {
+          async list() {
+            return { code: 1254302, msg: "Permission denied" };
+          },
+        },
+      },
+    };
+    const transport = createLarkSdkTransport(readyAuthSession, {
+      sdk: sdk as never,
+    });
+
+    const error = await transport
+      .listRecords({
+        appToken: fixtureSource.appToken,
+        tableId: fixtureSource.tableId,
+      })
+      .catch((error: unknown) => error);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error).toHaveProperty("message", "Permission denied");
+    expect(error).not.toHaveProperty("code");
+    expect(error).toHaveProperty("larkCode", 1254302);
+  });
+
   it("downloads drive media with authenticated requests", async () => {
     const requests: Array<{
       options: unknown;

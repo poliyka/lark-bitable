@@ -238,7 +238,7 @@ function assertOk(
       new Error(
         response.msg ?? `Lark ${operation} failed with code ${response.code}`,
       ),
-      { code: response.code },
+      { larkCode: response.code },
     );
   }
 }
