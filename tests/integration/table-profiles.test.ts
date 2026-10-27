@@ -11,6 +11,7 @@ import ListCommand from "../../src/cli/commands/list.js";
 import SearchCommand from "../../src/cli/commands/search.js";
 import SchemaCommand from "../../src/cli/commands/schema.js";
 import WriteCommand from "../../src/cli/commands/write.js";
+import { resolveCommandSource } from "../../src/cli/source-selection.js";
 import { AuthStore } from "../../src/config/auth-store.js";
 import { ConfigStore } from "../../src/config/store.js";
 import * as larkClient from "../../src/lark/client.js";
@@ -117,6 +118,125 @@ describe("table selection through command transports", () => {
   function contextArgs() {
     return ["--config-cwd", cwd, "--auth-path", authPath, "--json"];
   }
+
+  it.each(
+    [
+      {
+        name: "profile",
+        flags: ["--table-profile", "req"],
+        suffix: " --table-profile req",
+        source: { appToken: "appRequirements", tableId: "tblRequirements" },
+      },
+      {
+        name: "URL",
+        flags: ["--table", `${profileUrl}&label=Owner's%20notes`],
+        suffix:
+          " --table 'https://example.larksuite.com/base/appRequirements?table=tblRequirements&view=vewRequirements&label=Owner'\\''s%20notes'",
+        source: { appToken: "appRequirements", tableId: "tblRequirements" },
+      },
+      {
+        name: "token",
+        flags: ["--table", "tblOnce"],
+        suffix: " --table 'tblOnce'",
+        source: { appToken: "TypDbjKBfaJcaSsoEI1lZjHsgIY", tableId: "tblOnce" },
+      },
+    ].flatMap((selection) =>
+      ["create", "update"].map((op) => ({ ...selection, op })),
+    ),
+  )(
+    "write $op preserves the original $name selection in preview, success, and unknown follow-ups",
+    async ({ flags, suffix, source, op }) => {
+      const args = [
+        "--op",
+        op,
+        ...(op === "update" ? ["--record-id", "recRequirements"] : []),
+        ...flags,
+        "--field",
+        "標題=Follow-up",
+        ...contextArgs(),
+      ];
+      const preview = await WriteCommand.run(args);
+      expect(preview.source).toMatchObject(source);
+
+      const assertSource = (command: string) => {
+        expect(command).toContain(suffix);
+        const profile = command.match(
+          /--table-profile ([a-z][a-z0-9_-]{0,31})/,
+        );
+        const table = command.match(/--table '((?:[^']|'\\'')*)'/);
+        const resolved = resolveCommandSource(new ConfigStore({ cwd }), {
+          tableProfile: profile?.[1],
+          table: table?.[1]?.replaceAll("'\\''", "'"),
+        });
+        expect(resolved).toMatchObject(source);
+        expect(resolved.appToken).toBe(preview.source?.appToken);
+        expect(resolved.tableId).toBe(preview.source?.tableId);
+      };
+      const assertFollowUps = (
+        output: Awaited<ReturnType<typeof WriteCommand.run>>,
+      ) => {
+        const data = output.data as {
+          nextSafeCommands: string[];
+          result: { nextActions: string[] };
+        };
+        expect(data.nextSafeCommands).toHaveLength(1);
+        expect(data.result.nextActions).toHaveLength(1);
+        for (const command of [
+          ...data.nextSafeCommands,
+          ...data.result.nextActions,
+        ])
+          assertSource(command);
+      };
+      assertFollowUps(preview);
+
+      const response = {
+        code: 0,
+        data: {
+          record: {
+            record_id: "recRequirements",
+            fields: { 標題: "Follow-up" },
+          },
+        },
+      };
+      recordApi.create.mockResolvedValue(response);
+      recordApi.update.mockResolvedValue(response);
+      const confirmed = await WriteCommand.run([...args, "--confirm"]);
+      expect(confirmed.data).toMatchObject({
+        result: { confirmationStatus: "confirmed" },
+      });
+      assertFollowUps(confirmed);
+      const unknown = await WriteCommand.run([
+        ...args,
+        "--confirm",
+        "--mock-confirm-error",
+        "Fixture confirmation unavailable",
+      ]);
+      expect(unknown.data).toMatchObject({
+        result: { confirmationStatus: "unknown" },
+      });
+      assertFollowUps(unknown);
+      const unknownData = unknown.data as {
+        result: { issues: Array<{ remediation: string }> };
+      };
+      expect(unknownData.result.issues).toHaveLength(1);
+      assertSource(unknownData.result.issues[0]!.remediation);
+    },
+  );
+
+  it("keeps the original confirm command unchanged when no table selection was supplied", async () => {
+    const result = await WriteCommand.run([
+      "--op",
+      "create",
+      "--field",
+      "標題=Follow-up",
+      ...contextArgs(),
+    ]);
+    const command = `lark-bitable write --op create --fields-json '{"標題":"Follow-up"}' --confirm --json`;
+    expect(result.data).toMatchObject({
+      nextSafeCommands: [command],
+      result: { nextActions: [command] },
+    });
+  });
 
   it("get --table-profile req sends the profile tableId to transport and reports the resolved source", async () => {
     const result = await GetCommand.run([

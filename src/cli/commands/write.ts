@@ -98,6 +98,12 @@ export default class WriteCommand extends BaseCommand {
 
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(WriteCommand);
+    const tableSelectionArgs =
+      flags["table-profile"] !== undefined
+        ? ` --table-profile ${flags["table-profile"]}`
+        : flags.table !== undefined
+          ? ` --table '${flags.table.replaceAll("'", "'\\''")}'`
+          : "";
     const fields = parseFieldInput({
       fieldAssignments: flags.field,
       fieldsJson: flags["fields-json"],
@@ -161,7 +167,10 @@ export default class WriteCommand extends BaseCommand {
     });
 
     if (!flags.confirm) {
-      const previewResult = buildPreviewWriteResult(operation);
+      const previewResult = buildPreviewWriteResult(
+        operation,
+        tableSelectionArgs,
+      );
       const nextActions = nextActionsForPreview(operation, {
         attachmentMode: flags["attachment-mode"] as AttachmentWriteMode,
         attachmentPlan: attachmentPreparation.attachmentPlan,
@@ -202,6 +211,7 @@ export default class WriteCommand extends BaseCommand {
     }
 
     const result = await this.commitWrite(operation, {
+      tableSelectionArgs,
       mockConfirmError: flags["mock-confirm-error"],
       mockCreateError: flags["mock-create-error"],
       mockCreateRecord: flags["mock-create-record"],
@@ -251,6 +261,7 @@ export default class WriteCommand extends BaseCommand {
   private async commitWrite(
     operation: WriteOperation,
     input: {
+      tableSelectionArgs: string;
       mockConfirmError?: string;
       mockCreateError?: string;
       mockCreateRecord?: string;
@@ -292,12 +303,17 @@ export default class WriteCommand extends BaseCommand {
                 }),
               ],
             },
+            input.tableSelectionArgs,
           );
         }
-        return buildConfirmedWriteResult(operation, {
-          evidence: input.uploadEvidence,
-          record,
-        });
+        return buildConfirmedWriteResult(
+          operation,
+          {
+            evidence: input.uploadEvidence,
+            record,
+          },
+          input.tableSelectionArgs,
+        );
       }
 
       if (input.mockUpdateError) throw new Error(input.mockUpdateError);
@@ -312,22 +328,30 @@ export default class WriteCommand extends BaseCommand {
             recordId,
           });
       if (input.mockConfirmError) {
-        return buildUnknownWriteResult(operation, {
-          message: input.mockConfirmError,
-          evidence: [
-            ...(input.uploadEvidence ?? []),
-            writeEvidence({
-              reference: record.recordId,
-              excerpt: "Update response returned before confirmation failed.",
-              status: "partial",
-            }),
-          ],
-        });
+        return buildUnknownWriteResult(
+          operation,
+          {
+            message: input.mockConfirmError,
+            evidence: [
+              ...(input.uploadEvidence ?? []),
+              writeEvidence({
+                reference: record.recordId,
+                excerpt: "Update response returned before confirmation failed.",
+                status: "partial",
+              }),
+            ],
+          },
+          input.tableSelectionArgs,
+        );
       }
-      return buildConfirmedWriteResult(operation, {
-        evidence: input.uploadEvidence,
-        record,
-      });
+      return buildConfirmedWriteResult(
+        operation,
+        {
+          evidence: input.uploadEvidence,
+          record,
+        },
+        input.tableSelectionArgs,
+      );
     } catch (error) {
       const result = buildFailedWriteResult(
         operation,
