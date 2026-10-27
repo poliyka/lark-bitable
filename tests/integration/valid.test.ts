@@ -2,16 +2,143 @@ import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import ValidCommand from "../../src/cli/commands/valid.js";
 import { AuthStore } from "../../src/config/auth-store.js";
 import { ConfigStore } from "../../src/config/store.js";
 import { installBootstrapSkill } from "../../src/bootstrap/installer.js";
-import { readyAuthSession } from "../fixtures/auth.js";
+import * as larkAuth from "../../src/lark/auth.js";
+import { expiredAuthSession, readyAuthSession } from "../fixtures/auth.js";
 import { fixtureSource } from "../fixtures/lark.js";
 
 describe("valid command", () => {
+  it.each([
+    {
+      name: "Error.message with known credentials",
+      error: new Error(
+        "refresh denied: b01-access-sensitive b01-refresh-sensitive b01-app-sensitive",
+      ),
+      summary: "refresh denied:",
+    },
+    {
+      name: "Lark error code with a sensitive payload",
+      error: {
+        code: 99991663,
+        msg: "b01-access-sensitive b01-refresh-sensitive b01-app-sensitive",
+        access_token: "b01-access-sensitive",
+      },
+      summary: "99991663",
+    },
+    {
+      name: "Error.message containing an unknown credential payload",
+      error: new Error(
+        'request failed: {"access_token":"unexpected-token","refresh_token":"unexpected-refresh","app_secret":"unexpected-secret"}',
+      ),
+      summary: "Error",
+    },
+  ])("reports refresh failure safely for $name", async ({ error, summary }) => {
+    const cwd = await mkdtemp(join(tmpdir(), "valid-refresh-"));
+    const authPath = join(cwd, "auth.json");
+    const skillDir = join(cwd, "skills");
+    await new AuthStore(authPath).write({
+      ...expiredAuthSession,
+      storagePath: authPath,
+      accessToken: "b01-access-sensitive",
+      refreshToken: "b01-refresh-sensitive",
+    });
+    const store = new ConfigStore({ cwd });
+    store.setSource(fixtureSource);
+    store.setLarkApp({
+      appId: "b01-app",
+      appSecret: "b01-app-sensitive",
+      callbackPort: 14543,
+      domain: "larksuite.com",
+      updatedAt: "2026-10-27T00:00:00.000Z",
+    });
+    await installBootstrapSkill({ targetDir: skillDir });
+    const refresh = vi
+      .spyOn(larkAuth, "ensureReadyAuthSession")
+      .mockRejectedValue(error);
+    try {
+      const result = await ValidCommand.run([
+        "--config-cwd",
+        cwd,
+        "--auth-path",
+        authPath,
+        "--skill-dir",
+        skillDir,
+        "--json",
+      ]);
+      expect(result.status).toBe("error");
+      expect(result.issues).toEqual([
+        expect.objectContaining({
+          code: "auth-refresh-failed",
+          message: expect.stringContaining(
+            `Lark auth refresh failed: ${summary}`,
+          ),
+          remediation:
+            "Retry the command; if it still fails, run lark-bitable lark --login",
+        }),
+      ]);
+      expect(result.data).toMatchObject({
+        status: "blocked",
+        blockingIssues: [
+          expect.objectContaining({ code: "auth-refresh-failed" }),
+        ],
+      });
+      const serialized = JSON.stringify(result);
+      for (const secret of [
+        "b01-access-sensitive",
+        "b01-refresh-sensitive",
+        "b01-app-sensitive",
+        "unexpected-token",
+        "unexpected-refresh",
+        "unexpected-secret",
+      ]) {
+        expect(serialized).not.toContain(secret);
+      }
+      expect(serialized).not.toContain("auth-expired");
+      expect(serialized).not.toContain("configure");
+    } finally {
+      refresh.mockRestore();
+    }
+  });
+
+  it("keeps configure remediation for expired auth when app credentials are missing", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "valid-expired-"));
+    const authPath = join(cwd, "auth.json");
+    const skillDir = join(cwd, "skills");
+    await new AuthStore(authPath).write({
+      ...expiredAuthSession,
+      storagePath: authPath,
+    });
+    new ConfigStore({ cwd }).setSource(fixtureSource);
+    await installBootstrapSkill({ targetDir: skillDir });
+    vi.stubEnv("LARK_APP_ID", "");
+    vi.stubEnv("LARK_APP_SECRET", "");
+    try {
+      const result = await ValidCommand.run([
+        "--config-cwd",
+        cwd,
+        "--auth-path",
+        authPath,
+        "--skill-dir",
+        skillDir,
+        "--json",
+      ]);
+      expect(result.issues).toEqual([
+        expect.objectContaining({
+          code: "auth-expired",
+          remediation: expect.stringContaining("configure"),
+        }),
+      ]);
+      expect(JSON.stringify(result)).not.toContain("auth-refresh-failed");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("reports missing login and source with remediation", async () => {
     const cwd = await mkdtemp(join(tmpdir(), "valid-"));
     const authPath = join(cwd, "auth.json");

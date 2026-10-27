@@ -65,9 +65,18 @@ export async function checkReadiness(
     remediationSteps.push("Run lark-bitable doctor --install-skill");
   }
 
-  const auth = await readAuthForReadiness(context);
+  const { auth, refreshError } = await readAuthForReadiness(context);
   const authStatus = authStatusFor(auth);
-  if (authStatus.status !== "ready") {
+  if (refreshError) {
+    const remediation =
+      "Retry the command; if it still fails, run lark-bitable lark --login";
+    blockingIssues.push({
+      code: "auth-refresh-failed",
+      message: `Lark auth refresh failed: ${refreshError}`,
+      remediation,
+    });
+    remediationSteps.push(remediation);
+  } else if (authStatus.status !== "ready") {
     const authIssue = {
       code:
         authStatus.status === "missing"
@@ -208,15 +217,14 @@ export async function checkReadiness(
   };
 }
 
-async function readAuthForReadiness(
-  context: ReadinessContext,
-): Promise<
-  Awaited<ReturnType<NonNullable<ReadinessContext["authStore"]>["read"]>>
-> {
+async function readAuthForReadiness(context: ReadinessContext): Promise<{
+  auth: Awaited<ReturnType<NonNullable<ReadinessContext["authStore"]>["read"]>>;
+  refreshError?: string;
+}> {
   const auth = await context.authStore?.read();
-  if (!auth || !context.authStore) return auth;
+  if (!auth || !context.authStore) return { auth };
   if (authStatusFor(auth).status !== "expired" || !auth.refreshToken) {
-    return auth;
+    return { auth };
   }
 
   const app = context.configStore?.getLarkApp();
@@ -229,10 +237,39 @@ async function readAuthForReadiness(
       storagePath: context.authStore.path,
     });
     if (refreshed !== auth && authStatusFor(refreshed).status === "ready") {
-      return context.authStore.write(refreshed);
+      return context.authStore.write(refreshed).then((auth) => ({ auth }));
     }
-  } catch {
-    return auth;
+  } catch (error) {
+    let summary = "Unknown error";
+    if (error instanceof Error) {
+      summary = error.message;
+      const secrets = [
+        auth.accessToken,
+        auth.refreshToken,
+        app?.appSecret,
+        process.env.LARK_APP_SECRET,
+      ].filter((value): value is string => Boolean(value));
+      for (const secret of secrets.sort((a, b) => b.length - a.length)) {
+        summary = summary.split(secret).join("[REDACTED]");
+      }
+      if (
+        !summary.trim() ||
+        /access[_\s-]?token|refresh[_\s-]?token|app[_\s-]?secret|authorization|bearer/i.test(
+          summary,
+        )
+      ) {
+        summary = error instanceof TypeError ? "TypeError" : "Error";
+      }
+    } else if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      typeof error.code === "number" &&
+      Number.isFinite(error.code)
+    ) {
+      summary = String(error.code);
+    }
+    return { auth, refreshError: summary };
   }
-  return auth;
+  return { auth };
 }

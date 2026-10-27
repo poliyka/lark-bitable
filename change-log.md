@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+- Correct doctor auth expiry status and report token refresh failures with safe retry/login guidance.
+- Validate explicit client tokens as UUIDs locally before confirmed create writes.
+
 ## 2.0.2 - 2026-07-07
 
 ### Changed
