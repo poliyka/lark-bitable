@@ -17,6 +17,7 @@ import { ConfigStore } from "../../src/config/store.js";
 import * as larkClient from "../../src/lark/client.js";
 import { readyAuthSession } from "../fixtures/auth.js";
 import { fixtureSource } from "../fixtures/lark.js";
+import { fixtureWriteFields, fixtureWriteRecord } from "../fixtures/write.js";
 
 const scratch = join(
   homedir(),
@@ -118,6 +119,128 @@ describe("table selection through command transports", () => {
   function contextArgs() {
     return ["--config-cwd", cwd, "--auth-path", authPath, "--json"];
   }
+
+  it("keeps the req profile in risky attachment preservation preview get follow-ups", async () => {
+    const attachmentPath = join(cwd, "replace-risk.png");
+    await writeFile(attachmentPath, "fixture");
+    const result = await WriteCommand.run([
+      "--op",
+      "update",
+      "--record-id",
+      "recWrite",
+      "--table-profile",
+      "req",
+      "--fixture-fields",
+      JSON.stringify(fixtureWriteFields),
+      "--fixture-records",
+      JSON.stringify([fixtureWriteRecord]),
+      "--fields-json",
+      JSON.stringify({ 附件: attachmentPath }),
+      ...contextArgs(),
+    ]);
+    const get = "lark-bitable get recWrite --json --table-profile req";
+    expect(result.source).toMatchObject({
+      appToken: "appRequirements",
+      tableId: "tblRequirements",
+    });
+    expect(result.data).toMatchObject({
+      attachmentPlan: [
+        expect.objectContaining({
+          existingAttachmentCount: 1,
+          localFileCount: 1,
+          willReplaceExisting: true,
+          replacementPolicy: "preserve",
+        }),
+      ],
+      nextSafeCommands: [
+        get,
+        expect.stringContaining("preserving existing"),
+        expect.stringContaining("--attachment-mode replace"),
+      ],
+      result: {
+        nextActions: [
+          get,
+          expect.stringContaining("preserving existing"),
+          expect.stringContaining("--attachment-mode replace"),
+        ],
+      },
+    });
+    expect(recordApi.create).not.toHaveBeenCalled();
+    expect(recordApi.update).not.toHaveBeenCalled();
+    const data = result.data as {
+      nextSafeCommands: string[];
+      result: { nextActions: string[] };
+    };
+    expect(
+      JSON.stringify([...data.nextSafeCommands, ...data.result.nextActions]),
+    ).not.toContain("--confirm");
+  });
+
+  it.each([
+    { op: "create", attachmentMode: "preserve" },
+    { op: "update", attachmentMode: "replace" },
+  ])(
+    "keeps the req profile in uploaded attachment $op retry commands",
+    async ({ op, attachmentMode }) => {
+      const attachmentPath = join(cwd, "retry.png");
+      await writeFile(attachmentPath, "fixture");
+      const result = await WriteCommand.run([
+        "--op",
+        op,
+        ...(op === "update" ? ["--record-id", "recWrite"] : []),
+        "--table-profile",
+        "req",
+        "--fixture-fields",
+        JSON.stringify(fixtureWriteFields),
+        "--fixture-records",
+        JSON.stringify([fixtureWriteRecord]),
+        "--fields-json",
+        JSON.stringify({
+          附件:
+            op === "update"
+              ? [{ file_token: "boxcnexisting" }, attachmentPath]
+              : [attachmentPath],
+        }),
+        "--attachment-mode",
+        attachmentMode,
+        "--mock-upload-token",
+        "boxcnuploaded",
+        `--mock-${op}-error`,
+        "Lark invalid field value",
+        "--confirm",
+        ...contextArgs(),
+      ]);
+      expect(result.data).toMatchObject({
+        result: { confirmationStatus: "failed" },
+      });
+      const data = result.data as {
+        nextSafeCommands: string[];
+        result: { nextActions: string[] };
+      };
+      for (const command of [
+        data.nextSafeCommands[0]!,
+        data.result.nextActions[0]!,
+      ]) {
+        expect(command).toContain(`lark-bitable write --op ${op}`);
+        expect(command).toContain("boxcnuploaded");
+        expect(command).toContain(" --table-profile req");
+        if (attachmentMode === "replace")
+          expect(command).toContain(" --attachment-mode replace");
+        expect(
+          resolveCommandSource(new ConfigStore({ cwd }), {
+            tableProfile: command.match(
+              /--table-profile ([a-z][a-z0-9_-]{0,31})/,
+            )?.[1],
+          }),
+        ).toMatchObject({
+          appToken: "appRequirements",
+          tableId: "tblRequirements",
+        });
+      }
+      expect(recordApi.create).not.toHaveBeenCalled();
+      expect(recordApi.update).not.toHaveBeenCalled();
+    },
+  );
 
   it.each(
     [

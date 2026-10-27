@@ -172,6 +172,7 @@ export default class WriteCommand extends BaseCommand {
         tableSelectionArgs,
       );
       const nextActions = nextActionsForPreview(operation, {
+        tableSelectionArgs,
         attachmentMode: flags["attachment-mode"] as AttachmentWriteMode,
         attachmentPlan: attachmentPreparation.attachmentPlan,
         defaultNextActions: previewResult.nextActions,
@@ -358,6 +359,7 @@ export default class WriteCommand extends BaseCommand {
         issueFromWriteError(error),
       );
       const retryCommand = retryUploadedAttachmentCommand(operation, {
+        tableSelectionArgs: input.tableSelectionArgs,
         attachmentMode: input.attachmentMode,
         uploadEvidence: input.uploadEvidence,
       });
@@ -392,6 +394,7 @@ function buildWritePreview(
 function retryUploadedAttachmentCommand(
   operation: WriteOperation,
   input: {
+    tableSelectionArgs: string;
     attachmentMode?: AttachmentWriteMode;
     uploadEvidence?: ResearchEvidence[];
   },
@@ -406,14 +409,13 @@ function retryUploadedAttachmentCommand(
     operation.type === "update"
       ? `lark-bitable write --op update --record-id ${operation.targetRecordId} --fields-json '${fieldJson}' --confirm --json`
       : `lark-bitable write --op create --fields-json '${fieldJson}' --confirm --json`;
-  return input.attachmentMode === "replace"
-    ? `${base} --attachment-mode replace`
-    : base;
+  return `${input.attachmentMode === "replace" ? `${base} --attachment-mode replace` : base}${input.tableSelectionArgs}`;
 }
 
 function nextActionsForPreview(
   operation: WriteOperation,
   input: {
+    tableSelectionArgs: string;
     attachmentMode: AttachmentWriteMode;
     attachmentPlan: AttachmentPlan[];
     defaultNextActions: string[];
@@ -428,8 +430,8 @@ function nextActionsForPreview(
       .join(", ");
     return [
       operation.targetRecordId
-        ? `lark-bitable get ${operation.targetRecordId} --json`
-        : "Run lark-bitable get <record-id> --json before retrying this attachment write.",
+        ? `lark-bitable get ${operation.targetRecordId} --json${input.tableSelectionArgs}`
+        : `Run lark-bitable get <record-id> --json${input.tableSelectionArgs} before retrying this attachment write.`,
       `Rebuild --fields-json for attachment/photo field(s) ${fieldNames} by preserving existing {"file_token":"..."} objects and adding the new local file path, then run preview again.`,
       "Use --attachment-mode replace only when the user explicitly requested attachment replacement.",
     ];
