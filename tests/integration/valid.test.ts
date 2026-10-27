@@ -31,11 +31,16 @@ describe("valid command", () => {
       summary: "99991663",
     },
     {
-      name: "Error.message containing an unknown credential payload",
+      name: "Error.message containing an unknown 40-character token",
       error: new Error(
-        'request failed: {"access_token":"unexpected-token","refresh_token":"unexpected-refresh","app_secret":"unexpected-secret"}',
+        "request failed: 0123456789abcdefghijklmnopqrstuvwxyzABCD",
       ),
       summary: "Error",
+    },
+    {
+      name: "refresh token expired",
+      error: new Error("refresh token expired"),
+      summary: "refresh token expired",
     },
   ])("reports refresh failure safely for $name", async ({ error, summary }) => {
     const cwd = await mkdtemp(join(tmpdir(), "valid-refresh-"));
@@ -95,6 +100,7 @@ describe("valid command", () => {
         "unexpected-token",
         "unexpected-refresh",
         "unexpected-secret",
+        "0123456789abcdefghijklmnopqrstuvwxyzABCD",
       ]) {
         expect(serialized).not.toContain(secret);
       }

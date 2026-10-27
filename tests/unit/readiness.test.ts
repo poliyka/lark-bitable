@@ -2,16 +2,54 @@ import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { AuthStore } from "../../src/config/auth-store.js";
 import { checkReadiness } from "../../src/config/readiness.js";
 import { ConfigStore } from "../../src/config/store.js";
+import * as larkAuth from "../../src/lark/auth.js";
 import { expiredAuthSession, readyAuthSession } from "../fixtures/auth.js";
 import { fixtureSource } from "../fixtures/lark.js";
 import { selectedBugFixture } from "../fixtures/research.js";
 
 describe("checkReadiness", () => {
+  it("keeps dashboard refresh failures partial without blocking local features", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "readiness-"));
+    const authPath = join(cwd, "auth.json");
+    const authStore = new AuthStore(authPath);
+    const configStore = new ConfigStore({ cwd });
+    await authStore.write({ ...expiredAuthSession, storagePath: authPath });
+    configStore.setSource(fixtureSource);
+    configStore.setLarkApp({
+      appId: "cli-app",
+      appSecret: "cli-secret",
+      callbackPort: 14543,
+      domain: "larksuite.com",
+      updatedAt: "2026-10-27T00:00:00.000Z",
+    });
+    const refresh = vi
+      .spyOn(larkAuth, "ensureReadyAuthSession")
+      .mockRejectedValue(new Error("refresh denied"));
+    try {
+      const result = await checkReadiness("dashboard", {
+        authStore,
+        configStore,
+      });
+      expect(result.status).toBe("partial");
+      expect(result.blockingIssues).toEqual([]);
+      expect(result.partialIssues).toEqual([
+        {
+          code: "auth-refresh-failed",
+          message:
+            "Lark auth refresh failed: refresh denied Lark-backed dashboard pages are blocked until login completes.",
+          remediation:
+            "Retry the command; if it still fails, run lark-bitable lark --login",
+        },
+      ]);
+    } finally {
+      refresh.mockRestore();
+    }
+  });
   it("orders missing bootstrap, auth, and source remediation", async () => {
     const result = await checkReadiness("global", {
       bootstrapInstalled: false,

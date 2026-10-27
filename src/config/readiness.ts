@@ -70,11 +70,19 @@ export async function checkReadiness(
   if (refreshError) {
     const remediation =
       "Retry the command; if it still fails, run lark-bitable lark --login";
-    blockingIssues.push({
+    const authIssue = {
       code: "auth-refresh-failed",
       message: `Lark auth refresh failed: ${refreshError}`,
       remediation,
-    });
+    };
+    if (workflow === "dashboard") {
+      partialIssues.push({
+        ...authIssue,
+        message: `${authIssue.message} Lark-backed dashboard pages are blocked until login completes.`,
+      });
+    } else {
+      blockingIssues.push(authIssue);
+    }
     remediationSteps.push(remediation);
   } else if (authStatus.status !== "ready") {
     const authIssue = {
@@ -252,12 +260,7 @@ async function readAuthForReadiness(context: ReadinessContext): Promise<{
       for (const secret of secrets.sort((a, b) => b.length - a.length)) {
         summary = summary.split(secret).join("[REDACTED]");
       }
-      if (
-        !summary.trim() ||
-        /access[_\s-]?token|refresh[_\s-]?token|app[_\s-]?secret|authorization|bearer/i.test(
-          summary,
-        )
-      ) {
+      if (!summary.trim() || /[A-Za-z0-9._~+/=-]{32,}/.test(summary)) {
         summary = error instanceof TypeError ? "TypeError" : "Error";
       }
     } else if (
