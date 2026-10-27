@@ -260,7 +260,13 @@ async function readAuthForReadiness(context: ReadinessContext): Promise<{
       for (const secret of secrets.sort((a, b) => b.length - a.length)) {
         summary = summary.split(secret).join("[REDACTED]");
       }
-      if (!summary.trim() || /[A-Za-z0-9._~+/=-]{32,}/.test(summary)) {
+      if (
+        !summary.trim() ||
+        /access[_\s-]?token|refresh[_\s-]?token|app[_\s-]?secret|authorization|bearer/i.test(
+          summary,
+        ) ||
+        /[A-Za-z0-9._~+/=-]{32,}/.test(summary)
+      ) {
         summary = error instanceof TypeError ? "TypeError" : "Error";
       }
     } else if (

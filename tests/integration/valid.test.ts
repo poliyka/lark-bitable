@@ -40,7 +40,19 @@ describe("valid command", () => {
     {
       name: "refresh token expired",
       error: new Error("refresh token expired"),
-      summary: "refresh token expired",
+      summary: "Error",
+    },
+    {
+      name: "unknown short credential values in JSON",
+      error: new Error(
+        'request failed: {"access_token":"unknown-sensitive-access","refresh_token":"unknown-sensitive-refresh","app_secret":"unknown-sensitive-app"}',
+      ),
+      summary: "Error",
+    },
+    {
+      name: "unknown 31-character refresh token in prose",
+      error: new Error(`refresh token value ${"Z".repeat(31)} expired`),
+      summary: "Error",
     },
   ])("reports refresh failure safely for $name", async ({ error, summary }) => {
     const cwd = await mkdtemp(join(tmpdir(), "valid-refresh-"));
@@ -101,6 +113,10 @@ describe("valid command", () => {
         "unexpected-refresh",
         "unexpected-secret",
         "0123456789abcdefghijklmnopqrstuvwxyzABCD",
+        "unknown-sensitive-access",
+        "unknown-sensitive-refresh",
+        "unknown-sensitive-app",
+        "Z".repeat(31),
       ]) {
         expect(serialized).not.toContain(secret);
       }
