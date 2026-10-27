@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+- Fetch explicit record ids directly and report missing records without masking other Lark errors.
+- Use record-list pages of up to 500 records and keep reading the whole table regardless of configured view.
+
 ## 2.0.2 - 2026-07-07
 
 ### Changed

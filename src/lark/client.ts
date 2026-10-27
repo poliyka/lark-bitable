@@ -234,8 +234,11 @@ function assertOk(
   operation: string,
 ) {
   if (response.code && response.code !== 0) {
-    throw new Error(
-      response.msg ?? `Lark ${operation} failed with code ${response.code}`,
+    throw Object.assign(
+      new Error(
+        response.msg ?? `Lark ${operation} failed with code ${response.code}`,
+      ),
+      { larkCode: response.code },
     );
   }
 }
@@ -517,9 +520,10 @@ export class LarkClient {
   ): Promise<BitableRecord[]> {
     const records: BitableRecord[] = [];
     let pageToken: string | undefined;
-    const pageSize = options.pageSize ?? Math.min(options.limit ?? 100, 100);
+    const pageSize = options.pageSize ?? Math.min(options.limit ?? 500, 500);
 
     do {
+      // Intentionally read the whole table; the configured view is informational only.
       const page = await this.transport.listRecords({
         appToken: source.appToken,
         tableId: source.tableId,
