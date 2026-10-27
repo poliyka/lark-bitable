@@ -30,6 +30,7 @@ export default class GetCommand extends BaseCommand {
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
       fixture: flags.fixture,
+      loadRecords: !args.recordId,
     });
     const recordId =
       args.recordId ??
@@ -53,10 +54,19 @@ export default class GetCommand extends BaseCommand {
     const record =
       records.find((item) => item.recordId === recordId) ??
       (!flags.fixture
-        ? await new LarkClient(createLarkSdkTransport(auth)).getRecord(
-            source,
-            recordId,
-          )
+        ? await new LarkClient(createLarkSdkTransport(auth))
+            .getRecord(source, recordId)
+            .catch((error: unknown) => {
+              // Lark's RecordIdNotFound response; other failures must propagate.
+              if (
+                error instanceof Error &&
+                "larkCode" in error &&
+                error.larkCode === 1254043
+              ) {
+                return undefined;
+              }
+              throw error;
+            })
         : undefined);
     if (!record) {
       throw new CliError({

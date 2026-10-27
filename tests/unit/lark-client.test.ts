@@ -79,6 +79,43 @@ describe("LarkClient", () => {
     });
   });
 
+  it.each([
+    [undefined, 500],
+    [20, 20],
+    [750, 500],
+  ])(
+    "uses pageSize %s limit -> %s for record requests",
+    async (limit, pageSize) => {
+      const listRecords = vi.fn().mockResolvedValue({ items: [] });
+      const client = new LarkClient({
+        listRecords,
+      } as unknown as LarkClientTransport);
+
+      await client.listRecords(fixtureSource, { limit });
+
+      expect(listRecords).toHaveBeenCalledWith(
+        expect.objectContaining({ pageSize }),
+      );
+    },
+  );
+
+  it("omits the configured viewId from every listRecords page", async () => {
+    const listRecords = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [], pageToken: "next" })
+      .mockResolvedValueOnce({ items: [] });
+    const client = new LarkClient({
+      listRecords,
+    } as unknown as LarkClientTransport);
+
+    await client.listRecords(fixtureSource);
+
+    expect(listRecords).toHaveBeenCalledTimes(2);
+    for (const [input] of listRecords.mock.calls) {
+      expect(input.viewId).toBeUndefined();
+    }
+  });
+
   it("limits records across pages", async () => {
     const transport: LarkClientTransport = {
       async createRecord(input) {
@@ -218,6 +255,33 @@ describe("LarkClient", () => {
     expect(requests.map((request) => request.target)).toEqual(
       expect.arrayContaining(["create", "update"]),
     );
+  });
+
+  it("keeps non-get Lark error codes off the generic error.code", async () => {
+    const sdk = {
+      bitable: {
+        appTableRecord: {
+          async list() {
+            return { code: 1254302, msg: "Permission denied" };
+          },
+        },
+      },
+    };
+    const transport = createLarkSdkTransport(readyAuthSession, {
+      sdk: sdk as never,
+    });
+
+    const error = await transport
+      .listRecords({
+        appToken: fixtureSource.appToken,
+        tableId: fixtureSource.tableId,
+      })
+      .catch((error: unknown) => error);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error).toHaveProperty("message", "Permission denied");
+    expect(error).not.toHaveProperty("code");
+    expect(error).toHaveProperty("larkCode", 1254302);
   });
 
   it("downloads drive media with authenticated requests", async () => {
