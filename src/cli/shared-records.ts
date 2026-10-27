@@ -15,6 +15,7 @@ export interface RecordCommandContext {
   authPath: string;
   configCwd?: string;
   fixture?: string;
+  loadRecords?: boolean;
 }
 
 export async function loadRecordCommandData(context: RecordCommandContext) {
@@ -44,9 +45,11 @@ export async function loadRecordCommandData(context: RecordCommandContext) {
 
   const records = context.fixture
     ? (JSON.parse(context.fixture) as BitableRecord[])
-    : await new LarkClient(createLarkSdkTransport(readyAuth)).listRecords(
-        source,
-      );
+    : context.loadRecords === false
+      ? []
+      : await new LarkClient(createLarkSdkTransport(readyAuth)).listRecords(
+          source,
+        );
 
   const mode = resolveWorkflowMode(configStore);
   return { auth: readyAuth, configStore, mode, records, source };

@@ -65,8 +65,8 @@ describe("LarkClient", () => {
     expect(await client.listFields(fixtureSource)).toHaveLength(1);
     expect(await client.listRecords(fixtureSource)).toHaveLength(2);
     expect(recordListInputs).toEqual([
-      expect.not.objectContaining({ viewId: expect.any(String) }),
-      expect.not.objectContaining({ viewId: expect.any(String) }),
+      expect.objectContaining({ viewId: fixtureSource.viewId }),
+      expect.objectContaining({ viewId: fixtureSource.viewId }),
     ]);
     expect((await client.getRecord(fixtureSource, "recA")).recordId).toBe(
       "recA",
@@ -77,6 +77,43 @@ describe("LarkClient", () => {
       recordId: "recA",
       fields: { title: "Updated" },
     });
+  });
+
+  it.each([
+    [undefined, 500],
+    [20, 20],
+    [750, 500],
+  ])(
+    "uses pageSize %s limit -> %s for record requests",
+    async (limit, pageSize) => {
+      const listRecords = vi.fn().mockResolvedValue({ items: [] });
+      const client = new LarkClient({
+        listRecords,
+      } as unknown as LarkClientTransport);
+
+      await client.listRecords(fixtureSource, { limit });
+
+      expect(listRecords).toHaveBeenCalledWith(
+        expect.objectContaining({ pageSize }),
+      );
+    },
+  );
+
+  it("passes the source viewId to every listRecords page", async () => {
+    const listRecords = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [], pageToken: "next" })
+      .mockResolvedValueOnce({ items: [] });
+    const client = new LarkClient({
+      listRecords,
+    } as unknown as LarkClientTransport);
+
+    await client.listRecords(fixtureSource);
+
+    expect(listRecords).toHaveBeenCalledTimes(2);
+    for (const [input] of listRecords.mock.calls) {
+      expect(input.viewId).toBe(fixtureSource.viewId);
+    }
   });
 
   it("limits records across pages", async () => {
