@@ -4,6 +4,8 @@
 
 - Fetch explicit record ids directly and report missing records without masking other Lark errors.
 - Use record-list pages of up to 500 records and keep reading the whole table regardless of configured view.
+- Correct doctor auth expiry status and report token refresh failures with safe retry/login guidance.
+- Validate explicit client tokens as UUIDs locally before confirmed create writes.
 
 ## 2.0.2 - 2026-07-07
 

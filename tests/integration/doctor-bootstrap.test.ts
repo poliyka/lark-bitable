@@ -2,17 +2,68 @@ import { mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import DoctorCommand from "../../src/cli/commands/doctor.js";
 import { ConfigStore } from "../../src/config/store.js";
+import { AuthStore } from "../../src/config/auth-store.js";
+import * as larkAuth from "../../src/lark/auth.js";
+import { readyAuthSession } from "../fixtures/auth.js";
 import { fixtureSource } from "../fixtures/lark.js";
 
 describe("doctor bootstrap status", () => {
+  it.each([
+    ["2000-01-01T00:00:00.000Z", "refresh-doctor", "expired"],
+    ["2099-01-01T00:00:00.000Z", "refresh-doctor", "ready"],
+    ["2000-01-01T00:00:00.000Z", undefined, "invalid"],
+  ])(
+    "reports %s with refresh token %s as %s without refreshing",
+    async (expiresAt, refreshToken, status) => {
+      const cwd = await mkdtemp(join(tmpdir(), "doctor-auth-"));
+      const authPath = join(cwd, "auth.json");
+      await new AuthStore(authPath).write({
+        ...readyAuthSession,
+        storagePath: authPath,
+        expiresAt,
+        refreshToken,
+        status: "ready",
+      });
+      const refresh = vi.spyOn(larkAuth, "ensureReadyAuthSession");
+      try {
+        const result = await DoctorCommand.run([
+          "--config-cwd",
+          cwd,
+          "--auth-path",
+          authPath,
+          "--skill-dir",
+          join(cwd, "skills"),
+          "--json",
+        ]);
+        expect(result.auth).toMatchObject({
+          status,
+          expiresAt,
+          storagePath: authPath,
+          domain: readyAuthSession.domain,
+          accountLabel: readyAuthSession.accountLabel,
+        });
+        expect(refresh).not.toHaveBeenCalled();
+      } finally {
+        refresh.mockRestore();
+      }
+    },
+  );
+
   it("reports missing and installed bootstrap skill state", async () => {
     const skillDir = await mkdtemp(join(tmpdir(), "doctor-skill-"));
 
+    const isolatedFlags = [
+      "--config-cwd",
+      skillDir,
+      "--auth-path",
+      join(skillDir, "auth.json"),
+    ];
     const missing = await DoctorCommand.run([
+      ...isolatedFlags,
       "--skill-dir",
       skillDir,
       "--json",
@@ -20,6 +71,7 @@ describe("doctor bootstrap status", () => {
     expect(JSON.stringify(missing)).toContain("missing-bootstrap");
 
     const installed = await DoctorCommand.run([
+      ...isolatedFlags,
       "--skill-dir",
       skillDir,
       "--install-skill",

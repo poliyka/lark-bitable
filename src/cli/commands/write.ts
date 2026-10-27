@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../base-command.js";
+import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
 import type {
@@ -100,6 +101,21 @@ export default class WriteCommand extends BaseCommand {
       fieldsJson: flags["fields-json"],
     });
     const op = flags.op as "create" | "update";
+    if (
+      op === "create" &&
+      flags.confirm &&
+      flags["client-token"] !== undefined &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        flags["client-token"],
+      )
+    ) {
+      throw new CliError({
+        code: "invalid-client-token",
+        message: "Client token must be a UUID.",
+        remediation:
+          "Omit --client-token to auto-generate one, or pass a UUID.",
+      });
+    }
     const clientToken =
       op === "create" && flags.confirm
         ? (flags["client-token"] ?? randomUUID())
