@@ -10,8 +10,12 @@ import {
   type OwnerFilterResult,
 } from "../mode/owner-filter.js";
 import { CliError } from "./errors.js";
+import {
+  resolveCommandSource,
+  type CommandSourceSelection,
+} from "./source-selection.js";
 
-export interface RecordCommandContext {
+export interface RecordCommandContext extends CommandSourceSelection {
   authPath: string;
   configCwd?: string;
   fixture?: string;
@@ -34,14 +38,7 @@ export async function loadRecordCommandData(context: RecordCommandContext) {
     configStore,
   );
 
-  const source = configStore.getSource();
-  if (!source) {
-    throw new CliError({
-      code: "missing-source",
-      message: "No active Lark Bitable source is configured.",
-      remediation: "Run lark-bitable configure <url>",
-    });
-  }
+  const source = resolveCommandSource(configStore, context);
 
   const records = context.fixture
     ? (JSON.parse(context.fixture) as BitableRecord[])

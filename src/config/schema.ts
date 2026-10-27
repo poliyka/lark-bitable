@@ -69,6 +69,14 @@ export const bitableSourceSchema = z.object({
   updatedAt: isoTimestampSchema,
 });
 
+export const tableProfileNameSchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9_-]{0,31}$/);
+
+export const tableProfilesSchema = z
+  .record(tableProfileNameSchema, bitableSourceSchema)
+  .default({});
+
 export const authSessionSchema = z.object({
   storagePath: z.string().min(1),
   domain: z.string().min(1).optional(),

@@ -23,6 +23,7 @@ export interface UnknownWriteResultInput {
 
 export function buildPreviewWriteResult(
   operation: WriteOperation,
+  tableSelectionArgs = "",
 ): WriteResult {
   return {
     operationId: operation.operationId,
@@ -43,13 +44,14 @@ export function buildPreviewWriteResult(
         status: "not-run",
       }),
     ],
-    nextActions: [confirmCommandFor(operation)],
+    nextActions: [confirmCommandFor(operation, tableSelectionArgs)],
   };
 }
 
 export function buildConfirmedWriteResult(
   operation: WriteOperation,
   input: ConfirmedWriteResultInput,
+  tableSelectionArgs = "",
 ): WriteResult {
   const fieldChanges = operation.fieldChanges.map((change) =>
     classifyConfirmedFieldChange(change, input.record),
@@ -76,20 +78,23 @@ export function buildConfirmedWriteResult(
         status: "verified",
       }),
     ],
-    nextActions: [`lark-bitable get ${input.record.recordId} --json`],
+    nextActions: [
+      `lark-bitable get ${input.record.recordId} --json${tableSelectionArgs}`,
+    ],
   };
 }
 
 export function buildUnknownWriteResult(
   operation: WriteOperation,
   input: UnknownWriteResultInput,
+  tableSelectionArgs = "",
 ): WriteResult {
   const issue: Issue = {
     code: input.code ?? "write-confirmation-unknown",
     message: input.message,
     remediation:
       input.remediation ??
-      "Run lark-bitable get <record-id> --json or inspect the table before retrying.",
+      `Run lark-bitable get <record-id> --json${tableSelectionArgs} or inspect the table before retrying.`,
   };
 
   return {
@@ -118,7 +123,7 @@ export function buildUnknownWriteResult(
     ],
     nextActions: [
       operation.targetRecordId
-        ? `lark-bitable get ${operation.targetRecordId} --json`
+        ? `lark-bitable get ${operation.targetRecordId} --json${tableSelectionArgs}`
         : "Inspect the target table before retrying the create request.",
     ],
   };
@@ -127,8 +132,9 @@ export function buildUnknownWriteResult(
 export function buildPartialWriteResult(
   operation: WriteOperation,
   input: UnknownWriteResultInput,
+  tableSelectionArgs = "",
 ): WriteResult {
-  const result = buildUnknownWriteResult(operation, input);
+  const result = buildUnknownWriteResult(operation, input, tableSelectionArgs);
   return {
     ...result,
     confirmationStatus: "partial",
@@ -218,13 +224,14 @@ function classifyConfirmedFieldChange(
   };
 }
 
-function confirmCommandFor(operation: WriteOperation): string {
+function confirmCommandFor(
+  operation: WriteOperation,
+  tableSelectionArgs: string,
+): string {
   const fieldJson = JSON.stringify(operation.requestedFields);
   const base =
     operation.type === "update"
       ? `lark-bitable write --op update --record-id ${operation.targetRecordId} --fields-json '${fieldJson}' --confirm --json`
       : `lark-bitable write --op create --fields-json '${fieldJson}' --confirm --json`;
-  return operation.clientToken
-    ? `${base} --client-token ${operation.clientToken}`
-    : base;
+  return `${operation.clientToken ? `${base} --client-token ${operation.clientToken}` : base}${tableSelectionArgs}`;
 }

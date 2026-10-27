@@ -5,6 +5,7 @@ import { LarkClient, createLarkSdkTransport } from "../../lark/client.js";
 import { renderFieldValue } from "../../lark/record-mapper.js";
 import type { BitableFieldInfo } from "../../lark/field-discovery.js";
 import { BaseCommand } from "../base-command.js";
+import { tableSelectionFlags } from "../source-selection.js";
 import type { CommandOutput } from "../output.js";
 import { loadRecordCommandData } from "../shared-records.js";
 
@@ -13,6 +14,7 @@ export default class SchemaCommand extends BaseCommand {
     "Inspect the configured Lark Bitable table schema and sampled field values.";
   static flags = {
     ...BaseCommand.baseFlags,
+    ...tableSelectionFlags,
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
     "config-cwd": Flags.string({ hidden: true }),
     fixture: Flags.string({ hidden: true }),
@@ -27,6 +29,8 @@ export default class SchemaCommand extends BaseCommand {
     const context = await loadRecordCommandData({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
+      table: flags.table,
+      tableProfile: flags["table-profile"],
       fixture: flags.fixture,
     });
     const sampleLimit = flags["sample-limit"] ?? 20;

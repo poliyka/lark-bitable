@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../base-command.js";
+import { tableSelectionFlags } from "../source-selection.js";
 import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import { defaultAuthPath } from "../../config/auth-store.js";
@@ -51,6 +52,7 @@ export default class WriteCommand extends BaseCommand {
   ];
   static flags = {
     ...BaseCommand.baseFlags,
+    ...tableSelectionFlags,
     "auth-path": Flags.string({ default: defaultAuthPath(), hidden: true }),
     "client-token": Flags.string({
       description: "Idempotency token for committed create writes.",
@@ -96,6 +98,12 @@ export default class WriteCommand extends BaseCommand {
 
   async run(): Promise<CommandOutput> {
     const { flags } = await this.parse(WriteCommand);
+    const tableSelectionArgs =
+      flags["table-profile"] !== undefined
+        ? ` --table-profile ${flags["table-profile"]}`
+        : flags.table !== undefined
+          ? ` --table '${flags.table.replaceAll("'", "'\\''")}'`
+          : "";
     const fields = parseFieldInput({
       fieldAssignments: flags.field,
       fieldsJson: flags["fields-json"],
@@ -123,6 +131,8 @@ export default class WriteCommand extends BaseCommand {
     const context = await loadWriteCommandContext({
       authPath: flags["auth-path"],
       configCwd: flags["config-cwd"],
+      table: flags.table,
+      tableProfile: flags["table-profile"],
       fixtureFields: flags["fixture-fields"],
       fixtureRecords: flags["fixture-records"],
       recordId: flags["record-id"],
@@ -157,8 +167,12 @@ export default class WriteCommand extends BaseCommand {
     });
 
     if (!flags.confirm) {
-      const previewResult = buildPreviewWriteResult(operation);
+      const previewResult = buildPreviewWriteResult(
+        operation,
+        tableSelectionArgs,
+      );
       const nextActions = nextActionsForPreview(operation, {
+        tableSelectionArgs,
         attachmentMode: flags["attachment-mode"] as AttachmentWriteMode,
         attachmentPlan: attachmentPreparation.attachmentPlan,
         defaultNextActions: previewResult.nextActions,
@@ -198,6 +212,7 @@ export default class WriteCommand extends BaseCommand {
     }
 
     const result = await this.commitWrite(operation, {
+      tableSelectionArgs,
       mockConfirmError: flags["mock-confirm-error"],
       mockCreateError: flags["mock-create-error"],
       mockCreateRecord: flags["mock-create-record"],
@@ -247,6 +262,7 @@ export default class WriteCommand extends BaseCommand {
   private async commitWrite(
     operation: WriteOperation,
     input: {
+      tableSelectionArgs: string;
       mockConfirmError?: string;
       mockCreateError?: string;
       mockCreateRecord?: string;
@@ -288,12 +304,17 @@ export default class WriteCommand extends BaseCommand {
                 }),
               ],
             },
+            input.tableSelectionArgs,
           );
         }
-        return buildConfirmedWriteResult(operation, {
-          evidence: input.uploadEvidence,
-          record,
-        });
+        return buildConfirmedWriteResult(
+          operation,
+          {
+            evidence: input.uploadEvidence,
+            record,
+          },
+          input.tableSelectionArgs,
+        );
       }
 
       if (input.mockUpdateError) throw new Error(input.mockUpdateError);
@@ -308,28 +329,37 @@ export default class WriteCommand extends BaseCommand {
             recordId,
           });
       if (input.mockConfirmError) {
-        return buildUnknownWriteResult(operation, {
-          message: input.mockConfirmError,
-          evidence: [
-            ...(input.uploadEvidence ?? []),
-            writeEvidence({
-              reference: record.recordId,
-              excerpt: "Update response returned before confirmation failed.",
-              status: "partial",
-            }),
-          ],
-        });
+        return buildUnknownWriteResult(
+          operation,
+          {
+            message: input.mockConfirmError,
+            evidence: [
+              ...(input.uploadEvidence ?? []),
+              writeEvidence({
+                reference: record.recordId,
+                excerpt: "Update response returned before confirmation failed.",
+                status: "partial",
+              }),
+            ],
+          },
+          input.tableSelectionArgs,
+        );
       }
-      return buildConfirmedWriteResult(operation, {
-        evidence: input.uploadEvidence,
-        record,
-      });
+      return buildConfirmedWriteResult(
+        operation,
+        {
+          evidence: input.uploadEvidence,
+          record,
+        },
+        input.tableSelectionArgs,
+      );
     } catch (error) {
       const result = buildFailedWriteResult(
         operation,
         issueFromWriteError(error),
       );
       const retryCommand = retryUploadedAttachmentCommand(operation, {
+        tableSelectionArgs: input.tableSelectionArgs,
         attachmentMode: input.attachmentMode,
         uploadEvidence: input.uploadEvidence,
       });
@@ -364,6 +394,7 @@ function buildWritePreview(
 function retryUploadedAttachmentCommand(
   operation: WriteOperation,
   input: {
+    tableSelectionArgs: string;
     attachmentMode?: AttachmentWriteMode;
     uploadEvidence?: ResearchEvidence[];
   },
@@ -378,14 +409,13 @@ function retryUploadedAttachmentCommand(
     operation.type === "update"
       ? `lark-bitable write --op update --record-id ${operation.targetRecordId} --fields-json '${fieldJson}' --confirm --json`
       : `lark-bitable write --op create --fields-json '${fieldJson}' --confirm --json`;
-  return input.attachmentMode === "replace"
-    ? `${base} --attachment-mode replace`
-    : base;
+  return `${input.attachmentMode === "replace" ? `${base} --attachment-mode replace` : base}${input.tableSelectionArgs}`;
 }
 
 function nextActionsForPreview(
   operation: WriteOperation,
   input: {
+    tableSelectionArgs: string;
     attachmentMode: AttachmentWriteMode;
     attachmentPlan: AttachmentPlan[];
     defaultNextActions: string[];
@@ -400,8 +430,8 @@ function nextActionsForPreview(
       .join(", ");
     return [
       operation.targetRecordId
-        ? `lark-bitable get ${operation.targetRecordId} --json`
-        : "Run lark-bitable get <record-id> --json before retrying this attachment write.",
+        ? `lark-bitable get ${operation.targetRecordId} --json${input.tableSelectionArgs}`
+        : `Run lark-bitable get <record-id> --json${input.tableSelectionArgs} before retrying this attachment write.`,
       `Rebuild --fields-json for attachment/photo field(s) ${fieldNames} by preserving existing {"file_token":"..."} objects and adding the new local file path, then run preview again.`,
       "Use --attachment-mode replace only when the user explicitly requested attachment replacement.",
     ];

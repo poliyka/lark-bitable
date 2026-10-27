@@ -12,9 +12,13 @@ import { join } from "node:path";
 
 import Conf from "conf";
 
+import { CliError } from "../cli/errors.js";
+
 import {
   bitableSourceSchema,
   larkAppConfigSchema,
+  tableProfileNameSchema,
+  tableProfilesSchema,
   triageSelectionSchema,
   workflowConfigSchema,
   type BitableSource,
@@ -26,6 +30,7 @@ import {
 
 interface StoreShape {
   activeSource?: BitableSource;
+  tableProfiles?: Record<string, BitableSource>;
   larkApp?: LarkAppConfig;
   lastSelection?: TriageSelection;
   workflow?: WorkflowConfig;
@@ -134,6 +139,46 @@ export class ConfigStore {
   clearSource(): void {
     this.conf.delete("activeSource");
     ensurePrivateFile(this.path);
+  }
+
+  getTableProfile(name: string): BitableSource | undefined {
+    this.validateTableProfileName(name);
+    const profiles = this.listTableProfiles();
+    return Object.hasOwn(profiles, name) ? profiles[name] : undefined;
+  }
+
+  setTableProfile(name: string, source: BitableSource): BitableSource {
+    this.validateTableProfileName(name);
+    const parsed = bitableSourceSchema.parse(source);
+    this.conf.set("tableProfiles", {
+      ...this.listTableProfiles(),
+      [name]: parsed,
+    });
+    ensurePrivateFile(this.path);
+    return parsed;
+  }
+
+  removeTableProfile(name: string): void {
+    this.validateTableProfileName(name);
+    const profiles = this.listTableProfiles();
+    delete profiles[name];
+    this.conf.set("tableProfiles", profiles);
+    ensurePrivateFile(this.path);
+  }
+
+  listTableProfiles(): Record<string, BitableSource> {
+    return tableProfilesSchema.parse(this.conf.get("tableProfiles"));
+  }
+
+  private validateTableProfileName(name: string): void {
+    if (!tableProfileNameSchema.safeParse(name).success) {
+      throw new CliError({
+        code: "invalid-table-profile-name",
+        message: `Invalid table profile name: ${name}`,
+        remediation:
+          "Use 1-32 lowercase letters, digits, underscores, or hyphens, starting with a letter (^[a-z][a-z0-9_-]{0,31}$).",
+      });
+    }
   }
 
   getLarkApp(): LarkAppConfig | undefined {

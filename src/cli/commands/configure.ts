@@ -6,6 +6,7 @@ import {
 } from "@inquirer/prompts";
 
 import { BaseCommand } from "../base-command.js";
+import { CliError } from "../errors.js";
 import type { CommandOutput } from "../output.js";
 import {
   bitableSourceSchema,
@@ -32,11 +33,40 @@ export default class ConfigureCommand extends BaseCommand {
         'lark-bitable configure "https://example.larksuite.com/base/<appToken>?table=<tableId>&view=<viewId>"',
       description: "Configure an active Lark Bitable source.",
     },
+    {
+      command:
+        'lark-bitable configure "https://example.larksuite.com/base/<appToken>?table=<tableId>" --table-profile req',
+      description:
+        "Save a named table profile without changing the active source.",
+    },
+    {
+      command: "lark-bitable configure --list-table-profiles",
+      description: "List saved table profiles and their source identities.",
+    },
+    {
+      command: "lark-bitable configure --table-profile req --remove",
+      description: "Remove a saved table profile.",
+    },
   ];
   static flags = {
     ...BaseCommand.baseFlags,
     clear: Flags.boolean({
       description: "Clear the active source configuration.",
+      exclusive: ["table-profile", "list-table-profiles", "remove"],
+    }),
+    "table-profile": Flags.string({
+      description:
+        "Save or remove a named table profile (e.g. req); keep the active source unchanged.",
+      exclusive: ["list-table-profiles"],
+    }),
+    "list-table-profiles": Flags.boolean({
+      description:
+        "List table profile names, app tokens, table IDs, and recorded view IDs.",
+    }),
+    remove: Flags.boolean({
+      description:
+        "Remove the named --table-profile (e.g. --table-profile req --remove).",
+      dependsOn: ["table-profile"],
     }),
     "config-cwd": Flags.string({
       description: "Config storage directory for tests or advanced use.",
@@ -74,6 +104,85 @@ export default class ConfigureCommand extends BaseCommand {
   async run(): Promise<CommandOutput> {
     const { args, flags } = await this.parse(ConfigureCommand);
     const store = new ConfigStore({ cwd: flags["config-cwd"] });
+
+    if (flags["list-table-profiles"]) {
+      const output: CommandOutput = {
+        command: "configure",
+        status: "ok",
+        data: {
+          tableProfiles: Object.entries(store.listTableProfiles()).map(
+            ([name, source]) => ({
+              name,
+              appToken: source.appToken,
+              tableId: source.tableId,
+              viewId: source.viewId,
+            }),
+          ),
+        },
+      };
+      this.emit(output, Boolean(flags.json));
+      return output;
+    }
+
+    if (flags["table-profile"] !== undefined) {
+      const name = flags["table-profile"];
+      const previous = store.getTableProfile(name);
+      if (flags.remove) {
+        if (args.url) {
+          throw new CliError({
+            code: "conflicting-table-profile-options",
+            message: "A profile cannot be saved and removed together.",
+            remediation: "Omit the URL when using --remove.",
+          });
+        }
+        store.removeTableProfile(name);
+        const output: CommandOutput = {
+          command: "configure",
+          status: "ok",
+          data: { result: "removed", tableProfile: { name } },
+        };
+        this.emit(output, Boolean(flags.json));
+        return output;
+      }
+      if (!args.url) {
+        throw new CliError({
+          code: "missing-url",
+          message:
+            "A Lark Base/Bitable URL is required to save a table profile.",
+          remediation:
+            'Run lark-bitable configure "https://example.larksuite.com/base/<appToken>?table=<tableId>" --table-profile <name>',
+        });
+      }
+      const parsedUrl = parseBitableUrl(args.url);
+      const source = store.setTableProfile(name, {
+        sourceUrl: parsedUrl.sourceUrl,
+        appToken: parsedUrl.appToken,
+        tableId: parsedUrl.tableId,
+        viewId: parsedUrl.viewId,
+        updatedAt: new Date().toISOString(),
+      });
+      const output: CommandOutput = {
+        command: "configure",
+        status: "ok",
+        source: {
+          appToken: source.appToken,
+          tableId: source.tableId,
+          viewId: source.viewId,
+          retrievedAt: source.updatedAt,
+        },
+        data: {
+          result: previous ? "replaced" : "stored",
+          tableProfile: {
+            name,
+            appToken: source.appToken,
+            tableId: source.tableId,
+            viewId: source.viewId,
+          },
+        },
+      };
+      this.emit(output, Boolean(flags.json));
+      return output;
+    }
 
     if (flags.clear) {
       store.clearSource();
