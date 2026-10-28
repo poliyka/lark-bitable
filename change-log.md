@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 2.1.0 - 2026-10-28
 
 ### Added
 
@@ -10,6 +10,7 @@
 
 ### Changed
 
+- Bumped npm package version from `2.0.2` to `2.1.0`.
 - Fetch explicit record IDs directly instead of listing the table first.
 - Increase the default record-list page size to 500 records.
 
