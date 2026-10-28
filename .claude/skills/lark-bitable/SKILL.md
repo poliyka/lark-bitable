@@ -3,7 +3,7 @@ name: lark-bitable
 description: Use the local Lark Bitable CLI to inspect bug records, run triage, and produce evidence-backed reports.
 ---
 
-<!-- lark-bitable-bootstrap-version: 2026-05-28-attachment-plan -->
+<!-- lark-bitable-bootstrap-version: 2026-10-28-table-profiles -->
 
 # Lark Bitable CLI Bootstrap
 
@@ -128,6 +128,8 @@ inconclusive live access.
   app credentials exist; the CLI can refresh with the stored refresh token and
   app secret. Only fall back to `lark-bitable lark --login` when refresh is not
   possible or still leaves auth unusable.
+- If `valid` reports `auth-refresh-failed`, retry the command first; if it
+  still fails, run `lark-bitable lark --login` with the required scopes.
 - Inspect the stored auth scopes before fallback login. Check the current auth
   scopes in `~/.lark-bitable/auth.json`, then request the required scope set
   explicitly when logging in again. Use
@@ -154,6 +156,25 @@ inconclusive live access.
   auth state.
 - Use only user-provided Lark app credentials and Lark Base URLs. Never invent
   or infer them.
+
+## 多表選擇
+
+- For a table other than activeSource, save a profile with
+  `lark-bitable configure <url> --table-profile <name>`, or use one-off
+  `--table <tblXXX|full-url>`; do not switch tables with a temporary HOME.
+- `list`, `get`, `filter`, `search`, `schema`, and `write` support
+  `--table-profile <name>` or `--table`, never both together.
+- Omit both selectors to use activeSource; selecting a table does not change
+  activeSource. Profiles share the same auth; view IDs are metadata only and
+  do not filter reads.
+- `triage`, `verify`, `research`, `doctor`, `valid`, `dashboard`, and `media`
+  do not support these selectors. Table workflows use activeSource;
+  `triage` and `verify` only inspect activeSource. Media downloads use shared
+  auth and the specified file token.
+- Run `schema --table-profile <name> --json` (or the same `--table`) for the
+  selected table before querying or writing when its schema is unknown.
+- Keep identical table selection arguments in write preview and confirmation;
+  emitted follow-up commands retain them, including record readback commands.
 
 ## Inspect
 
@@ -217,6 +238,8 @@ Rules for write operations:
   only `bitable:app:readonly`, ask the user to re-login with write scope before
   running `write --confirm`.
 - Use `--client-token` only for committed creates.
+- An explicit client token must be a UUID; otherwise confirmed create fails
+  locally with `invalid-client-token`. Omit it to let the CLI generate a UUID.
 - Missing write permission, rejected values, or unknown confirmation must be
   reported as failure/partial evidence, not as success.
 - If media upload succeeds but the record write fails, keep the returned
