@@ -22,6 +22,7 @@
   - [4. 發布版本並等待審核](#4-發布版本並等待審核)
   - [5. 確認 app 可以讀取目標 Base](#5-確認-app-可以讀取目標-base)
 - [多維表格準備](#多維表格準備)
+- [多表與 Table Profile](#多表與-table-profile)
 - [Workflow Mode](#workflow-mode)
 - [第一次設定 CLI](#第一次設定-cli)
 - [登入 Lark](#登入-lark)
@@ -502,7 +503,9 @@ bitable:app:readonly
 同一份登入授權可供多張表共用。先用完整 Lark Base URL 儲存具名 profile；這個操作不會改動 activeSource、Lark app 或 workflow，也不會進入互動設定：
 
 ```bash
-lark-bitable configure "https://example.larksuite.com/base/appXXX?table=tblRequirements&view=vewXXX" --table-profile req
+lark-bitable configure "https://example.larksuite.com/base/appXXX?table=tblXXXBug" --table-profile bug
+lark-bitable configure "https://example.larksuite.com/base/appXXX?table=tblXXXReq&view=vewXXX" --table-profile req
+lark-bitable configure "https://example.larksuite.com/base/appXXX?table=tblXXXVer" --table-profile ver
 lark-bitable configure --list-table-profiles
 lark-bitable get recXXX --table-profile req --json
 lark-bitable filter --table-profile req --field "狀態" --equals "待處理" --json
@@ -510,14 +513,16 @@ lark-bitable write --op update --record-id recXXX --table-profile req --field "�
 lark-bitable configure --table-profile req --remove
 ```
 
-`list`、`get`、`filter`、`search`、`schema`、`write` 都支援 `--table-profile <name>` 與一次性的 `--table`。profile 名稱須符合 `^[a-z][a-z0-9_-]{0,31}$`；同名儲存會覆寫該 profile。`--table` 可使用 table token（例如 `--table tblRequirements`，沿用 activeSource 的 appToken 並清除 viewId），或完整 Lark Base URL：
+`list`、`get`、`filter`、`search`、`schema`、`write` 都支援 `--table-profile <name>` 與一次性的 `--table`。profile 名稱須符合 `^[a-z][a-z0-9_-]{0,31}$`；同名儲存會覆寫該 profile。`--table` 可使用 table token（例如 `--table tblXXXReq`，沿用 activeSource 的 appToken 並清除 viewId），或完整 Lark Base URL：
 
 ```bash
-lark-bitable list --table tblRequirements --json
-lark-bitable filter --table "https://example.larksuite.com/base/appXXX?table=tblRequirements&view=vewXXX" --field "狀態" --equals "待處理" --json
+lark-bitable list --table tblXXXReq --json
+lark-bitable filter --table "https://example.larksuite.com/base/appXXX?table=tblXXXReq&view=vewXXX" --field "狀態" --equals "待處理" --json
 ```
 
-兩個選表旗標不可同時使用；都省略時沿用 activeSource，單次選表不會更改預設來源。URL 裡的 viewId 僅作紀錄，`list`、`filter`、`search` 一律讀整張表。所有 profile 共用既有 auth.json，沒有各自的 workflow 或欄位對應；`write` 未帶 `--confirm` 時只會預覽。
+兩個選表旗標不可同時使用；都省略時沿用 activeSource，單次選表不會更改預設來源。URL 裡的 viewId 僅作紀錄，讀取時不套用 view 篩選（自 2.0.2 起即如此）。所有 profile 共用既有 auth.json，沒有各自的 workflow 或欄位對應；`write` 未帶 `--confirm` 時只會預覽。
+
+`triage`、`verify`、`research`、`doctor`、`valid`、`dashboard`、`media` 不支援這兩個選表旗標；涉及表格的工作流仍以 activeSource 為準，`media download` 則以共用 auth 下載指定 file token。
 
 ## Workflow Mode
 
@@ -727,6 +732,10 @@ Developer-oriented workflow；如果 active mode 是 `QA`，`valid --workflow re
 目錄是否足以顯示狀態。缺少 Lark auth 或 source 不會阻止 dashboard 啟動，但會讓
 Lark-backed 頁面顯示 partial/blocked remediation。
 
+`doctor` 的 auth 狀態 `expired` 表示 access token 已過期且有 refresh token 可供嘗試更新；過期且沒有 refresh token 時會顯示 `invalid`。`doctor` 本身只檢查狀態；可重跑原指令或 `valid --workflow inspect` 嘗試更新。
+
+若 `valid` 回報 `auth-refresh-failed`，先重試同一指令；仍失敗再執行 `lark-bitable lark --login`，保留所需的 scope（寫入通常需 `--scope="bitable:app"`）。此錯誤會阻擋一般 workflow；dashboard workflow 則回報 `partial`。錯誤摘要含 credential 關鍵字或 token 形字串時只顯示錯誤類別。
+
 如果看到 `blocked`，照輸出的 remediation 做。常見 remediation：
 
 ```bash
@@ -821,6 +830,8 @@ lark-bitable list --limit 20
 lark-bitable get <record-id>
 ```
 
+指定 record id 時，`get` 直接查詢單筆記錄。若 Lark 回傳 1254043，CLI 會輸出 `status=error`、`code=record-not-found`、`message="Record not found."`，並引導用 `list` 查看可用 ID；其他 Lark 錯誤會原樣拋出。
+
 下載多維表格圖片或附件素材：
 
 ```bash
@@ -913,7 +924,7 @@ lark-bitable write --op update --record-id recxxxx --field "狀態=處理中"
 ```bash
 lark-bitable write --op create \
   --fields-json '{"標題":"新增登入錯誤","狀態":"待處理"}' \
-  --client-token "manual-write-create-001" \
+  --client-token "123e4567-e89b-42d3-a456-426614174000" \
   --confirm \
   --json
 
@@ -922,6 +933,14 @@ lark-bitable write --op update \
   --fields-json '{"狀態":"處理中"}' \
   --confirm \
   --json
+```
+
+`write` 可搭配 `--table-profile` 或 `--table`；預覽與確認必須帶同一組選表參數，輸出的 `nextSafeCommands` 也會保留它們：
+
+```bash
+lark-bitable write --op update --record-id recXXX --table-profile req --field "狀態=處理中" --json
+# 檢查預覽後再確認
+lark-bitable write --op update --record-id recXXX --table-profile req --field "狀態=處理中" --confirm --json
 ```
 
 Attachment 欄位支援兩種值：
@@ -986,7 +1005,7 @@ POST /open-apis/drive/v1/medias/upload_all
   `attachmentPlan.replacementPolicy` 描述 CLI 目前的保護策略。舊欄位
   `attachmentPlan.mode` 保留為 `requestedEffect` 的相容別名。
 - 同一個欄位不能同時在多個輸入裡重複出現。
-- `--client-token` 只適用於 committed create。
+- `--client-token` 只適用於 committed create，必須是 UUID；格式錯誤會在本機回報 `invalid-client-token`。省略時 CLI 會自動產生 UUID。
 
 安全邊界：
 

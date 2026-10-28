@@ -2,11 +2,35 @@
 
 ## Unreleased
 
-- Add named table profiles managed by `configure`, plus shared `--table-profile` and `--table` selection for list, get, filter, search, schema, and write; keep active settings and shared auth unchanged, and retain view IDs as metadata only.
-- Fetch explicit record ids directly and report missing records without masking other Lark errors.
-- Use record-list pages of up to 500 records and keep reading the whole table regardless of configured view.
-- Correct doctor auth expiry status and report token refresh failures with safe retry/login guidance.
-- Validate explicit client tokens as UUIDs locally before confirmed create writes.
+### Added
+
+- Add named table profiles with `configure <url> --table-profile <name>`, `--list-table-profiles`, and `--remove`.
+- Add mutually exclusive `--table-profile` and one-off `--table` selection to list, get, filter, search, schema, and write, sharing existing auth without changing the active source.
+- Preserve table selection in follow-up commands emitted by write.
+
+### Changed
+
+- Fetch explicit record IDs directly instead of listing the table first.
+- Increase the default record-list page size to 500 records.
+
+### Fixed
+
+- Report missing records as `record-not-found` for Lark error 1254043 while preserving other Lark errors.
+- Show expired access tokens as `expired` when a refresh token is available, or `invalid` otherwise, in doctor output.
+- Report failed auth refreshes in valid as `auth-refresh-failed` with retry-then-login guidance, treating the dashboard workflow as partial.
+- Show only the error class in refresh error summaries containing credential keywords or token-shaped strings.
+- Reject non-UUID client tokens locally with `invalid-client-token` before confirmed create writes.
+
+### Verification
+
+Run release validation:
+
+```bash
+pnpm format:check
+pnpm test
+pnpm build
+git diff --check
+```
 
 ## 2.0.2 - 2026-07-07
 
