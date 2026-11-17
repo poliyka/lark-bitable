@@ -1,9 +1,9 @@
 ---
 name: lark-bitable
-description: Use the local Lark Bitable CLI to inspect bug records, run triage, and produce evidence-backed reports.
+description: Use the local Lark Bitable CLI to inspect bug records, run triage, and produce evidence-backed reports; also for previewed record writes (including fix/QA evidence attachment uploads), QA-mode verify, multi-table profiles, and the local dashboard.
 ---
 
-<!-- lark-bitable-bootstrap-version: 2026-10-28-table-profiles -->
+<!-- lark-bitable-bootstrap-version: 2026-11-18-skill-refresh -->
 
 # Lark Bitable CLI Bootstrap
 
@@ -286,27 +286,13 @@ Rules for write operations:
 
 ### Required bug-investigation flow
 
-When a human or AI asks for high-risk bugs, the workflow must be:
-
-1. If you only need field headers, run `lark-bitable schema`.
-2. If the exact table schema is not known, run `lark-bitable schema --json`.
-3. Use `triage`, `list`, `search`, or `filter` to produce a candidate list.
-4. Return a numbered candidate summary that includes the record id and the
-   minimum fields needed to choose a record.
-5. After the user selects one record, run `lark-bitable get <record-id>` before
-   any repository research.
-6. Read the full record fields from `get`, not only the triage/list summary.
-7. If the record includes image links, attachment links, or other media URLs,
-   inspect those assets before making conclusions when the environment can
-   access them.
-8. Treat each image or attachment as evidence. Record whether it was actually
-   viewed, only referenced, or could not be opened.
-9. Do not convert unread assets, missing access, or partial inspection into
-   facts.
-10. Use the full bug record to guide repository research, reproduction
-    inspection, and root-cause analysis.
-11. Only after the record and any accessible assets have been inspected should
-    you write the first research report.
+When asked for high-risk bugs, produce a candidate list with `triage`, `list`,
+`search`, or `filter` and return a numbered summary with each record id and the
+fields needed to choose one. Once the user picks a record,
+run `lark-bitable get <record-id>` to read it in full and inspect its
+accessible media, recording each asset as viewed, only
+referenced, or could not be opened (see Evidence boundaries), before any
+repository research or the first `research` report.
 
 ## QA Mode: Verify
 
