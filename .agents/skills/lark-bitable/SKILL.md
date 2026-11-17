@@ -292,7 +292,8 @@ fields needed to choose one. Once the user picks a record,
 run `lark-bitable get <record-id>` to read it in full and inspect its
 accessible media, recording each asset as viewed, only
 referenced, or could not be opened (see Evidence boundaries), before any
-repository research or the first `research` report.
+repository research or the first `research` report; then let the full record
+guide that research.
 
 ## QA Mode: Verify
 
