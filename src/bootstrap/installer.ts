@@ -26,7 +26,7 @@ export interface BootstrapInstallGroupResult extends BootstrapSkillGroupState {
 
 const DEFAULT_SKILL_TARGET_DIRS = [".agents/skills", ".claude/skills"] as const;
 const BOOTSTRAP_SKILL_MARKER =
-  "lark-bitable-bootstrap-version: 2026-10-28-table-profiles";
+  "lark-bitable-bootstrap-version: 2026-11-18-skill-refresh";
 
 export function defaultSkillTargetDirs(): string[] {
   return [...DEFAULT_SKILL_TARGET_DIRS];
