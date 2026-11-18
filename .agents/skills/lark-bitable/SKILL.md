@@ -292,8 +292,8 @@ fields needed to choose one. Once the user picks a record,
 run `lark-bitable get <record-id>` to read it in full and inspect its
 accessible media, recording each asset as viewed, only
 referenced, or could not be opened (see Evidence boundaries), before any
-repository research or the first `research` report; then let the full record
-guide that research.
+repository research or the first `research` report. Use the full bug record to
+guide repository research, reproduction inspection, and root-cause analysis.
 
 ## QA Mode: Verify
 
